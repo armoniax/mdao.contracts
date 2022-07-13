@@ -102,10 +102,11 @@ namespace hotpot_token
          * @param quantity - the quantity of tokens to be transferred,
          * @param memo - the memo string to accompany the transaction.
          */
-        [[eosio::action]] void transfer(const name &from,
-                                        const name &to,
-                                        const asset &quantity,
-                                        const string &memo);
+         [[eosio::action]]
+         void transfer( const name&    from,
+                        const name&    to,
+                        const asset&   quantity,
+                        const string&  memo );
 
         /**
          * Notify pay fee.

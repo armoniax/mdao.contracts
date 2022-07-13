@@ -25,7 +25,7 @@ static constexpr name MIRROR_BANK = "amax.mtoken"_n;
 static constexpr symbol BRIDGE_SYMBOL = SYMBOL("BRIDGE", 4);
 static constexpr uint64_t BRIDGE_AMOUNT = 1000000000000ll;
 
-static constexpr name HOTPOT_BANK = "hotpotxtoken"_n;
+static constexpr name HOTPOT_BANK = "hotpotatoken"_n;
 
 static constexpr uint64_t RATIO_BOOST = 10000;
 static constexpr uint64_t SLOPE_BOOST = 10000000000;

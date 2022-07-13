@@ -137,7 +137,7 @@ void algoex::setmktstatus(const name& creator,
     _db.set(market, get_self());
 }
 
-void algoex::ontransfer(name from, name to, asset quantity, string memo){
+void algoex::ontransfer(const name &from, const name &to, const asset &quantity, const string &memo){
     if(from == get_self()) return;
     CHECKC(to == get_self() && to != from, err::ACCOUNT_INVALID, "invalid account")
 
@@ -177,6 +177,7 @@ void algoex::ontransfer(name from, name to, asset quantity, string memo){
 }
 
 void algoex::onissue(const name &to, const asset &quantity, const string &memo){
+    CHECKC(get_first_receiver() == _gstate.admins.at(admin_type::tokenarc), err::ACCOUNT_INVALID, "require issue from " + _gstate.admins.at(admin_type::tokenarc).to_string())
     CHECKC(_gstate.exchg_status == market_status::trading, err::MAINTAINING, "exchange is in maintaining")
     
     CHECKC(to == get_self(), err::ACCOUNT_INVALID, "issued to must be self")
@@ -214,7 +215,7 @@ void algoex::_create_market(const name& creator,
     CHECKC((algo_type == algo_type_t::bancor || algo_type == algo_type_t::polycurve), err::PARAM_ERROR, "unsopport algo type")
     CHECKC(base_supply.amount>0, err::NOT_POSITIVE, "not positive quantity:" + base_supply.to_string())
     CHECKC(quote_supply.amount>0, err::NOT_POSITIVE, "not positive quantity:" + quote_supply.to_string())
-    CHECKC(_gstate.quote_symbols.count(extended_symbol(quote_supply.symbol, arc)), err::SYMBOL_MISMATCH, "unvalid quote asset: " + quote_supply.to_string())
+    CHECKC(_gstate.quote_symbols.count(extended_symbol(quote_supply.symbol, quote_contract)), err::SYMBOL_MISMATCH, "unvalid quote asset: " + quote_supply.to_string())
 
     symbol_code base_code = base_supply.symbol.code();
 
@@ -231,7 +232,6 @@ void algoex::_create_market(const name& creator,
     CHECKC(grand_rwd_rate >= 0 && grand_rwd_rate <= 0.2*RATIO_BOOST, err::OVERSIZED, "grand_rwd_rate tax should less than 20%")
     CHECKC((parent_rwd_rate + grand_rwd_rate <= in_tax) && (parent_rwd_rate + grand_rwd_rate <= out_tax),
             err::OVERSIZED, "reward ratio should less than in_tax and out_tax")
-
 
     market.base_code = base_code;
     market.creator = creator;
@@ -327,10 +327,10 @@ void algoex::_bid(const name& account, const asset& quantity, const symbol_code&
 
     if(actual_trade.amount > 0){
         asset exchg_quantity = market.convert(actual_trade, market.base_balance.quantity.symbol);
-        asset avg = asset((int64_t)divide_decimal64(quantity.amount, actual_trade.amount, power10(market.quote_supply.symbol.precision())), actual_trade.symbol);
+        asset avg = asset((int64_t)divide_decimal64(quantity.amount, exchg_quantity.amount, power10(exchg_quantity.symbol.precision())), actual_trade.symbol);
 
         CHECKC(exchg_quantity.amount > 0, err::NOT_POSITIVE, actual_trade.to_string() + " is too small to exchange: "+exchg_quantity.to_string())
-        CHECKC(market.base_balance.quantity > exchg_quantity, err::OVERSIZED, "market balance not enough")
+        CHECKC(market.base_balance.quantity.amount >= 0, err::OVERSIZED, "market balance not enough")
         TRANSFER(market.base_balance.contract, account, exchg_quantity, "price: "+avg.to_string())
     }
 
@@ -354,10 +354,10 @@ void algoex::_ask(const name& account, const asset& quantity, const symbol_code&
     CHECKC( arc == market.base_balance.contract, err::SYMBOL_MISMATCH, "invalid asset from " + arc.to_string())
 
     asset exchg_quantity = market.convert(quantity, market.quote_supply.symbol);
-    asset avg = asset((int64_t)divide_decimal64(exchg_quantity.amount, quantity.amount,  power10(market.quote_supply.symbol.precision())), exchg_quantity.symbol);
+    asset avg = asset((int64_t)divide_decimal64(exchg_quantity.amount, quantity.amount,  power10(quantity.symbol.precision())), exchg_quantity.symbol);
     
     CHECKC(exchg_quantity.amount > 0, err::NOT_POSITIVE, "quantity is too small to exchange")
-    CHECKC(market.quote_balance.quantity > exchg_quantity, err::OVERSIZED, "market balance not enough")
+    CHECKC(market.quote_balance.quantity.amount >= 0, err::OVERSIZED, "market quote not enough")
 
     asset fee = asset((int64_t)multiply_decimal64(exchg_quantity.amount, _gstate.exchg_fee_ratio, RATIO_BOOST), exchg_quantity.symbol);
     asset tax = asset((int64_t)multiply_decimal64(exchg_quantity.amount, market.out_tax, RATIO_BOOST), exchg_quantity.symbol);

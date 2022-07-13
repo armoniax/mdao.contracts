@@ -66,12 +66,12 @@ public:
      *      creat:{}
      */
     [[eosio::on_notify("*::transfer")]] 
-    void ontransfer(name from, name to, asset quantity, string memo);
+    void ontransfer(const name &from, const name &to, const asset &quantity, const string &memo);
 
     /**
      * ontransfer, trigger by recipient of issue()
      */
-    [[eosio::on_notify("hotpotxtoken::issue")]] 
+    [[eosio::on_notify("*::issue")]] 
     void onissue(const name &to, const asset &quantity, const string &memo);
 
     [[eosio::action]]

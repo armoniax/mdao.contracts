@@ -141,10 +141,10 @@ namespace hotpot_token {
         sub_balance(st, account, quantity);
     }
 
-    void token::transfer(const name &from,
-                          const name &to,
-                          const asset &quantity,
-                          const string &memo)
+void token::transfer( const name&    from,
+                      const name&    to,
+                      const asset&   quantity,
+                      const string&  memo )
     {
         check(from != to, "cannot transfer to self");
         require_auth(from);
@@ -155,8 +155,8 @@ namespace hotpot_token {
         check(st.supply.symbol == quantity.symbol, "symbol precision mismatch");
         check(!st.is_paused, "token is paused");
 
-        require_recipient(from);
-        require_recipient(to);
+        require_recipient( from );
+        require_recipient( to );
 
         check(quantity.is_valid(), "invalid quantity");
         check(quantity.amount > 0, "must transfer positive quantity");
