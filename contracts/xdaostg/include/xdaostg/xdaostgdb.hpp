@@ -35,13 +35,13 @@ typedef eosio::singleton< "global"_n, global_t > global_singleton;
 
 
 namespace strategy_status {
-    static constexpr eosio::name testing         = "testing"_n;
-    static constexpr eosio::name tested         = "tested"_n;
-    static constexpr eosio::name published         = "published"_n;
+    static constexpr eosio::name testing            = "testing"_n;
+    static constexpr eosio::name tested             = "tested"_n;
+    static constexpr eosio::name published          = "published"_n;
 };
 
 namespace strategy_type {
-    static constexpr eosio::name unlimited            = "unlimited"_n;
+    static constexpr eosio::name unlimited          = "unlimited"_n;
     static constexpr eosio::name tokenbalance       = "tokenbalance"_n;
     // static constexpr eosio::name tokenstaking       = "tokenstaking"_n;
     // static constexpr eosio::name nftbalance         = "nftbalance"_n;
@@ -49,16 +49,16 @@ namespace strategy_type {
 };
 
 struct STG_TABLE strategy_t {
-    uint64_t    id;
-    name        creator;
-    name        type;
-    name        status;
-    string      stg_name;
-    string      stg_algo;
-    asset       require_apl;
-    symbol_code      require_symbol_code;
-    name        ref_contract;
-    time_point_sec created_at;
+    uint64_t        id;
+    name            creator;
+    name            type;
+    name            status;
+    string          stg_name;
+    string          stg_algo;
+    asset           require_apl;
+    symbol_code     require_symbol_code;
+    name            ref_contract;
+    time_point_sec  created_at;
 
     strategy_t() {}
     strategy_t(const uint64_t& pid): id(pid) {}
