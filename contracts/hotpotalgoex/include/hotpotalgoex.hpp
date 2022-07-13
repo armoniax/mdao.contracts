@@ -3,7 +3,7 @@
 #include <eosio/asset.hpp>
 #include <eosio/eosio.hpp>
 #include <string>
-#include "hotpotbancordb.hpp"
+#include "hotpotalgoexdb.hpp"
 
 
 using namespace std;
@@ -16,40 +16,33 @@ namespace hotpot
 using std::pair;
 using std::string;
 
-class [[eosio::contract("hotpotbancor")]] bancor : public contract
+class [[eosio::contract("hotpotalgoex")]] algoex : public contract
 {
 private:
     global_singleton    _global;
     global_t            _gstate;
     dbc           _db;
 
-    asset _convert_to_exchange(market_t& market, extended_asset& reserve, const asset& payment );
-    asset _convert_from_exchange(market_t& market, extended_asset& reserve, const asset& tokens );
-    asset _convert(market_t& market, const asset& from, const symbol& to );
-    
-    void _create_market(const name& creator, 
-                        const uint16_t& cw_value,
-                        const extended_asset& base_supply,
-                        const extended_asset& quote_supply,
-                        const uint16_t& in_tax,
-                        const uint16_t& out_tax,
-                        const uint16_t& parent_rwd_rate,
-                        const uint16_t& grand_rwd_rate
-                        );
+    void _create_market(const name& creator, const vector<string_view>& memo_params);
 
     void _allot_tax(const name& account, const market_t& market, const asset& tax, const name& bank_con);
 
-
-    void _launch_market(const name& creator, 
+    void _launch_market(const name& launcher, 
                             const asset& quantity,
-                            const symbol_code& base_code);
+                            const vector<string_view>& memo_params);
+
+    void _launch_polycurve_market(
+                            market_t market,
+                            const name& launcher, 
+                            const asset& quantity,
+                            const asset& lauch_price);
 
     void _bid(const name& account, const asset& quantity, const symbol_code& base_code);
 
     void _ask(const name& account, const asset& quantity, const symbol_code& base_code);
 
 public:
-    bancor(eosio::name receiver, eosio::name code, datastream<const char *> ds) : _db(_self),contract(receiver, code, ds), _global(_self, _self.value)
+    algoex(eosio::name receiver, eosio::name code, datastream<const char *> ds) : _db(_self),contract(receiver, code, ds), _global(_self, _self.value)
     {
         if (_global.exists()) _gstate = _global.get();
         else _gstate = global_t{};
@@ -57,6 +50,9 @@ public:
 
     [[eosio::action]]
     void init(const name &admin);
+
+    [[eosio::action]]
+    void setlimitsym(const set<string>& sym_codes);
 
     [[eosio::action]]
     void setadmin(const name& admin_type,const name &admin);
@@ -79,8 +75,29 @@ public:
     void onissue(const name &to, const asset &quantity, const string &memo);
 
     [[eosio::action]]
-    void updateappinf(const uint64_t& market_id,
+    void updateappinf(const name& creator,
+                      const symbol_code& base_code,
                       const AppInfo_t& app_info
+                    );
+
+    [[eosio::action]]
+    void setlauncher(const name& creator,
+                    const symbol_code& base_code, 
+                    const name& launcher,
+                    const string& recv_memo
+                    );
+
+    [[eosio::action]]
+    void settaxtaker(const name& creator, 
+                    const symbol_code& base_code,
+                    const name& taxker,
+                    const string& recv_memo
+                    );
+
+    [[eosio::action]]
+    void setmktstatus(const name& creator, 
+                    const symbol_code& base_code,
+                    const name& status
                     );
 };
 

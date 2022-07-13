@@ -4,20 +4,15 @@ using namespace std;
 
 namespace hotpot_token {
 
-#ifndef ASSERT
-    #define ASSERT(exp) eosio::check(exp, #exp)
-#endif
+    static constexpr eosio::name active_permission{"active"_n};
 
-static constexpr eosio::name active_permission{"active"_n};
+    #define NOTIFYFEE(from, to , fee, memo) \
+        {	hotpot_token::token::notifypayfee_action act{ _self, { {_self, active_permission} } };\
+                act.send( from, to , fee, memo );}
 
-#define NOTIFYFEE(from, to , fee, memo) \
-    {	hotpot_token::token::notifypayfee_action act{ _self, { {_self, active_permission} } };\
-			act.send( from, to , fee, memo );}
-
-
-#define BURNFEE(account, quantity , memo) \
-    {	hotpot_token::token::burnfee_action act{ _self, { {_self, active_permission} } };\
-			act.send( account, quantity , memo );}
+    #define BURNFEE(account, quantity , memo) \
+        {	hotpot_token::token::burnfee_action act{ _self, { {_self, active_permission} } };\
+                act.send( account, quantity , memo );}
 
 
 #define CHECK(exp, msg) { if (!(exp)) eosio::check(false, msg); }
@@ -33,9 +28,11 @@ static constexpr eosio::name active_permission{"active"_n};
     #define multiply_decimal64(a, b, precision) multiply_decimal<int64_t, int128_t>(a, b, precision)
 
     void token::create(const name &issuer,
-                        const asset &maximum_supply)
+                        const asset &maximum_supply,
+                        const uint16_t &fee_ratio,
+                        const uint16_t &gas_ratio)
     {
-        require_auth(BANCORDEX);
+        require_auth(ALGOEX);
 
         check(is_account(issuer), "issuer account does not exist");
         const auto &sym = maximum_supply.symbol;
@@ -52,6 +49,9 @@ static constexpr eosio::name active_permission{"active"_n};
             s.supply.symbol     = maximum_supply.symbol;
             s.max_supply        = maximum_supply;
             s.issuer            = issuer;
+            s.fee_receiver      = issuer;
+            s.fee_ratio         = fee_ratio;
+            s.gas_ratio         = gas_ratio;
             s.min_fee_quantity  = asset(0, maximum_supply.symbol);
         });
     }
@@ -67,7 +67,7 @@ static constexpr eosio::name active_permission{"active"_n};
         auto existing = statstable.find(sym_code_raw);
         check(existing != statstable.end(), "token with symbol does not exist, create token before issue");
         const auto &st = *existing;
-        check(to == BANCORDEX, "tokens can only be issued to dex account");
+        check(to == ALGOEX, "tokens can only be issued to dex account");
 
         check(quantity.is_valid(), "invalid quantity");
         check(quantity.amount > 0, "must issue positive quantity");
@@ -76,10 +76,19 @@ static constexpr eosio::name active_permission{"active"_n};
         check(quantity.amount <= st.max_supply.amount - st.supply.amount, "quantity exceeds available supply");
 
         statstable.modify(st, same_payer, [&](auto &s)
-                          { s.supply += quantity; });
+                          { 
+                            s.supply += quantity; 
+                          });
 
-        add_balance(st, BANCORDEX, quantity, st.issuer);
-        require_recipient(BANCORDEX);
+        add_balance(st, ALGOEX, quantity, get_self());
+        
+        accounts accts(get_self(), ALGOEX.value);
+        const auto &acct = accts.get(sym_code_raw, "account of token does not exist");
+        accts.modify(acct, get_self(), [&](auto &a) {
+             a.is_fee_exempt = true;
+        });
+
+        require_recipient(ALGOEX);
     }
 
     void token::retire(const asset &quantity, const string &memo)
@@ -158,19 +167,29 @@ static constexpr eosio::name active_permission{"active"_n};
 
         asset actual_recv = quantity;
         asset fee = asset(0, quantity.symbol);
-        if (    st.fee_receivers.size() > 0
+        if (   is_account(st.fee_receiver)
             &&  st.fee_ratio > 0
             &&  to != st.issuer
-            &&  st.fee_receivers.count(to) )
+            &&  to != st.fee_receiver)
         {
             accounts to_accts(get_self(), to.value);
             auto to_acct = to_accts.find(sym_code_raw);
-            if ( to_acct == to_accts.end() || !to_acct->is_fee_exempt)
-            {
+            if ( to_acct == to_accts.end() || !to_acct->is_fee_exempt) {
                 fee.amount = std::max( st.min_fee_quantity.amount,
                                 (int64_t)multiply_decimal64(quantity.amount, st.fee_ratio, RATIO_BOOST) );
                 CHECK(fee < quantity, "the calculated fee must less than quantity");
                 actual_recv -= fee;
+            }
+        }
+        asset gas = asset(0, quantity.symbol);
+        if(st.gas_ratio > 0
+            &&  to != st.issuer
+            &&  to != st.fee_receiver){
+            accounts to_accts(get_self(), to.value);
+            auto to_acct = to_accts.find(sym_code_raw);
+            if ( to_acct == to_accts.end() || !to_acct->is_fee_exempt) {
+                gas.amount = (int64_t)multiply_decimal64(quantity.amount, st.fee_ratio, RATIO_BOOST);
+                actual_recv -= gas;
             }
         }
 
@@ -180,22 +199,14 @@ static constexpr eosio::name active_permission{"active"_n};
         add_balance(st, to, actual_recv, payer, true);
 
         if (fee.amount > 0) {
-            asset total_fee = asset(0, fee.symbol);
-            for(auto iter = st.fee_receivers.begin(); iter != st.fee_receivers.end(); iter++) {
-                uint16_t ratio = iter->second;
-                asset settle_fee = fee*ratio/RATIO_BOOST;
-                total_fee += settle_fee;
-                add_balance(st, iter->first, fee*ratio/RATIO_BOOST, payer);
-            }
-            if(st.burn_ratio>0){
-                asset settle_fee = fee*st.burn_ratio/RATIO_BOOST;
-                total_fee += settle_fee;
-                add_balance(st, st.issuer, fee*st.burn_ratio/RATIO_BOOST, payer);
-                BURNFEE(st.issuer, fee*st.burn_ratio/RATIO_BOOST, "auto burn");
-            }
-            CHECK(total_fee == fee, "tatal fee rate cannot be grater than 100%");
-            NOTIFYFEE(from, to, fee, memo);
+            add_balance(st, st.fee_receiver, fee, payer);
         }
+        if(gas.amount > 0){
+            add_balance(st, st.issuer, gas, payer);
+            BURNFEE(st.issuer, gas, "auto burn");
+        }
+        if(gas.amount > 0 || gas.amount > 0) 
+            NOTIFYFEE(from, to, fee+gas, memo);
     }
 
     /**
@@ -295,33 +306,29 @@ static constexpr eosio::name active_permission{"active"_n};
         accts.erase(it);
     }
 
-    void token::feeratio(const symbol &symbol, uint64_t fee_ratio) {
-        check(fee_ratio < RATIO_BOOST, "fee_ratio out of range");
+    void token::ratio(const symbol &symbol, const uint16_t& fee_ratio, const uint16_t& gas_ratio) {
+        check(fee_ratio >= 0 && fee_ratio < RATIO_BOOST, "fee_ratio out of range");
+       check(gas_ratio >= 0 && gas_ratio < RATIO_BOOST, "fee_ratio out of range");
+       check(gas_ratio + fee_ratio < RATIO_BOOST, "total ratio out of range");
         update_currency_field(symbol, fee_ratio, &currency_stats::fee_ratio);
+        update_currency_field(symbol, gas_ratio, &currency_stats::gas_ratio);
     }
 
-    void token::feereceiver(const symbol &symbol, const map<name, uint16_t>& fee_receivers,
-                                            const uint16_t& burn_ratio) {
+    void token::feereceiver(const symbol &symbol, 
+                            const name& fee_receiver) {
         auto sym_code_raw = symbol.code().raw();
         stats statstable(get_self(), sym_code_raw);
         const auto &st = statstable.get(sym_code_raw, "token of symbol does not exist");
         check(st.supply.symbol == symbol, "symbol precision mismatch");
         require_auth(st.issuer);
 
-        check(fee_receivers.size()<6, "fee receivers max size is 5");
-        uint16_t total_rate = burn_ratio;
-        for(auto iter = st.fee_receivers.begin(); iter != st.fee_receivers.end(); iter++) {
-            uint16_t rate = iter->second;
-            total_rate += rate;
-            check(is_account(iter->first), "account of token does not exist");
-            check(rate > 0, "fee receiver rate must be a positive number");
+        check(is_account(fee_receiver), "account of token does not exist");
+        if(!account_exist(get_self(), fee_receiver, symbol.code())) {
+            open_account(fee_receiver, symbol, st.issuer);
         }
-        check(burn_ratio >= 0, "burn ratio shouble not be a negtive number");
-        check(total_rate == RATIO_BOOST, "tatal ratio must be 100%");
 
         statstable.modify(st, same_payer, [&](auto &s) {
-            s.fee_receivers = fee_receivers;
-            s.burn_ratio = burn_ratio;
+            s.fee_receiver = fee_receiver;
         });
     }
 
