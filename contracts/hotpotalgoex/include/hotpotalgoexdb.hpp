@@ -6,7 +6,7 @@
 #include <eosio/singleton.hpp>
 #include <eosio/system.hpp>
 #include <eosio/time.hpp>
-#include <otcconf/wasm_db.hpp>
+#include "thirdparty/wasm_db.hpp"
 
 using namespace eosio;
 using namespace std;
@@ -23,11 +23,12 @@ static constexpr name SYS_ACCT = "amax"_n;
 static constexpr name MIRROR_BANK = "amax.mtoken"_n;
 
 static constexpr symbol BRIDGE_SYMBOL = SYMBOL("BRIDGE", 4);
-static constexpr uint64_t BRIDGE_AMOUNT = 100000000000000ll;
+static constexpr uint64_t BRIDGE_AMOUNT = 1000000000000ll;
 
-static constexpr name HOTPOT_BANK = "hotpotxtoken"_n;
+static constexpr name HOTPOT_BANK = "hotpotatoken"_n;
 
 static constexpr uint64_t RATIO_BOOST = 10000;
+static constexpr uint64_t SLOPE_BOOST = 10000000000;
  static constexpr uint64_t MAX_CONTENT_SIZE = 64;
 
 struct AppInfo_t {
@@ -44,7 +45,7 @@ struct Depository_t {
 
 namespace transfer_type {
     static constexpr eosio::name create      = "create"_n;
-    static constexpr eosio::name lauch     = "lauch"_n;
+    static constexpr eosio::name launch     = "launch"_n;
     static constexpr eosio::name bid         = "bid"_n;
     static constexpr eosio::name ask         = "ask"_n;
 };
@@ -63,12 +64,24 @@ namespace market_status {
     static constexpr eosio::name delisted        = "delisted"_n;
 };
 
+namespace algo_type_t {
+    static constexpr eosio::name bancor     = "bancor"_n;
+    static constexpr eosio::name polycurve     = "polycurve"_n;
+};
+
+namespace algo_parma_type {
+    static constexpr eosio::name aslope     = "aslope"_n;
+    static constexpr eosio::name bvalue     = "bvalue"_n;
+    static constexpr eosio::name cwvalue     = "cwvalue"_n;
+    static constexpr eosio::name cwsupply     = "cwsupply"_n;
+};
+
 namespace wasm
 {
 namespace db
 {
-    #define HOTPOT_TBL [[eosio::table, eosio::contract("hotpotbancor")]]
-    #define HOTPOT_TBL_NAME(name) [[eosio::table(name), eosio::contract("hotpotbancor")]]
+    #define HOTPOT_TBL [[eosio::table, eosio::contract("hotpotalgoex")]]
+    #define HOTPOT_TBL_NAME(name) [[eosio::table(name), eosio::contract("hotpotalgoex")]]
     
     struct HOTPOT_TBL_NAME("global") global_t
     {
@@ -90,17 +103,17 @@ namespace db
     {
         symbol_code base_code;
         name creator;
-        Depository_t laucher;
+        Depository_t launcher;
         name status;
         AppInfo_t app_info;
-        uint16_t cw_value = 5000;
+        name algo_type;
+        map<name, uint64_t> algo_params;
         uint16_t in_tax;
         uint16_t out_tax;
         uint16_t parent_rwd_rate = 0;
         uint16_t grand_rwd_rate = 0;
         asset base_supply;
         asset quote_supply;
-        asset bridge_supply;
         extended_asset base_balance;
         extended_asset quote_balance;
         Depository_t taxtaker;
@@ -111,12 +124,23 @@ namespace db
         market_t() {}
         market_t(const symbol_code &pbase_code) : base_code(pbase_code) {}
 
-     
-        typedef wasm::db::multi_index<"markets"_n, market_t> idx_t;
+        asset convert_to_exchange_old( extended_asset& c, asset in );
+        asset convert_from_exchange_old(extended_asset& c, asset in );
+        asset convert_old( asset from, symbol to );
+        
+        asset convert_to_exchange(extended_asset& reserve, const asset& payment );
+        asset convert_from_exchange(extended_asset& reserve, const asset& tokens );
+        asset convert(const asset& from, const symbol& to);
 
-        EOSLIB_SERIALIZE(market_t, (base_code)(creator)(laucher)(status)(app_info)(cw_value)(in_tax)
-            (out_tax)(parent_rwd_rate)(grand_rwd_rate)(base_supply)(quote_supply)
-            (bridge_supply)
+        asset poly_to_exchange(const asset& in);
+        asset poly_from_exchange(const asset& in);
+    
+        typedef wasm::db::multi_index<"algomkt"_n, market_t> idx_t;
+
+        EOSLIB_SERIALIZE(market_t, (base_code)(creator)(launcher)(status)(app_info)
+            (algo_type)(algo_params)(in_tax)(out_tax)(parent_rwd_rate)
+            (grand_rwd_rate)
+            (base_supply)(quote_supply)
             (base_balance)(quote_balance)(taxtaker)(created_at))
     };
 
