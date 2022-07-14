@@ -197,26 +197,22 @@ void algoex::_create_market(const name& creator,
                             const vector<string_view>& memo_params
                         ){
     CHECKC(get_first_receiver() == SYS_BANK, err::ACCOUNT_INVALID, "require fee from " + SYS_BANK.to_string())
-    CHECKC(memo_params.size() == 11, err::PARAM_ERROR, "invalid params")
+    CHECKC(memo_params.size() >= 9, err::PARAM_ERROR, "invalid params")
 
     name arc = _gstate.admins.at(admin_type::tokenarc);
 
     name algo_type = name(memo_params.at(1));
     asset base_supply = asset_from_string(memo_params.at(2));
-    asset quote_supply = asset_from_string(memo_params.at(3));
-    name quote_contract(memo_params.at(4));
-    uint16_t in_tax = to_uint16(memo_params.at(5), "in_tax value error:");
-    uint16_t out_tax = to_uint16(memo_params.at(6), "out_tax value error:");
-    uint16_t parent_rwd_rate = to_uint16(memo_params.at(7), "parent_rwd_rate value error:");
-    uint16_t grand_rwd_rate = to_uint16(memo_params.at(8), "grand_rwd_rate value error:");
-    uint16_t tk_fee_ratio = to_uint16(memo_params.at(9), "tk_fee_ratio value error:");
-    uint16_t tk_gas_ratio = to_uint16(memo_params.at(10), "tk_gas_ratio value error:");
+    uint16_t in_tax = to_uint16(memo_params.at(3), "in_tax value error:");
+    uint16_t out_tax = to_uint16(memo_params.at(4), "out_tax value error:");
+    uint16_t parent_rwd_rate = to_uint16(memo_params.at(5), "parent_rwd_rate value error:");
+    uint16_t grand_rwd_rate = to_uint16(memo_params.at(6), "grand_rwd_rate value error:");
+    uint16_t token_fee_ratio = to_uint16(memo_params.at(7), "token_fee_ratio value error:");
+    uint16_t token_gas_ratio = to_uint16(memo_params.at(8), "token_gas_ratio value error:");
 
     CHECKC((algo_type == algo_type_t::bancor || algo_type == algo_type_t::polycurve), err::PARAM_ERROR, "unsopport algo type")
     CHECKC(base_supply.amount>0, err::NOT_POSITIVE, "not positive quantity:" + base_supply.to_string())
-    CHECKC(quote_supply.amount>0, err::NOT_POSITIVE, "not positive quantity:" + quote_supply.to_string())
-    CHECKC(_gstate.quote_symbols.count(extended_symbol(quote_supply.symbol, quote_contract)), err::SYMBOL_MISMATCH, "unvalid quote asset: " + quote_supply.to_string())
-
+    
     symbol_code base_code = base_supply.symbol.code();
 
     CHECKC(base_code.length() > 3, err::NO_AUTH, "cannot create limited token")
@@ -226,10 +222,12 @@ void algoex::_create_market(const name& creator,
     auto market = market_t(base_code);
     CHECKC(!_db.get(market), err::RECORD_EXISTING, "symbol is existed")
 
-    CHECKC(in_tax >= 0 && in_tax <= 0.2*RATIO_BOOST, err::OVERSIZED, "in tax should in range 0-20%")
-    CHECKC(out_tax >= 0 && out_tax <= 0.2*RATIO_BOOST, err::OVERSIZED, "out tax should in range 0-20%")
-    CHECKC(parent_rwd_rate >= 0 && parent_rwd_rate <= 0.2*RATIO_BOOST, err::OVERSIZED, "parent_rwd_rate tax should less than 20%")
-    CHECKC(grand_rwd_rate >= 0 && grand_rwd_rate <= 0.2*RATIO_BOOST, err::OVERSIZED, "grand_rwd_rate tax should less than 20%")
+    CHECKC(in_tax >= 0 && in_tax <= 0.2 * RATIO_BOOST, err::OVERSIZED, "in tax should in range 0-20%")
+    CHECKC(out_tax >= 0 && out_tax <= 0.2 * RATIO_BOOST, err::OVERSIZED, "out tax should in range 0-20%")
+    CHECKC(token_fee_ratio >= 0 && token_fee_ratio <= 0.01 * RATIO_BOOST, err::OVERSIZED, "in tax should in range 0-20%")
+    CHECKC(token_gas_ratio >= 0 && token_gas_ratio <= 0.01 * RATIO_BOOST, err::OVERSIZED, "out tax should in range 0-20%")
+    CHECKC(parent_rwd_rate >= 0 && parent_rwd_rate <= 0.2 * RATIO_BOOST, err::OVERSIZED, "parent_rwd_rate tax should less than 20%")
+    CHECKC(grand_rwd_rate >= 0 && grand_rwd_rate <= 0.2 * RATIO_BOOST, err::OVERSIZED, "grand_rwd_rate tax should less than 20%")
     CHECKC((parent_rwd_rate + grand_rwd_rate <= in_tax) && (parent_rwd_rate + grand_rwd_rate <= out_tax),
             err::OVERSIZED, "reward ratio should less than in_tax and out_tax")
 
@@ -242,9 +240,7 @@ void algoex::_create_market(const name& creator,
     market.grand_rwd_rate = grand_rwd_rate;
     market.algo_type = algo_type;
     market.base_supply = base_supply;
-    market.quote_supply = quote_supply;
     market.base_balance = extended_asset(asset(0, base_supply.symbol), arc);
-    market.quote_balance = extended_asset(asset(0, quote_supply.symbol), quote_contract);
     Depository_t depository;
     depository.owner = creator;
     depository.transmemo = base_code.to_string();
@@ -254,7 +250,7 @@ void algoex::_create_market(const name& creator,
 
     _db.set(market, get_self());
 
-    CREATE_TOKEN(arc, creator, base_supply, tk_fee_ratio, tk_gas_ratio) 
+    CREATE_TOKEN(arc, creator, base_supply, token_fee_ratio, token_gas_ratio) 
     TRANSFER(SYS_BANK, _gstate.admins.at(admin_type::feetaker), _gstate.token_crt_fee, base_code.to_string() + " market creation fee")
     ISSUE(arc, get_self(), base_supply, "")
 }
@@ -262,20 +258,27 @@ void algoex::_create_market(const name& creator,
 void algoex::_launch_market(const name& launcher, 
                             const asset& quantity,
                             const vector<string_view>& memo_params){
+    CHECKC(memo_params.size() >= 4, err::PARAM_ERROR, "invalid params")
+
     auto market = market_t(symbol_code(memo_params.at(1)));
+
     CHECKC(_db.get(market), err::RECORD_NOT_FOUND ,"cannot found market")
     CHECKC(market.status == market_status::initialized, err::HAS_INITIALIZE, "cannot launch market in status: " + market.status.to_string())
     CHECKC(market.launcher.owner == launcher, err::NO_AUTH, "no auth to launch market")
-    CHECKC(quantity.symbol == market.quote_balance.quantity.symbol, err::SYMBOL_MISMATCH, "symbol mismatch")
     
     name arc = get_first_receiver();
-    CHECKC( arc == market.quote_balance.contract, err::SYMBOL_MISMATCH, "invalid asset from " + arc.to_string())
+
+    asset quote_supply = asset_from_string(memo_params.at(2));
+    CHECKC(quote_supply.amount>0, err::NOT_POSITIVE, "not positive quantity:" + quote_supply.to_string())
+    CHECKC(_gstate.quote_symbols.count(extended_symbol(quote_supply.symbol, arc)), err::SYMBOL_MISMATCH, "unvalid quote asset: " + quote_supply.to_string())
+
+    market.quote_balance = extended_asset(asset(0, quote_supply.symbol), arc);
+    market.quote_supply = quote_supply;
 
     switch (market.algo_type.value)
     {
     case algo_type_t::polycurve.value: {
-        CHECKC(memo_params.size() == 3, err::PARAM_ERROR, "invalid params")
-        asset lauch_price = asset_from_string(memo_params.at(2));
+        asset lauch_price = asset_from_string(memo_params.at(3));
         _launch_polycurve_market(market, launcher, quantity, lauch_price);
         }
         break;

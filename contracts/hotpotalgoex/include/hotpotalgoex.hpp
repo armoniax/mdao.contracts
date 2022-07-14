@@ -63,7 +63,24 @@ public:
     /**
      * ontransfer, trigger by recipient of transfer()
      * memo:
-     *      creat:{}
+     *  * create a market for token
+     *    create:{algo_type}:{base_supply}:{in_tax}:{out_tax}:{parent_reward_rate}:
+     *           {grand_reward_rate}:{token_fee_ratio}{token_gas_ratio}
+     *      * algo_type: polycurve, for boding curve: y = kx + b
+     *      * base_supply: create and issue token
+     *      * in_tax/out_tax: transfer to buy/sell token, max: 2000 (20%), tax will send to taxtaker
+     *      * parent_reward_rate/grand_reward_rate: reward to parent/grand, max: 2000 (20%), reward cost from tax
+     *      * token_fee_ratio/token_gas_ratio: fee/gas for token transfer, max: 100 (1%)
+     *   * lauch a market and start trading
+     *      launch:{token_symbol}:{quote_supply}
+     *        * token_symbol: symbol of base_supply
+     *        * quote_supply: target market cap
+     *   * bid token
+     *      bid:{token_symbol}
+     *        * token_symbol: symbol of base_supply
+     *   * ask token
+     *      ask:{token_symbol}
+     *        * token_symbol: symbol of base_supply
      */
     [[eosio::on_notify("*::transfer")]] 
     void ontransfer(const name &from, const name &to, const asset &quantity, const string &memo);
