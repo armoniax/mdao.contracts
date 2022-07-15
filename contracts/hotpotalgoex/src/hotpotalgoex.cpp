@@ -197,20 +197,18 @@ void algoex::_create_market(const name& creator,
                             const vector<string_view>& memo_params
                         ){
     CHECKC(get_first_receiver() == SYS_BANK, err::ACCOUNT_INVALID, "require fee from " + SYS_BANK.to_string())
-    CHECKC(memo_params.size() >= 9, err::PARAM_ERROR, "invalid params")
+    CHECKC(memo_params.size() >= 8, err::PARAM_ERROR, "invalid params")
 
     name arc = _gstate.admins.at(admin_type::tokenarc);
 
-    name algo_type = name(memo_params.at(1));
-    asset base_supply = asset_from_string(memo_params.at(2));
-    uint16_t in_tax = to_uint16(memo_params.at(3), "in_tax value error:");
-    uint16_t out_tax = to_uint16(memo_params.at(4), "out_tax value error:");
-    uint16_t parent_rwd_rate = to_uint16(memo_params.at(5), "parent_rwd_rate value error:");
-    uint16_t grand_rwd_rate = to_uint16(memo_params.at(6), "grand_rwd_rate value error:");
-    uint16_t token_fee_ratio = to_uint16(memo_params.at(7), "token_fee_ratio value error:");
-    uint16_t token_gas_ratio = to_uint16(memo_params.at(8), "token_gas_ratio value error:");
+    asset base_supply = asset_from_string(memo_params.at(1));
+    uint16_t in_tax = to_uint16(memo_params.at(2), "in_tax value error:");
+    uint16_t out_tax = to_uint16(memo_params.at(3), "out_tax value error:");
+    uint16_t parent_rwd_rate = to_uint16(memo_params.at(4), "parent_rwd_rate value error:");
+    uint16_t grand_rwd_rate = to_uint16(memo_params.at(5), "grand_rwd_rate value error:");
+    uint16_t token_fee_ratio = to_uint16(memo_params.at(6), "token_fee_ratio value error:");
+    uint16_t token_gas_ratio = to_uint16(memo_params.at(7), "token_gas_ratio value error:");
 
-    CHECKC((algo_type == algo_type_t::bancor || algo_type == algo_type_t::polycurve), err::PARAM_ERROR, "unsopport algo type")
     CHECKC(base_supply.amount>0, err::NOT_POSITIVE, "not positive quantity:" + base_supply.to_string())
     
     symbol_code base_code = base_supply.symbol.code();
@@ -238,7 +236,6 @@ void algoex::_create_market(const name& creator,
     market.out_tax = out_tax;
     market.parent_rwd_rate = parent_rwd_rate;
     market.grand_rwd_rate = grand_rwd_rate;
-    market.algo_type = algo_type;
     market.base_supply = base_supply;
     market.base_balance = extended_asset(asset(0, base_supply.symbol), arc);
     Depository_t depository;
@@ -258,27 +255,30 @@ void algoex::_create_market(const name& creator,
 void algoex::_launch_market(const name& launcher, 
                             const asset& quantity,
                             const vector<string_view>& memo_params){
-    CHECKC(memo_params.size() >= 4, err::PARAM_ERROR, "invalid params")
+    CHECKC(memo_params.size() >= 5, err::PARAM_ERROR, "invalid params")
 
+    name arc = get_first_receiver();
     auto market = market_t(symbol_code(memo_params.at(1)));
+    name algo_type = name(memo_params.at(2));
+    asset quote_supply = asset_from_string(memo_params.at(3));
 
     CHECKC(_db.get(market), err::RECORD_NOT_FOUND ,"cannot found market")
     CHECKC(market.status == market_status::initialized, err::HAS_INITIALIZE, "cannot launch market in status: " + market.status.to_string())
     CHECKC(market.launcher.owner == launcher, err::NO_AUTH, "no auth to launch market")
     
-    name arc = get_first_receiver();
-
-    asset quote_supply = asset_from_string(memo_params.at(2));
     CHECKC(quote_supply.amount>0, err::NOT_POSITIVE, "not positive quantity:" + quote_supply.to_string())
     CHECKC(_gstate.quote_symbols.count(extended_symbol(quote_supply.symbol, arc)), err::SYMBOL_MISMATCH, "unvalid quote asset: " + quote_supply.to_string())
 
+    CHECKC((algo_type == algo_type_t::bancor || algo_type == algo_type_t::polycurve), err::PARAM_ERROR, "unsopport algo type")
+    
+    market.algo_type = algo_type;
     market.quote_balance = extended_asset(asset(0, quote_supply.symbol), arc);
     market.quote_supply = quote_supply;
 
-    switch (market.algo_type.value)
+    switch (algo_type.value)
     {
     case algo_type_t::polycurve.value: {
-        asset lauch_price = asset_from_string(memo_params.at(3));
+        asset lauch_price = asset_from_string(memo_params.at(4));
         _launch_polycurve_market(market, launcher, quantity, lauch_price);
         }
         break;
