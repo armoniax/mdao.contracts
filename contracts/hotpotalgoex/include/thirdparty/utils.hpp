@@ -34,6 +34,7 @@ enum class err: uint8_t {
    NONE                 = 0,
    RECORD_NOT_FOUND     = 1,
    RECORD_EXISTING      = 2,
+   ASSET_MISMATCH       = 3,
    SYMBOL_MISMATCH      = 4,
    PARAM_ERROR          = 5,
    PAUSED               = 6,
@@ -46,9 +47,35 @@ enum class err: uint8_t {
    ACTION_REDUNDANT     = 13,
    ACCOUNT_INVALID      = 14,
    UN_INITIALIZE        = 16,
-   HAS_INITIALIZE       = 17
+   HAS_INITIALIZE       = 17,
+   MAINTAINING          = 18
 };
 
+
+inline constexpr int64_t power(int64_t base, int64_t exp) {
+    int64_t ret = 1;
+    while( exp > 0  ) {
+        ret *= base; --exp;
+    }
+    return ret;
+}
+inline constexpr int64_t power10(int64_t exp) {
+    return power(10, exp);
+}
+
+inline constexpr int64_t calc_precision(int64_t digit) {
+    return power10(digit);
+}
+
+inline int64_t get_precision(const symbol &s) {
+    int64_t digit = s.precision();
+    CHECK(digit >= 0 && digit <= 18, "precision digit " + std::to_string(digit) + " should be in range[0,18]");
+    return calc_precision(digit);
+}
+
+inline int64_t get_precision(const asset &a) {
+    return get_precision(a.symbol);
+}
 
 template<typename T>
 int128_t multiply(int128_t a, int128_t b) {
@@ -107,21 +134,7 @@ uint16_t to_uint16(string_view s, const char* err_title) {
     return ret;
 }
 
-inline constexpr int64_t power(int64_t base, int64_t exp) {
-    int64_t ret = 1;
-    while( exp > 0  ) {
-        ret *= base; --exp;
-    }
-    return ret;
-}
 
-inline constexpr int64_t power10(int64_t exp) {
-    return power(10, exp);
-}
-
-inline constexpr int64_t calc_precision(int64_t digit) {
-    return power10(digit);
-}
 
 string_view trim(string_view sv) {
     sv.remove_prefix(std::min(sv.find_first_not_of(" "), sv.size())); // left trim

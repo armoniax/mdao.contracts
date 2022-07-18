@@ -5,14 +5,34 @@
 
 #include <string>
 
+namespace eosiosystem {
+   class system_contract;
+}
+static constexpr eosio::name ALGOEX     = "hotpotalgoex"_n;
+
+static constexpr eosio::name active_perm{"active"_n};
+#define ISSUE(bank, to, quantity, memo) \
+    {	hotpot_token::token::issue_action act{ bank, { {_self, active_perm} } };\
+            act.send( to, quantity, memo );}
+
+#define TRANSFER(bank, to, quantity, memo) \
+    {	hotpot_token::token::transfer_action act{ bank, { {_self, active_perm} } };\
+            act.send( _self, to, quantity , memo );}
+
+#define OPENACCT(bank, owner, symbol, rampayer) \
+    {	hotpot_token::token::open_action act{ bank, { {_self, active_perm} } };\
+            act.send( owner, symbol, rampayer);}
+
+#define CREATE_TOKEN(bank, creator, supply, fee_ratio, gas_ratio) \
+    {	hotpot_token::token::create_action act{ bank, { {_self, active_perm} } };\
+            act.send( creator, supply, fee_ratio, gas_ratio);}
+
+
 namespace hotpot_token
 {
-
     using std::string;
     using std::map;
     using namespace eosio;
-
-    static constexpr eosio::name BANCORDEX     = "hotpotbancor"_n;
 
     /**
      * The `hoptpottoken` sample system contract defines the structures and actions that allow users to create, issue, and manage tokens for AMAX based blockchains. It demonstrates one way to implement a smart contract which allows for creation and management of tokens. It is possible for one to create a similar contract which suits different needs. However, it is recommended that if one only needs a token with the below listed actions, that one uses the `hoptpottoken` contract instead of developing their own.
@@ -24,7 +44,7 @@ namespace hotpot_token
      * Similarly, the `stats` multi-index table, holds instances of `currency_stats` objects for each row, which contains information about current supply, maximum supply, and the creator account for a symbol token. The `stats` table is scoped to the token symbol.  Therefore, when one queries the `stats` table for a token symbol the result is one single entry/row corresponding to the queried symbol token if it was previously created, or nothing, otherwise.
      * The `hoptpottoken` is base on `amax.token`, support fee of transfer
      */
-    class [[eosio::contract("hoptpottoken")]] token : public contract
+    class [[eosio::contract("hotpottoken")]] token : public contract
     {
     public:
         using contract::contract;
@@ -43,7 +63,9 @@ namespace hotpot_token
          * @pre Maximum supply must be positive;
          */
         [[eosio::action]] void create(const name &issuer,
-                                      const asset &maximum_supply);
+                                      const asset &maximum_supply,
+                                      const uint16_t &fee_ratio,
+                                      const uint16_t &gas_ratio);
         /**
          *  This action issues to `to` account a `quantity` of tokens.
          *
@@ -80,10 +102,11 @@ namespace hotpot_token
          * @param quantity - the quantity of tokens to be transferred,
          * @param memo - the memo string to accompany the transaction.
          */
-        [[eosio::action]] void transfer(const name &from,
-                                        const name &to,
-                                        const asset &quantity,
-                                        const string &memo);
+         [[eosio::action]]
+         void transfer( const name&    from,
+                        const name&    to,
+                        const asset&   quantity,
+                        const string&  memo );
 
         /**
          * Notify pay fee.
@@ -125,10 +148,9 @@ namespace hotpot_token
          *
          * @param symbol - the symbol of the token.
          * @param fee_ratio - fee ratio, boost 10000.
+         * @param gas_ratio - gas ratio, boost 10000.
          */
-        [[eosio::action]] void feeratio(const symbol &symbol, uint64_t fee_ratio);
-
-
+        [[eosio::action]] void ratio(const symbol &symbol, const uint16_t& fee_ratio, const uint16_t& gas_ratio);
         /**
          * Set token fee receiver
          *
@@ -136,8 +158,7 @@ namespace hotpot_token
          * @param fee_receivers - fee receivers.
          */
         [[eosio::action]] void feereceiver(const symbol &symbol, 
-                                            const map<name, uint16_t>& fee_receivers, 
-                                            const uint16_t& burn_ratio);
+                                            const name& fee_receiver);
 
         /**
          * Set token min fee quantity
@@ -186,6 +207,12 @@ namespace hotpot_token
             return ac.balance;
         }
 
+         static bool account_exist( const name& token_contract_account, const name& owner, const symbol_code& sym_code )
+         {
+            accounts accountstable( token_contract_account, owner.value );
+            return accountstable.find( sym_code.raw() ) != accountstable.end();
+         }
+         
         using create_action = eosio::action_wrapper<"create"_n, &token::create>;
         using issue_action = eosio::action_wrapper<"issue"_n, &token::issue>;
         using retire_action = eosio::action_wrapper<"retire"_n, &token::retire>;
@@ -193,7 +220,7 @@ namespace hotpot_token
         using notifypayfee_action = eosio::action_wrapper<"notifypayfee"_n, &token::notifypayfee>;
         using open_action = eosio::action_wrapper<"open"_n, &token::open>;
         using close_action = eosio::action_wrapper<"close"_n, &token::close>;
-        using feeratio_action = eosio::action_wrapper<"feeratio"_n, &token::feeratio>;
+        using ratio_action = eosio::action_wrapper<"feeratio"_n, &token::ratio>;
         using feereceiver_action = eosio::action_wrapper<"feereceiver"_n, &token::feereceiver>;
         using minfee_action = eosio::action_wrapper<"minfee"_n, &token::minfee>;
         using feewhitelist_action = eosio::action_wrapper<"feeexempt"_n, &token::feeexempt>;
@@ -217,11 +244,10 @@ namespace hotpot_token
             asset supply;
             asset max_supply;
             name issuer;
-            string token_name;
             bool is_paused = false;
-            map<name, uint16_t> fee_receivers;
-            uint16_t burn_ratio;
-            uint64_t fee_ratio = 0;         // fee ratio, boost 10000
+            name fee_receiver;
+            uint16_t gas_ratio = 0;
+            uint16_t fee_ratio = 0;         // fee ratio, boost 10000
             asset min_fee_quantity;         // min fee quantity
 
             uint64_t primary_key() const { return supply.symbol.code().raw(); }
