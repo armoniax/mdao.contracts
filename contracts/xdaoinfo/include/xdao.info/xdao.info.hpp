@@ -6,12 +6,10 @@
 #include <eosio/time.hpp>
 #include "xdao.info.db.hpp"
 #include "wasm_db.hpp"
-
 using namespace eosio;
 using namespace wasm::db;
 using namespace xdao;
 using namespace std;
-
 static constexpr symbol   AM_SYMBOL = symbol(symbol_code("AMAX"), 8);
 
 static constexpr name AMAX_TOKEN{"amax.token"_n};
