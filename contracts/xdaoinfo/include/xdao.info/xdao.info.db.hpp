@@ -5,7 +5,7 @@
 #include <eosio/singleton.hpp>
 #include <eosio/privileged.hpp>
 #include <eosio/name.hpp>
-#include <xdao.conf/xdao.conf.db.hpp>
+#include <xdao.info/xdao.info.db.hpp>
 
 #include "wasm_db.hpp"
 #include <map>
