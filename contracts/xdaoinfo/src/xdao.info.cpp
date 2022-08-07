@@ -41,7 +41,7 @@ ACTION xdaoinfo::upgradedao(name from, name to, asset quantity, string memo)
     auto parts = split( memo, ":" );
     CHECKC( parts.size() == 2, err::INVALID_FORMAT, "expected format 'code : title '" );
 
-    // AMAX_TRANSFER(AMAX_TOKEN, conf.fee_taker, conf.dao_upg_fee, "upgrade fee collection");
+    AMAX_TRANSFER(AMAX_TOKEN, conf.fee_taker, conf.dao_upg_fee, "upgrade fee collection");
     details_t::idx_t details_sec(_self, _self.value);
     auto details_index = details_sec.get_index<"bytitle"_n>();
     checksum256 sec_index = HASH256(string(parts[1]));
