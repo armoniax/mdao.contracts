@@ -60,9 +60,9 @@ public:
 
     [[eosio::action]] void delfee( const symbol& coin );
 
-    [[eosio::action]] void setconf(const name& admin, const uint16_t& hours);
+    [[eosio::action]] void setconf( const name& admin, const uint16_t& hours );
 
-    [[eosio::action]] void erase(const uint64_t& id);
+    [[eosio::action]] void delredpacks( uint64_t& id );
 
     asset _calc_fee(const asset& fee, const uint64_t count);
 

@@ -5,17 +5,16 @@
 #include <eosio/singleton.hpp>
 #include <eosio/privileged.hpp>
 #include <eosio/name.hpp>
-#include <xdao.info/xdao.info.db.hpp>
-
-#include "wasm_db.hpp"
 #include <map>
 
 using namespace eosio;
 
+#define HASH256(str) sha256(const_cast<char*>(str.c_str()), str.size());
+static constexpr uint64_t   seconds_per_day       = 24 * 3600;
 
 namespace xdao {
 
-#define TG_TBL [[eosio::table, eosio::contract("xdao.info")]]
+#define INFO_TG_TBL [[eosio::table, eosio::contract("xdao.info")]]
 
 struct evm_symbol{
     string address;
@@ -29,7 +28,7 @@ bool operator < (const evm_symbol& symbol1, const evm_symbol& symbol2) {
 }
 
 
-struct TG_TBL evm_info_t {
+struct INFO_TG_TBL evm_info_t {
     name            code;
     string          evm_wallet_address;
     string          evm_governance;
@@ -48,7 +47,7 @@ struct TG_TBL evm_info_t {
 
 };
 
-struct TG_TBL amc_info_t {
+struct INFO_TG_TBL amc_info_t {
     name                 code;
     optional<uint64_t>   wallet_id;
     optional<uint64_t>   governance_id;
@@ -66,7 +65,7 @@ struct TG_TBL amc_info_t {
 
 };
 
-struct TG_TBL details_t {
+struct INFO_TG_TBL details_t {
     name                code;
     name                type;
     name                status;
@@ -78,6 +77,8 @@ struct TG_TBL details_t {
     map<name, string>   links;
     optional<uint64_t>   strategy_id;
     set<app_info>       dapps;
+    string              group_id;
+    time_point_sec      created_at;
 
     details_t() {}
     details_t(const name& c): code(c) {}
@@ -93,7 +94,7 @@ struct TG_TBL details_t {
         indexed_by<"bytitle"_n, const_mem_fun<details_t, checksum256, &details_t::by_title>>
     > idx_t;
 
-    EOSLIB_SERIALIZE( details_t, (code)(type)(status)(creator)(title)(logo)(desc)(tags)(links)(strategy_id)(dapps) )
+    EOSLIB_SERIALIZE( details_t, (code)(type)(status)(creator)(title)(logo)(desc)(tags)(links)(strategy_id)(dapps)(group_id)(created_at) )
 
 };
 

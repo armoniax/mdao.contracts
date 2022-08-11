@@ -19,6 +19,7 @@ static uint128_t get_union_id(const name& account, const uint64_t& proposal_id){
 }
 
 struct option{
+    uint32_t    id = 0;
     string      title;
     uint32_t    recv_votes = 0;
     action      excute_action;
@@ -34,7 +35,6 @@ struct TG_TBL propose_t {
     uint64_t    vote_stgid;
     vector<option> opts;
     uint32_t    req_votes;
-    uint32_t    max_opt_id;
 
     uint64_t    primary_key()const { return id; }
     uint64_t    scope() const { return 0; }
@@ -42,7 +42,7 @@ struct TG_TBL propose_t {
     propose_t() {}
     propose_t(const uint64_t& i): id(i) {}
 
-    EOSLIB_SERIALIZE( propose_t, (id)(vote_type)(status)(creator)(name)(desc)(vote_stgid)(opts)(req_votes)(max_opt_id) )
+    EOSLIB_SERIALIZE( propose_t, (id)(vote_type)(status)(creator)(name)(desc)(vote_stgid)(opts)(req_votes) )
 
     typedef eosio::multi_index <"proposes"_n, propose_t> idx_t;
 };

@@ -110,6 +110,6 @@ public:
     ACTION excute(const name& owner, const uint64_t& proposeid);
 
     [[eosio::action]]
-    ACTION votefor(const name& voter, const uint64_t& proposeid);
+    ACTION votefor(const name& voter, const uint64_t& proposeid, const uint32_t optid);
 
 };

@@ -4,19 +4,17 @@
 #include <eosio/eosio.hpp>
 #include <eosio/singleton.hpp>
 #include <eosio/time.hpp>
+#include <xdao.conf/xdao.conf.hpp>
+#include <xdaostg/xdaostgdb.hpp>
+#include <xdao.gov/xdao.gov.hpp>
 #include "xdao.info.db.hpp"
-#include "wasm_db.hpp"
+
 using namespace eosio;
 using namespace wasm::db;
 using namespace xdao;
 using namespace std;
-static constexpr symbol   AM_SYMBOL = symbol(symbol_code("AMAX"), 8);
-
-static constexpr name AMAX_TOKEN{"amax.token"_n};
-static constexpr name XDAO_CONF{"xdao.conf"_n};
-static constexpr name XDAO_STG{"xdao.stg"_n};
-static constexpr name XDAO_GOV{"xdao.gov"_n};
-static constexpr name AMAX_MULSIGN{"amax.mulsign"_n};
+static constexpr symbol AMAX_SYMBOL = symbol(symbol_code("AMAX"), 8);
+static constexpr uint64_t INFO_PERMISSION_AGING = 24 * 3600;
 
 namespace info_type {
     static constexpr name GROUP        = "group"_n;
@@ -30,22 +28,7 @@ namespace info_status {
 
 };
 
-namespace conf_status {
-    static constexpr name INITIAL    = "initial"_n;
-    static constexpr name RUNNING    = "running"_n;
-    static constexpr name MAINTAIN   = "maintain"_n;
-
-};
-
-namespace manager {
-    static constexpr name INFO       = "info"_n;
-    static constexpr name STRATEGY   = "strategy"_n;
-    static constexpr name WALLET     = "wallet"_n;
-    static constexpr name TOKEN      = "token"_n;
-
-};
-
-enum class err: uint8_t {
+enum class info_err: uint8_t {
     ACCOUNT_NOT_EXITS       = 0,
     RECORD_NOT_FOUND        = 1,
     STRATEGY_NOT_FOUND      = 2,
@@ -66,8 +49,8 @@ enum class err: uint8_t {
 
 class [[eosio::contract("xdao.info")]] xdaoinfo : public contract {
 
-using conf_t = xdao::global_t;
-using conf_table_t = xdao::global_singleton;
+using conf_t = xdao::conf_global_t;
+using conf_table_t = xdao::conf_global_singleton;
 
 private:
     dbc                 _db;
@@ -80,14 +63,18 @@ public:
     using contract::contract;
     xdaoinfo(name receiver, name code, datastream<const char*> ds):_db(_self),  contract(receiver, code, ds){}
 
+    // [[eosio::action]]
+    // void createdao(const name& owner,const name& code, const string& title,
+    //                        const string& logo, const string& desc,
+    //                        const set<string>& tags, const map<name, string>& links);
 
-    [[eosio::on_notify("*::transfer")]] 
+    [[eosio::action]]
     void upgradedao(name from, name to, asset quantity, string memo);
 
     [[eosio::action]]
-    void updatedao(const name& owner, const name& code,
-                           const string& logo, const string& desc,
-                           const set<string>& tags, const map<name, string>& links);
+    void updatedao(const name& owner, const name& code, const string& logo, 
+                            const string& desc,const map<name, string>& links,
+                            const extended_symbol& amctoken, const string& groupid);
 
     [[eosio::action]]
     void setstrategy(const name& owner, const name& code, const uint64_t& stgid);

@@ -47,8 +47,10 @@ ACTION xdaopropose::addoption( const name& owner, const uint64_t& proposeid, con
     propose_t propose(proposeid);
     CHECKC( _db.get(propose) ,propose_err::RECORD_NOT_FOUND, "record not found" );
     CHECKC( owner == propose.creator, propose_err::PERMISSION_DENIED, "only the creator can operate" );
- 
+   
+    auto prev_opt = propose.opts.back();
     option opt;
+    opt.id           =   prev_opt.id++;
     opt.title        =   title;
     propose.opts.push_back(opt);
     _db.set(propose);
@@ -89,7 +91,7 @@ ACTION xdaopropose::excute(const name& owner, const uint64_t& proposeid)
     _db.set(propose);
 }
 
-ACTION xdaopropose::votefor(const name& voter, const uint64_t& proposeid)
+ACTION xdaopropose::votefor(const name& voter, const uint64_t& proposeid, const uint32_t optid)
 {
     require_auth( voter );
 
@@ -116,7 +118,10 @@ ACTION xdaopropose::votefor(const name& voter, const uint64_t& proposeid)
     });
     
     for( vector<option>::iterator opt_iter = propose.opts.begin(); opt_iter != propose.opts.end(); opt_iter++ ){
-        (*opt_iter).recv_votes  +=  stg_weight;
+        if( optid == (*opt_iter).id ){
+            (*opt_iter).recv_votes  +=  stg_weight;
+            break;
+        }
     }
 
     _db.set(propose);

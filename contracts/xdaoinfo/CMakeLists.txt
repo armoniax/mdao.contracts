@@ -6,6 +6,7 @@ target_include_directories(xdao.info
    ${CMAKE_CURRENT_SOURCE_DIR}/include/xdao.info
    ${CMAKE_CURRENT_SOURCE_DIR}/../xdaostg/include
    ${CMAKE_CURRENT_SOURCE_DIR}/../xdaoconf/include
+   ${CMAKE_CURRENT_SOURCE_DIR}/../xdaogov/include
 
 )
 

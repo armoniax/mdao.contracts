@@ -12,8 +12,8 @@ using namespace xdao;
 
 class [[eosio::contract("xdao.conf")]] xdaoconf : public contract {
 private:
-    global_t            _gstate;
-    global_singleton    _global;
+    conf_global_t            _gstate;
+    conf_global_singleton    _global;
 
 public:
     using contract::contract;
@@ -24,7 +24,7 @@ public:
             _gstate = _global.get();
 
         } else {
-            _gstate = global_t{};
+            _gstate = conf_global_t{};
         }
     }
 

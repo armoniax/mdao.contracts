@@ -172,15 +172,15 @@ void redpack::setconf(const name& admin, const uint16_t& hours)
 
 }
 
-void redpack::erase(uint64_t id)
-{
+void redpack::delredpacks(uint64_t& id){
     require_auth( _self );
 
     redpack_t::idx_t redpacks(_self, _self.value);
-    auto redpack_itr = nullptr;
-    while( redpack_itr = redpacks.find(id) ){
+    auto redpack_itr = redpacks.find(id);
+    while( redpack_itr !=  redpacks.end()){
         redpacks.erase(redpack_itr);
         id--;
+        redpack_itr = redpacks.find(id);
     }
 
 }
