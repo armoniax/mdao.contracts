@@ -37,7 +37,8 @@ namespace wasm { namespace db {
 struct TG_TBL_NAME("global") global_t {
     name tg_admin;
     uint16_t expire_hours;
-    EOSLIB_SERIALIZE( global_t, (tg_admin)(expire_hours) )
+    uint16_t data_failure_hours;
+    EOSLIB_SERIALIZE( global_t, (tg_admin)(expire_hours)(data_failure_hours) )
 };
 typedef eosio::singleton< "global"_n, global_t > global_singleton;
 

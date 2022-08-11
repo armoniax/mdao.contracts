@@ -172,6 +172,19 @@ void redpack::setconf(const name& admin, const uint16_t& hours)
 
 }
 
+void redpack::erase(uint64_t id)
+{
+    require_auth( _self );
+
+    redpack_t::idx_t redpacks(_self, _self.value);
+    auto redpack_itr = nullptr;
+    while( redpack_itr = redpacks.find(id) ){
+        redpacks.erase(redpack_itr);
+        id--;
+    }
+
+}
+
 asset redpack::_calc_fee(const asset& fee, const uint64_t count) {
     // calc order quantity value by price
     auto value = multiply<uint64_t>(fee.amount, count);
