@@ -37,11 +37,17 @@ ACTION xdaoinfo::upgradedao(name from, name to, asset quantity, string memo)
     CHECKC( quantity == conf.dao_upg_fee, info_err::INCORRECT_FEE, "incorrect handling fee" );
     auto parts = split( memo, "|" );
     CHECKC( parts.size() == 4, info_err::INVALID_FORMAT, "expected format 'code | title | desc | logo" );
+    CHECKC( string(parts[0]).size() <= 12, info_err::INVALID_FORMAT, "code has more than 12 bytes");
+    CHECKC( string(parts[1]).size() <= 32, info_err::INVALID_FORMAT, "title has more than 32 bytes");
+    CHECKC( string(parts[2]).size() <= 128, info_err::INVALID_FORMAT, "desc has more than 128 bytes");
+    CHECKC( string(parts[3]).size() <= 64, info_err::INVALID_FORMAT, "logo has more than 64 bytes");
+
     AMAX_TRANSFER(AMAX_TOKEN, conf.fee_taker, conf.dao_upg_fee, string("upgrade fee collection"));
+    
 
     details_t::idx_t details_sec(_self, _self.value);
     auto details_index = details_sec.get_index<"bytitle"_n>();
-    checksum256 sec_index = HASH256(string(parts[1]));
+    checksum256 sec_index = HASH256(string(parts[1]));             
     CHECKC( details_index.find(sec_index) == details_index.end(), info_err::TITLE_REPEAT, "title already existing!" );
 
     details_t detail((name(parts[0])));
@@ -51,10 +57,9 @@ ACTION xdaoinfo::upgradedao(name from, name to, asset quantity, string memo)
     detail.status    =   info_status::RUNNING;
     detail.type      =   info_type::DAO;
     detail.title     =   string(parts[1]);
-    detail.desc      =   string(parts[3]);
-    detail.logo      =   string(parts[4]);
+    detail.desc      =   string(parts[2]);
+    detail.logo      =   string(parts[3]);
     detail.created_at=   time_point_sec(current_time_point());
-
 
     _db.set(detail, _self);
 }
@@ -90,7 +95,6 @@ ACTION xdaoinfo::updatedao(const name& owner, const name& code, const string& lo
     if(!links.empty())                  detail.links  = links;
     // if(!title.empty())                  detail.title  = title;
     // if(!groupid.empty())                detail.group_id  = groupid;
-
     _db.set(detail, _self);
     
     if( !symcode.empty() ){
