@@ -29,24 +29,21 @@ namespace info_status {
 };
 
 enum class info_err: uint8_t {
-    ACCOUNT_NOT_EXITS       = 0,
-    RECORD_NOT_FOUND        = 1,
-    STRATEGY_NOT_FOUND      = 2,
-    NOT_REPEAT_RECEIVE      = 4,
-    RECORD_EXITS            = 5,
-    GOVERNANCE_NOT_FOUND    = 6,
-    SIZE_TOO_MUCH           = 7,
-    WALLET_NOT_FOUND        = 8,
-    CODE_REPEAT             = 9,
-    TITLE_REPEAT            = 10,
-    PERMISSION_DENIED       = 11,
-    CANNOT_ZERO             = 12,
-    INVALID_FORMAT          = 13,
-    INCORRECT_FEE           = 14,
-    NOT_AVAILABLE           = 15,
-    SYSTEM_ERROR            = 16,
-    PARAM_ERROR             = 17,
-    SYMBOL_ERROR            = 18
+    INVALID_FORMAT      = 1,
+    INCORRECT_FEE       = 2,
+    TITLE_REPEAT        = 3,
+    CODE_REPEAT         = 4,
+    RECORD_NOT_FOUND    = 5,
+    PERMISSION_DENIED   = 6,
+    NOT_AVAILABLE       = 7,
+    PARAM_ERROR         = 8,
+    SYMBOL_ERROR        = 9,
+    RECORD_EXITS        = 10,
+    SIZE_TOO_MUCH       = 11,
+    STRATEGY_NOT_FOUND  = 12,
+    CANNOT_ZERO         = 13,
+    GOVERNANCE_NOT_FOUND= 14,
+    SYSTEM_ERROR        = 15
 };
 
 class [[eosio::contract("xdaoinfotest")]] xdaoinfo : public contract {

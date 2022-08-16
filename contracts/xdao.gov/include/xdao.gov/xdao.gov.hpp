@@ -46,26 +46,17 @@ namespace gov_status {
 // };
 
 enum class gov_err: uint8_t {
-    ACCOUNT_NOT_EXITS       = 0,
-    RECORD_NOT_FOUND        = 1,
-    STRATEGY_NOT_FOUND      = 2,
-    NOT_REPEAT_RECEIVE      = 4,
-    RECORD_EXITS            = 5,
-    GOVERNANCE_NOT_FOUND    = 6,
-    SIZE_TOO_MUCH           = 7,
-    WALLET_NOT_FOUND        = 8,
-    CODE_REPEAT             = 9,
-    TITLE_REPEAT            = 10,
-    PERMISSION_DENIED       = 11,
-    CANNOT_ZERO             = 12,
-    INVALID_FORMAT          = 13,
-    INCORRECT_FEE           = 14,
-    NOT_AVAILABLE           = 15,
-    SYSTEM_ERROR            = 16,
-    PROPOSER_NOT_FOUND      = 17,
-    VOTE_STRATEGY_NOT_FOUND = 18,
-    MIN_VOTES_LESS_THAN_ZERO= 19,
-    TOO_FEW_VOTES           = 20
+    ACCOUNT_NOT_EXITS       =1,
+    MIN_VOTES_LESS_THAN_ZERO=2,
+    CODE_REPEAT             =3,
+    NOT_AVAILABLE           =4,
+    STRATEGY_NOT_FOUND      =5,
+    RECORD_NOT_FOUND        =6,
+    PERMISSION_DENIED       =7,
+    TOO_FEW_VOTES           =8,
+    PROPOSER_NOT_FOUND      =9,
+    VOTE_STRATEGY_NOT_FOUND =10,
+    SYSTEM_ERROR            =11
 };
 
 class [[eosio::contract("xdao.gov")]] xdaogov : public contract {

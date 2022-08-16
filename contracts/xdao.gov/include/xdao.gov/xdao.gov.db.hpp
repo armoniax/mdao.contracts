@@ -6,7 +6,6 @@
 #include <eosio/privileged.hpp>
 #include <eosio/name.hpp>
 #include <eosio/time.hpp>
-#include <xdao.conf/xdao.conf.hpp>
 #include <map>
 
 using namespace eosio;

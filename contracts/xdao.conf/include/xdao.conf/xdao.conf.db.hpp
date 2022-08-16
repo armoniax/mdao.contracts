@@ -20,6 +20,7 @@ using namespace eosio;
 static constexpr symbol AMAX_SYMBOL            = SYMBOL("AMAX", 8);
 
 static constexpr name AMAX_TOKEN{"amax.token"_n};
+static constexpr name XDAO_INFO{"xdaoinfotest"_n};
 static constexpr name XDAO_CONF{"xdaoconftest"_n};
 static constexpr name XDAO_STG{"xdao.stg"_n};
 static constexpr name XDAO_GOV{"xdao.gov"_n};

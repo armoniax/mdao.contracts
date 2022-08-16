@@ -54,28 +54,45 @@ namespace vote_type {
 // };
 
 enum class propose_err: uint8_t {
-    ACCOUNT_NOT_EXITS       = 0,
     RECORD_NOT_FOUND        = 1,
-    STRATEGY_NOT_FOUND      = 2,
-    NOT_REPEAT_RECEIVE      = 4,
-    RECORD_EXITS            = 5,
-    GOVERNANCE_NOT_FOUND    = 6,
-    SIZE_TOO_MUCH           = 7,
-    WALLET_NOT_FOUND        = 8,
-    CODE_REPEAT             = 9,
-    TITLE_REPEAT            = 10,
-    PERMISSION_DENIED       = 11,
-    CANNOT_ZERO             = 12,
-    INVALID_FORMAT          = 13,
-    INCORRECT_FEE           = 14,
-    NOT_AVAILABLE           = 15,
-    SYSTEM_ERROR            = 16,
-    INSUFFICIENT_VOTES      = 17,
-    VOTED                   = 18,
-    STATUS_ERROR            = 19,
-    OPTS_EMPTY              = 20
+    PERMISSION_DENIED       = 2,
+    PARAM_ERROR             = 3,
+    SYMBOL_ERROR            = 4,
+    NOT_AVAILABLE           = 5,
+    STATUS_ERROR            = 6,
+    OPTS_EMPTY              = 7,
+    INSUFFICIENT_VOTES      = 8,
+    VOTED                   = 9,
+    SYSTEM_ERROR            = 10,
+    ACCOUNT_NOT_EXITS       = 11,
+    STRATEGY_NOT_FOUND      = 12
 
 };
+
+namespace proposal_action_type {
+    static constexpr eosio::name updatedao          = "updatedao"_n;
+    static constexpr eosio::name setpropstg         = "setpropstg"_n;
+};
+
+struct updatedao_data {
+    name owner; 
+    name code; 
+    string logo; 
+    string desc; 
+    map<name, string> links;
+    string symcode; 
+    string symcontract;  
+    string groupid;
+};
+
+struct setpropstg_data {
+    name owner;  
+    name daocode;                    
+    set<name> proposers; 
+    set<uint64_t> proposestg ;
+};
+
+typedef std::variant<updatedao_data, setpropstg_data> action_data_variant;
 
 class [[eosio::contract("xdao.propose")]] xdaopropose : public contract {
 
@@ -112,4 +129,11 @@ public:
     [[eosio::action]]
     ACTION votefor(const name& voter, const uint64_t& proposeid, const uint32_t optid);
 
+    [[eosio::action]]
+    ACTION setaction(const name& owner, const uint64_t& proposeid, 
+                                const uint32_t& optid,  const name& action_name, 
+                                const name& action_account, const std::vector<char>& packed_action_data);
+
+private:
+    void _check_proposal_params(const action_data_variant& data_var,  const name& action_name, const name& action_account);
 };

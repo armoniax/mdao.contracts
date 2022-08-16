@@ -3,9 +3,10 @@ add_contract(xdao.propose xdao.propose ${CMAKE_CURRENT_SOURCE_DIR}/src/xdao.prop
 target_include_directories(xdao.propose
    PUBLIC
    ${CMAKE_CURRENT_SOURCE_DIR}/include
-   ${CMAKE_CURRENT_SOURCE_DIR}/../xdaoconf/include   
+   ${CMAKE_CURRENT_SOURCE_DIR}/../xdao.conf/include   
    ${CMAKE_CURRENT_SOURCE_DIR}/../xdaostg/include
-   ${CMAKE_CURRENT_SOURCE_DIR}/../xdaoinfo/include
+   ${CMAKE_CURRENT_SOURCE_DIR}/../xdao.info/include
+   ${CMAKE_CURRENT_SOURCE_DIR}/../xdao.gov/include
 
 
 )
