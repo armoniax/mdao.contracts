@@ -82,7 +82,7 @@ ACTION xdaoinfo::updatedao(const name& owner, const name& code, const string& lo
     CHECKC( conf.status != conf_status::MAINTAIN, info_err::NOT_AVAILABLE, "under maintenance" );
     CHECKC( detail.status == info_status::RUNNING, info_err::NOT_AVAILABLE, "under maintenance" );
 
-    CHECKC( !groupid.empty(), info_err::PARAM_ERROR, "desc can not be empty" );
+    CHECKC( !groupid.empty(), info_err::PARAM_ERROR, "groupid can not be empty" );
     CHECKC( !(symcode.empty() ^ symcontract.empty()), info_err::PARAM_ERROR, "symcode and symcontract must be null or not null" );
 
     bool is_expired = (detail.created_at + INFO_PERMISSION_AGING) < time_point_sec(current_time_point());
