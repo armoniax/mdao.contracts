@@ -43,7 +43,6 @@ ACTION xdaoinfo::upgradedao(name from, name to, asset quantity, string memo)
     CHECKC( string(parts[3]).size() <= 64, info_err::INVALID_FORMAT, "logo has more than 64 bytes");
 
     AMAX_TRANSFER(AMAX_TOKEN, conf.fee_taker, conf.dao_upg_fee, string("upgrade fee collection"));
-    
 
     details_t::idx_t details_sec(_self, _self.value);
     auto details_index = details_sec.get_index<"bytitle"_n>();
