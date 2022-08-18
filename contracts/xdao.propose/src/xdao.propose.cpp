@@ -16,7 +16,7 @@ ACTION xdaopropose::create(const name& creator,const string& name, const string&
         row.name        =   name;
         row.status      =   propose_status::CREATED;
         row.desc	    =   desc;
-        row.vote_stgid	=   stgid;        
+        row.vote_stgid	=   stgid;
         row.req_votes	=   votes;
         row.vote_type	=   vote_type::PLEDGE;
 
@@ -49,7 +49,7 @@ ACTION xdaopropose::addoption( const name& owner, const uint64_t& proposeid, con
     propose_t propose(proposeid);
     CHECKC( _db.get(propose) ,propose_err::RECORD_NOT_FOUND, "record not found" );
     CHECKC( owner == propose.creator, propose_err::PERMISSION_DENIED, "only the creator can operate" );
-   
+
     auto prev_opt = propose.opts.back();
     option opt;
     opt.id           =   prev_opt.id++;
@@ -67,7 +67,7 @@ ACTION xdaopropose::start(const name& owner, const uint64_t& proposeid)
     CHECKC( conf.status != conf_status::MAINTAIN, propose_err::NOT_AVAILABLE, "under maintenance" );
 
     propose_t propose(proposeid);
-    CHECKC( _db.get(propose) ,propose_err::RECORD_NOT_FOUND, "record not found" );    
+    CHECKC( _db.get(propose) ,propose_err::RECORD_NOT_FOUND, "record not found" );
     CHECKC( propose.status == propose_status::CREATED, propose_err::STATUS_ERROR, "propose status must be created" );
     CHECKC( owner == propose.creator, propose_err::PERMISSION_DENIED, "only the creator can operate" );
     CHECKC( !propose.opts.empty(), propose_err::OPTS_EMPTY, "please add option" );
@@ -118,7 +118,7 @@ ACTION xdaopropose::votefor(const name& voter, const uint64_t& proposeid, const 
         row.proposal_id =   proposeid;
         row.vote_time   =   stg_weight;
     });
-    
+
     for( vector<option>::iterator opt_iter = propose.opts.begin(); opt_iter != propose.opts.end(); opt_iter++ ){
         if( optid == (*opt_iter).id ){
             (*opt_iter).recv_votes  +=  stg_weight;
@@ -129,20 +129,20 @@ ACTION xdaopropose::votefor(const name& voter, const uint64_t& proposeid, const 
     _db.set(propose, _self);
 }
 
-ACTION xdaopropose::setaction(const name& owner, const uint64_t& proposeid, 
-                                const uint32_t& optid,  const name& action_name, 
+ACTION xdaopropose::setaction(const name& owner, const uint64_t& proposeid,
+                                const uint32_t& optid,  const name& action_name,
                                 const name& action_account, const std::vector<char>& packed_action_data)
 {
+    require_auth(owner);
+
     auto conf = _conf();
     CHECKC( conf.status != conf_status::MAINTAIN, propose_err::NOT_AVAILABLE, "under maintenance" );
 
     propose_t propose(proposeid);
     CHECKC( _db.get(propose) ,propose_err::RECORD_NOT_FOUND, "record not found" );
     CHECKC( owner == propose.creator, propose_err::PERMISSION_DENIED, "only the creator can operate" );
-    // CHECKC( propose.status == propose_status::RUNNING, propose_err::STATUS_ERROR, "propose status must be running" );
-    // propose.status  =  propose_status::EXCUTING;
-    permission_level pem({_self, "active"_n});
 
+    permission_level pem({_self, "active"_n});
 
     option opt;
     for (vector<option>::iterator opt_iter = propose.opts.begin(); opt_iter != propose.opts.end(); opt_iter++){
@@ -195,7 +195,7 @@ void xdaopropose::_check_proposal_params(const action_data_variant& data_var,  c
 
             if( !data.symcode.empty() ){
                 accounts accountstable(name(data.symcontract), data.owner.value);
-                const auto ac = accountstable.find(symbol_code(data.symcode).raw()); 
+                const auto ac = accountstable.find(symbol_code(data.symcode).raw());
                 CHECKC(ac != accountstable.end(),  propose_err::SYMBOL_ERROR, "symcode or symcontract not found");
             }
 
