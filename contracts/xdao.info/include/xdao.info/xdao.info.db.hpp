@@ -28,58 +28,57 @@ bool operator < (const evm_symbol& symbol1, const evm_symbol& symbol2) {
 }
 
 
-struct INFO_TG_TBL evm_info_t {
-    name            code;
+struct evm_info {
     string          evm_wallet_address;
     string          evm_governance;
     set<evm_symbol> evmtokens;
     string          chain;
 
-    uint64_t    primary_key()const { return code.value; }
-    uint64_t    scope() const { return 0; }
+    // uint64_t    primary_key()const { return code.value; }
+    // uint64_t    scope() const { return 0; }
 
-    evm_info_t() {}
-    evm_info_t(const name& c): code(c) {}
+    // evm_info_t() {}
+    // evm_info_t(const name& c): code(c) {}
 
-    typedef eosio::multi_index<"evminfos"_n, evm_info_t> idx_t;
+    // typedef eosio::multi_index<"evminfos"_n, evm_info_t> idx_t;
 
-    EOSLIB_SERIALIZE( evm_info_t, (code)(evm_wallet_address)(evm_governance)(evmtokens)(chain) )
+    EOSLIB_SERIALIZE( evm_info, (evm_wallet_address)(evm_governance)(evmtokens)(chain) )
 
 };
 
-struct INFO_TG_TBL amc_info_t {
-    name                 code;
+struct amc_info {
     optional<uint64_t>   wallet_id;
     optional<uint64_t>   governance_id;
     set<extended_symbol> tokens;
 
-    uint64_t    primary_key()const { return code.value; }
-    uint64_t    scope() const { return 0; }
+    // uint64_t    primary_key()const { return code.value; }
+    // uint64_t    scope() const { return 0; }
 
-    amc_info_t() {}
-    amc_info_t(const name& c): code(c) {}
+    // amc_info_t() {}
+    // amc_info_t(const name& c): code(c) {}
 
-    typedef eosio::multi_index<"amcinfos"_n, amc_info_t> idx_t;
+    // typedef eosio::multi_index<"amcinfos"_n, amc_info_t> idx_t;
 
-    EOSLIB_SERIALIZE( amc_info_t, (code)(wallet_id)(governance_id)(tokens))
+    EOSLIB_SERIALIZE( amc_info, (wallet_id)(governance_id)(tokens))
 
 };
 
 struct INFO_TG_TBL details_t {
-    name                code;
-    name                type;
-    name                status;
-    name                creator;
-    string              title;
-    string              logo;
-    string              desc;
-    set<string>         tags;
-    map<name, string>   links;
-    optional<uint64_t>   strategy_id;
-    set<app_info>       dapps;
-    string              group_id;
-    time_point_sec      created_at;
-
+    name                    code;
+    name                    type;
+    name                    status;
+    name                    creator;
+    string                  title;
+    string                  logo;
+    string                  desc;
+    set<string>             tags;
+    map<name, string>       links;
+    optional<uint64_t>      strategy_id;
+    set<app_info>           dapps;
+    string                  group_id;
+    time_point_sec          created_at;
+    amc_info                amc_info;
+    evm_info                evm_info;
     details_t() {}
     details_t(const name& c): code(c) {}
 
@@ -94,7 +93,8 @@ struct INFO_TG_TBL details_t {
         indexed_by<"bytitle"_n, const_mem_fun<details_t, checksum256, &details_t::by_title>>
     > idx_t;
 // 
-    EOSLIB_SERIALIZE( details_t, (code)(type)(status)(creator)(title)(logo)(desc)(tags)(links)(strategy_id)(dapps)(group_id)(created_at) )
+    EOSLIB_SERIALIZE( details_t, (code)(type)(status)(creator)(title)(logo)
+                        (desc)(tags)(links)(strategy_id)(dapps)(group_id)(created_at)(amc_info)(evm_info) )
 
 };
 

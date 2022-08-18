@@ -59,6 +59,8 @@ ACTION xdaoinfo::upgradedao(name from, name to, asset quantity, string memo)
     detail.desc      =   string(parts[2]);
     detail.logo      =   string(parts[3]);
     detail.created_at=   time_point_sec(current_time_point());
+    detail.amc_info  =   amc_info();
+    detail.evm_info  =   evm_info();
 
     _db.set(detail, _self);
 }
@@ -67,7 +69,7 @@ ACTION xdaoinfo::updatedao(const name& owner, const name& code, const string& lo
                             const string& desc,const map<name, string>& links,
                             const string& symcode, string symcontract, const string& groupid)
 {   
-    require_auth( owner );
+    //require_auth( owner );
     auto conf = _conf();      
     
     // if(!title.empty()){
@@ -82,19 +84,18 @@ ACTION xdaoinfo::updatedao(const name& owner, const name& code, const string& lo
     CHECKC( conf.status != conf_status::MAINTAIN, info_err::NOT_AVAILABLE, "under maintenance" );
     CHECKC( detail.status == info_status::RUNNING, info_err::NOT_AVAILABLE, "under maintenance" );
 
-    CHECKC( !groupid.empty(), info_err::PARAM_ERROR, "groupid can not be empty" );
+    // CHECKC( !groupid.empty(), info_err::PARAM_ERROR, "groupid can not be empty" );
     CHECKC( !(symcode.empty() ^ symcontract.empty()), info_err::PARAM_ERROR, "symcode and symcontract must be null or not null" );
 
     bool is_expired = (detail.created_at + INFO_PERMISSION_AGING) < time_point_sec(current_time_point());
-    CHECKC( ( is_account(owner) &&! is_expired )|| ( is_account(conf.managers[manager::INFO]) && is_expired ) ,info_err::PERMISSION_DENIED, "insufficient permissions" );
+    CHECKC( ( has_auth(owner) &&! is_expired )|| ( has_auth(conf.managers[manager::INFO]) && is_expired ) ,info_err::PERMISSION_DENIED, "insufficient permissions" );
 
     if(!logo.empty())                   detail.logo   = logo;
     if(!desc.empty())                   detail.desc   = desc;
     // if(!tags.empty())                   detail.tags   = tags;
     if(!links.empty())                  detail.links  = links;
     // if(!title.empty())                  detail.title  = title;
-    // if(!groupid.empty())                detail.group_id  = groupid;
-    _db.set(detail, _self);
+    if(!groupid.empty())                detail.group_id  = groupid;
     
     if( !symcode.empty() ){
 
@@ -105,13 +106,12 @@ ACTION xdaoinfo::updatedao(const name& owner, const name& code, const string& lo
         
         extended_symbol amctoken(ac->balance.symbol, name(symcontract));
 
-        amc_info_t amcinfo(code);
-        CHECKC( !_db.get(amcinfo) ,info_err::RECORD_EXITS, "record exits");
-        CHECKC((amcinfo.tokens.size()+1) <= conf.amc_token_seats_max, info_err::SIZE_TOO_MUCH, "token size more than limit" );
-
-        amcinfo.tokens.insert(amctoken);
-        _db.set(amcinfo, _self);
+        CHECKC((detail.amc_info.tokens.size()+1) <= conf.amc_token_seats_max, info_err::SIZE_TOO_MUCH, "token size more than limit" );
+        detail.amc_info.tokens.insert(amctoken);         
+        
     }
+
+    _db.set(detail, _self);
 }
 
 ACTION xdaoinfo::setstrategy(const name& owner, const name& code, const uint64_t& stgid)
@@ -163,12 +163,9 @@ ACTION xdaoinfo::bindevmgov(const name& owner, const name& code, const string& e
     CHECKC( conf.status != conf_status::MAINTAIN, info_err::NOT_AVAILABLE, "under maintenance" );
     CHECKC( detail.status == info_status::RUNNING, info_err::NOT_AVAILABLE, "under maintenance" );
 
-    evm_info_t evminfo(code);
-    CHECKC( !_db.get(evminfo) ,info_err::RECORD_EXITS, "record exits");
+    detail.evm_info.evm_governance = evmgov;
+    _db.set(detail, _self);
 
-    evminfo.evm_governance = evmgov;
-
-    _db.set(evminfo, _self);
 }
 
 ACTION xdaoinfo::bindamcgov(const name& owner, const name& code, const uint64_t& govid)
@@ -182,15 +179,17 @@ ACTION xdaoinfo::bindamcgov(const name& owner, const name& code, const uint64_t&
     CHECKC( conf.status != conf_status::MAINTAIN, info_err::NOT_AVAILABLE, "under maintenance" );
     CHECKC( detail.status == info_status::RUNNING, info_err::NOT_AVAILABLE, "under maintenance" );
 
-    amc_info_t amcinfo(code);
-    CHECKC( !_db.get(amcinfo) ,info_err::RECORD_EXITS, "record exits");
+    // amc_info amcinfo;
+    // CHECKC( !_db.get(amcinfo) ,info_err::RECORD_EXITS, "record exits");
 
     gov_t::idx_t gov(XDAO_GOV, XDAO_GOV.value);
     CHECKC(gov.find(govid) != gov.end(), info_err::GOVERNANCE_NOT_FOUND, "governance not found");
 
-    amcinfo.governance_id = make_optional(govid);
+    // amcinfo. = make_optional(govid);
 
-    _db.set(amcinfo, _self);
+    detail.amc_info.governance_id = govid;   
+    _db.set(detail, _self);
+       
 }
 
 ACTION xdaoinfo::bindevmtoken(const name& owner, const name& code, const evm_symbol& evmtoken)
@@ -204,12 +203,16 @@ ACTION xdaoinfo::bindevmtoken(const name& owner, const name& code, const evm_sym
     CHECKC( conf.status != conf_status::MAINTAIN, info_err::NOT_AVAILABLE, "under maintenance" );
     CHECKC( detail.status == info_status::RUNNING, info_err::NOT_AVAILABLE, "under maintenance" );
 
-    evm_info_t evminfo(code);
-    CHECKC( !_db.get(evminfo) ,info_err::RECORD_EXITS, "record exits");
-    CHECKC( (evminfo.evmtokens.size()+1) <= conf.evm_token_seats_max, info_err::SIZE_TOO_MUCH, "token size more than limit" );
+    // evm_info evminfo;
+    // CHECKC( !_db.get(evminfo) ,info_err::RECORD_EXITS, "record exits");
+    // CHECKC( (evminfo.evmtokens.size()+1) <= conf.evm_token_seats_max, info_err::SIZE_TOO_MUCH, "token size more than limit" );
 
-    evminfo.evmtokens.insert(evmtoken);
-    _db.set(evminfo, _self);
+    // evminfo.evmtokens.insert(evmtoken);
+    // _db.set(evminfo, _self);
+    CHECKC((detail.evm_info.evmtokens.size()+1) <= conf.evm_token_seats_max, info_err::SIZE_TOO_MUCH, "token size more than limit" );
+    detail.evm_info.evmtokens.insert(evmtoken);         
+    _db.set(detail, _self);
+
 }
 
 ACTION xdaoinfo::bindamctoken(const name& owner, const name& code, const extended_symbol& amctoken)
@@ -223,12 +226,14 @@ ACTION xdaoinfo::bindamctoken(const name& owner, const name& code, const extende
     CHECKC( conf.status != conf_status::MAINTAIN, info_err::NOT_AVAILABLE, "under maintenance" );
     CHECKC( detail.status == info_status::RUNNING, info_err::NOT_AVAILABLE, "under maintenance" );
 
-    amc_info_t amcinfo(code);
-    CHECKC( !_db.get(amcinfo) ,info_err::RECORD_EXITS, "record exits");
-    CHECKC((amcinfo.tokens.size()+1) <= conf.amc_token_seats_max, info_err::SIZE_TOO_MUCH, "token size more than limit" );
+    // amc_info amcinfo;
+    // CHECKC( !_db.get(amcinfo) ,info_err::RECORD_EXITS, "record exits");
+    // CHECKC((amcinfo.tokens.size()+1) <= conf.amc_token_seats_max, info_err::SIZE_TOO_MUCH, "token size more than limit" );
 
-    amcinfo.tokens.insert(amctoken);
-    _db.set(amcinfo,_self);
+    // amcinfo.tokens.insert(amctoken);
+    // _db.set(amcinfo,_self);
+    CHECKC((detail.amc_info.tokens.size()+1) <= conf.amc_token_seats_max, info_err::SIZE_TOO_MUCH, "token size more than limit" );
+    detail.amc_info.tokens.insert(amctoken); 
 }
 //
 ACTION xdaoinfo::bindevmwal(const name& owner, const name& code, const string& evmwallet, const string& chain)
@@ -242,12 +247,15 @@ ACTION xdaoinfo::bindevmwal(const name& owner, const name& code, const string& e
     CHECKC( conf.status != conf_status::MAINTAIN, info_err::NOT_AVAILABLE, "under maintenance" );
     CHECKC( detail.status == info_status::RUNNING, info_err::NOT_AVAILABLE, "under maintenance" );
 
-    evm_info_t evminfo(code);
-    CHECKC( !_db.get(evminfo) ,info_err::RECORD_EXITS, "record exits");
+    // evm_info evminfo;
+    // CHECKC( !_db.get(evminfo) ,info_err::RECORD_EXITS, "record exits");
 
-    evminfo.chain = chain;
-    evminfo.evm_wallet_address = evmwallet;
-    _db.set(evminfo, _self);
+    // evminfo.chain = chain;
+    // evminfo.evm_wallet_address = evmwallet;
+    // detail.evm_info = evminfo;
+    detail.evm_info.chain = chain;   
+    detail.evm_info.evm_wallet_address = evmwallet;   
+    _db.set( detail, _self);
 
 }
 
@@ -262,11 +270,13 @@ ACTION xdaoinfo::bindamcwal(const name& owner, const name& code, const uint64_t&
     CHECKC( conf.status != conf_status::MAINTAIN, info_err::NOT_AVAILABLE, "under maintenance" );
     CHECKC( detail.status == info_status::RUNNING, info_err::NOT_AVAILABLE, "under maintenance" );
 
-    amc_info_t amcinfo(code);
-    CHECKC( !_db.get(amcinfo) ,info_err::RECORD_EXITS, "record exits");
+    // amc_info amcinfo;
+    // CHECKC( !_db.get(amcinfo) ,info_err::RECORD_EXITS, "record exits");
 
-    amcinfo.wallet_id = make_optional(walletid);
-    _db.set(amcinfo, _self);
+    // amcinfo.wallet_id = make_optional(walletid);
+    // _db.set(amcinfo, _self);
+    detail.amc_info.wallet_id = walletid;   
+    _db.set( detail, _self);
 
 }
 
@@ -281,13 +291,13 @@ ACTION xdaoinfo::delamcparam(const name& owner, const name& code, set<extended_s
     CHECKC( conf.status != conf_status::MAINTAIN, info_err::NOT_AVAILABLE, "under maintenance" );
     CHECKC( detail.status == info_status::RUNNING, info_err::NOT_AVAILABLE, "under maintenance" );
 
-    amc_info_t amcinfo(code);
-    CHECKC( !_db.get(amcinfo) ,info_err::RECORD_EXITS, "record exits");
+    // amc_info_t amcinfo(code);
+    // CHECKC( !_db.get(amcinfo) ,info_err::RECORD_EXITS, "record exits");
 
     for(set<extended_symbol>::iterator token_iter=tokens.begin();token_iter!=tokens.end();token_iter++){
-        amcinfo.tokens.erase(*token_iter);
+        detail.amc_info.tokens.erase(*token_iter);
     }
-    _db.set(amcinfo, _self);
+    _db.set( detail, _self);
 
 }
 
@@ -301,14 +311,14 @@ ACTION xdaoinfo::delevmparam(const name& owner, const name& code, set<evm_symbol
     CHECKC( conf.status != conf_status::MAINTAIN, info_err::NOT_AVAILABLE, "under maintenance" );
     CHECKC( detail.status == info_status::RUNNING, info_err::NOT_AVAILABLE, "under maintenance" );
 
-    evm_info_t evminfo(code);
-    CHECKC( !_db.get(evminfo) ,info_err::RECORD_EXITS, "record exits");
+    // evm_info_t evminfo(code);
+    // CHECKC( !_db.get(evminfo) ,info_err::RECORD_EXITS, "record exits");
 
     for( set<evm_symbol>::iterator token_iter = tokens.begin(); token_iter!=tokens.end(); token_iter++ ){
-        evminfo.evmtokens.erase(*token_iter);
+        detail.evm_info.evmtokens.erase(*token_iter);
     }
 
-    _db.set(evminfo, _self);
+    _db.set(detail, _self);
 }
 
 ACTION xdaoinfo::updatestatus(const name& code, const bool& isenable)
