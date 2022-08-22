@@ -4,7 +4,7 @@
 #include <eosio/eosio.hpp>
 #include <string>
 #include <algorithm>
-#include "c2swapdb.hpp"
+#include "fixswapdb.hpp"
 
 using namespace std;
 using namespace eosio;
@@ -15,7 +15,7 @@ namespace xdao
 using std::pair;
 using std::string;
 
-class [[eosio::contract("c2swap")]] c2swap : public contract
+class [[eosio::contract("fixswap")]] fixswap : public contract
 {
     using contract::contract;
 
@@ -25,7 +25,7 @@ private:
     dbc           _db;
 
 public:
-    c2swap(eosio::name receiver, eosio::name code, datastream<const char *> ds) : _db(_self),contract(receiver, code, ds), _global(_self, _self.value)
+    fixswap(eosio::name receiver, eosio::name code, datastream<const char *> ds) : _db(_self),contract(receiver, code, ds), _global(_self, _self.value)
     {
         if (_global.exists()) _gstate = _global.get();
         else _gstate = gswap_t{};
