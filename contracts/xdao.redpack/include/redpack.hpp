@@ -19,7 +19,8 @@ enum class err: uint8_t {
    ACCOUNT_INVALID      = 11,
    FEE_NOT_POSITIVE     = 12,
    VAILD_TIME_INVALID   = 13,
-   MIN_UNIT_INVALID     = 14
+   MIN_UNIT_INVALID     = 14,
+   RED_PACK_EXIST       = 15
 };
 
 enum class redpack_type: uint8_t {
@@ -52,9 +53,9 @@ public:
     //[[eosio::action]]
     [[eosio::on_notify("*::transfer")]] void ontransfer(name from, name to, asset quantity, string memo);
 
-    [[eosio::action]] void claim( const name& claimer, const uint64_t& pack_id, const string& pwhash );
+    [[eosio::action]] void claim( const name& claimer, const name& code, const string& pwhash );
 
-    [[eosio::action]] void cancel( const uint64_t& pack_id );
+    [[eosio::action]] void cancel( const name& code );
 
     [[eosio::action]] void addfee( const asset& fee, const name& contract, const uint16_t& min_unit);
 
@@ -62,7 +63,7 @@ public:
 
     [[eosio::action]] void setconf( const name& admin, const uint16_t& hours );
 
-    [[eosio::action]] void delredpacks( uint64_t& id );
+    [[eosio::action]] void delredpacks( name& code );
 
     asset _calc_fee(const asset& fee, const uint64_t count);
 

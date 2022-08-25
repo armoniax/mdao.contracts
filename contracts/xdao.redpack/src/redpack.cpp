@@ -34,10 +34,14 @@ void redpack::ontransfer( name from, name to, asset quantity, string memo )
 	CHECKC( quantity.amount > 0, err::NOT_POSITIVE, "quantity must be positive" )
 
     //memo params format:
-    //${pwhash} : count : type
+    //${pwhash} : count : type : code
     vector<string_view> memo_params = split( memo, ":" );
     auto parts = split( memo, ":" );
-    CHECKC( parts.size() >= 3, err::INVALID_FORMAT,"Expected format 'pwhash : count : type'" );
+    CHECKC( parts.size() == 4, err::INVALID_FORMAT,"Expected format 'pwhash : count : type : code'" );
+
+    auto code = name(parts[3]);
+    redpack_t redpack(code);
+    CHECKC( !_db.get(redpack), err::RED_PACK_EXIST, "code is already exists" );
 
     auto count = stoi(string(parts[1]));
 
@@ -54,9 +58,9 @@ void redpack::ontransfer( name from, name to, asset quantity, string memo )
     CHECKC( (total_quantity/count).amount >= power10(quantity.symbol.precision()-fee_info.min_unit), err::QUANTITY_NOT_ENOUGH , "not enough " );
 
     redpack_t::idx_t redpacks( _self, _self.value );
-    auto id = redpacks.available_primary_key();
+    // auto id = redpacks.available_primary_key();
     redpacks.emplace( _self, [&]( auto& row ) {
-        row.id 					        = id;
+        row.code 					    = code;
         row.sender 			            = from;
         row.pw_hash                     = string( parts[0] );
         row.total_quantity              = total_quantity;
@@ -71,11 +75,11 @@ void redpack::ontransfer( name from, name to, asset quantity, string memo )
    });
 
 }
-void redpack::claim( const name& claimer, const uint64_t& pack_id, const string& pwhash )
+void redpack::claim( const name& claimer, const name& code, const string& pwhash )
 {
     require_auth( _gstate.tg_admin );
 
-    redpack_t redpack(pack_id);
+    redpack_t redpack(code);
     CHECKC( _db.get(redpack), err::RECORD_NO_FOUND, "redpack not found" );
     CHECKC( redpack.pw_hash == pwhash, err::PWHASH_INVALID, "incorrect password" );
     CHECKC( redpack.status == redpack_status::CREATED, err::EXPIRED, "redpack has expired" );
@@ -83,7 +87,7 @@ void redpack::claim( const name& claimer, const uint64_t& pack_id, const string&
 
     claim_t::idx_t claims(_self, _self.value);
     auto claims_index = claims.get_index<"unionid"_n>();
-    uint128_t sec_index = get_unionid(claimer,pack_id);
+    uint128_t sec_index = get_unionid(claimer, code.value);
     auto claims_iter = claims_index.find(sec_index);
     eosio::print(claims_iter->id);
     CHECKC( claims_iter == claims_index.end() ,err::NOT_REPEAT_RECEIVE, "Can't repeat to receive" );
@@ -113,7 +117,7 @@ void redpack::claim( const name& claimer, const uint64_t& pack_id, const string&
     auto id = claims.available_primary_key();
     claims.emplace( _self, [&]( auto& row ) {
         row.id                  = id;
-        row.pack_id 			= pack_id;
+        row.red_pack_code 	    = code;
         row.sender              = redpack.sender;
         row.receiver            = claimer;
         row.quantity            = redpack_quantity;
@@ -122,10 +126,10 @@ void redpack::claim( const name& claimer, const uint64_t& pack_id, const string&
 
 }
 
-void redpack::cancel( const uint64_t& pack_id )
+void redpack::cancel( const name& code )
 {
     require_auth( _gstate.tg_admin );
-    redpack_t redpack(pack_id);
+    redpack_t redpack(code);
     CHECKC( _db.get(redpack), err::RECORD_NO_FOUND, "redpack not found" );
     CHECKC( redpack.status == redpack_status::CREATED, err::EXPIRED, "redpack has expired" );
     CHECKC( current_time_point() > redpack.created_at + eosio::hours(_gstate.expire_hours), err::NOT_EXPIRED, "expiration date is not reached" );
@@ -172,15 +176,13 @@ void redpack::setconf(const name& admin, const uint16_t& hours)
 
 }
 
-void redpack::delredpacks(uint64_t& id){
+void redpack::delredpacks(name& code){
     require_auth( _self );
 
     redpack_t::idx_t redpacks(_self, _self.value);
-    auto redpack_itr = redpacks.find(id);
-    while( redpack_itr !=  redpacks.end()){
+    auto redpack_itr = redpacks.find(code.value);
+    if( redpack_itr !=  redpacks.end()){
         redpacks.erase(redpack_itr);
-        id--;
-        redpack_itr = redpacks.find(id);
     }
 
 }
