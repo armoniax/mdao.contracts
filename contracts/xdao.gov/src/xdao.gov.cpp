@@ -8,7 +8,6 @@
 
 #define VOTE_EXCUTE(owner, proposeid) \
 { action(permission_level{get_self(), "active"_n }, "xdao.vote"_n, "create"_n, std::make_tuple( owner, proposeid)).send(); }
-//name vote_type, name status, name creator, string name, string desc, uint64_t vote_strategies, uint64_t req_votes
 
 ACTION xdaogov::creategov(const name& creator,const name& daocode, const string& title,
                             const string& desc, const set<uint64_t>& votestg, const uint32_t minvotes)
@@ -22,20 +21,20 @@ ACTION xdaogov::creategov(const name& creator,const name& daocode, const string&
 
     auto conf = _conf();
     CHECKC( conf.status != conf_status::MAINTAIN, gov_err::NOT_AVAILABLE, "under maintenance" );
-    //check status
-    //
+
     if(!votestg.empty()){
         strategy_t::idx_t stg(XDAO_STG, XDAO_STG.value);
         for( set<uint64_t>::iterator votestg_iter = votestg.begin(); votestg_iter != votestg.end(); votestg_iter++ ){
             CHECKC(stg.find(*votestg_iter) != stg.end(), gov_err::STRATEGY_NOT_FOUND, "strategy not found");
         }
     }
+
     gov.creator   =   creator;
     gov.dao_name  =   daocode;
     gov.status    =   gov_status::RUNNING;
     gov.title     =   title;
     gov.desc	  =   desc;
-    gov.vote_strategies	 =   votestg;    
+    gov.vote_strategies	 =   votestg;
     gov.created_at	     =   time_point_sec(current_time_point());
     gov.min_votes	     =   minvotes;
 
@@ -71,7 +70,7 @@ ACTION xdaogov::setpropstg( const name& owner, const name& daocode,
     CHECKC( gov.status == gov_status::RUNNING, gov_err::NOT_AVAILABLE, "under maintenance" );
 
     bool is_expired = (gov.created_at + PROPOSE_STG_PERMISSION_AGING) < time_point_sec(current_time_point());
-    CHECKC( ( is_account(owner) &&! is_expired )|| ( is_account(conf.managers[manager::GOV]) && is_expired ) ,gov_err::PERMISSION_DENIED, "insufficient permissions" );
+    CHECKC( ( has_auth(owner) &&! is_expired ) || ( has_auth(conf.managers[manager::GOV]) && is_expired ) ,gov_err::PERMISSION_DENIED, "insufficient permissions" );
 
     if(!proposers.empty()){
         for( set<name>::iterator proposers_iter = proposers.begin(); proposers_iter != proposers.end(); proposers_iter++ ){
@@ -92,7 +91,7 @@ ACTION xdaogov::setpropstg( const name& owner, const name& daocode,
 }
 
 ACTION xdaogov::createprop(const name& owner, const name& creator, const name& daocode,
-                                const uint64_t& stgid, const string& name, 
+                                const uint64_t& stgid, const string& name,
                                 const string& desc, const uint32_t& votes)
 {
     require_auth( owner );
@@ -104,7 +103,7 @@ ACTION xdaogov::createprop(const name& owner, const name& creator, const name& d
     CHECKC( _db.get(gov) ,gov_err::RECORD_NOT_FOUND, "record not found" );
     CHECKC( owner == gov.creator, gov_err::PERMISSION_DENIED, "only the creator can operate" );
     CHECKC( conf.status != conf_status::MAINTAIN, gov_err::NOT_AVAILABLE, "under maintenance" );
-    CHECKC( gov.status == gov_status::RUNNING, gov_err::NOT_AVAILABLE, "under maintenance" );    
+    CHECKC( gov.status == gov_status::RUNNING, gov_err::NOT_AVAILABLE, "under maintenance" );
     CHECKC( gov.min_votes <= votes, gov_err::TOO_FEW_VOTES, "too few votes" );
     CHECKC( gov.proposers.find(creator) != gov.proposers.end(), gov_err::PROPOSER_NOT_FOUND, "creator not found");
 
@@ -119,8 +118,7 @@ ACTION xdaogov::createprop(const name& owner, const name& creator, const name& d
             if(stg_weight > 0) break;
         }
     }
-    //TODO:how tow rite gov_error msg
-    CHECKC( stg_weight > 0, gov_err::PROPOSER_NOT_FOUND, "creator not found")
+    CHECKC( stg_weight > 0, gov_err::INSUFFICIENT_WEIGHT, "insufficient strategy weight")
 
     VOTE_CREATE(creator, name, desc, stgid, votes)
 

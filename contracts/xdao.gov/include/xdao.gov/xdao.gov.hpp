@@ -24,7 +24,7 @@ static constexpr uint64_t PROPOSE_STG_PERMISSION_AGING = 24 * 3600;
 
 namespace gov_status {
     static constexpr name RUNNING       = "running"_n;
-    static constexpr name BLOCK         = "block"_n;    
+    static constexpr name BLOCK         = "block"_n;
     static constexpr name CANCEL        = "cancel"_n;
 };
 
@@ -56,7 +56,8 @@ enum class gov_err: uint8_t {
     TOO_FEW_VOTES           =8,
     PROPOSER_NOT_FOUND      =9,
     VOTE_STRATEGY_NOT_FOUND =10,
-    SYSTEM_ERROR            =11
+    SYSTEM_ERROR            =11,
+    INSUFFICIENT_WEIGHT     =12
 };
 
 class [[eosio::contract("xdao.gov")]] xdaogov : public contract {
@@ -93,7 +94,7 @@ public:
 
     [[eosio::action]]
     ACTION createprop(const name& owner, const name& creator, const name& daocode,
-                                const uint64_t& stgid, const string& name, 
+                                const uint64_t& stgid, const string& name,
                                 const string& desc, const uint32_t& votes);
 
     [[eosio::action]]
