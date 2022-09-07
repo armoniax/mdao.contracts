@@ -4,7 +4,7 @@ target_include_directories(xdao.propose
    PUBLIC
    ${CMAKE_CURRENT_SOURCE_DIR}/include
    ${CMAKE_CURRENT_SOURCE_DIR}/../xdao.conf/include   
-   ${CMAKE_CURRENT_SOURCE_DIR}/../xdaostg/include
+   ${CMAKE_CURRENT_SOURCE_DIR}/../xdao.stg/include
    ${CMAKE_CURRENT_SOURCE_DIR}/../xdao.info/include
    ${CMAKE_CURRENT_SOURCE_DIR}/../xdao.gov/include
 

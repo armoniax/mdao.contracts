@@ -35,7 +35,6 @@ void redpack::ontransfer( name from, name to, asset quantity, string memo )
 
     //memo params format:
     //${pwhash} : count : type : code
-    vector<string_view> memo_params = split( memo, ":" );
     auto parts = split( memo, ":" );
     CHECKC( parts.size() == 4, err::INVALID_FORMAT,"Expected format 'pwhash : count : type : code'" );
 

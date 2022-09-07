@@ -7,9 +7,12 @@
 #include <eosio/system.hpp>
 #include <eosio/time.hpp>
 #include <thirdparty/wasm_db.hpp>
+#include <amax.ntoken/amax.ntoken_db.hpp>
 
 using namespace eosio;
 using namespace std;
+using namespace amax;
+
 using std::string;
 
 using namespace wasm;
@@ -19,12 +22,14 @@ static constexpr uint64_t seconds_per_day                   = 24 * 3600;
 static constexpr uint64_t default_expired_secs = 30 * seconds_per_day;
 
 static constexpr uint64_t percent_boost = 10000;
-#define HASH256(str) sha256(str.c_str(), str.size())
+// #define HASH256(str) sha256(str.c_str(), str.size())
 
 static constexpr name   APLINK_FARM              = "aplink.farm"_n;
 static constexpr symbol   APLINK_SYMBOL              = SYMBOL("APL", 4);
 
 using checksum256 = fixed_bytes<32>;
+
+// typedef std::variant<nasset, extended_asset> variant_asset;
 
 namespace swap_status_t {
     static constexpr eosio::name created        = "created"_n;
@@ -57,13 +62,16 @@ namespace wasm
     struct SWAP_TBL swap_t
     {
         uint64_t id;
+        name type;
         name maker;
         name taker = name(0);
+        // variant_asset make_asset;
+        // variant_asset take_asset;
         extended_asset make_asset;
         extended_asset take_asset;
         string code;
         time_point_sec  expired_at;
-
+       
         uint64_t primary_key() const { return id; }
         uint64_t by_maker()const { return maker.value; }
 
@@ -74,7 +82,7 @@ namespace wasm
             indexed_by<"maker"_n, const_mem_fun<swap_t, uint64_t, &swap_t::by_maker> >
         > idx_t;
 
-        EOSLIB_SERIALIZE(swap_t, (id)(maker)(taker)(make_asset)(take_asset)(code)(expired_at))
+        EOSLIB_SERIALIZE(swap_t, (id)(type)(maker)(taker)(make_asset)(take_asset)(code)(expired_at))
     };
 }
 }

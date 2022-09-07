@@ -1,8 +1,5 @@
-#include <thirdparty/utils.hpp>
-#include <fixswap.hpp>
-#include "eosio.token/eosio.token.hpp"
+#include "xdao.fixswap.hpp"
 #include "aplink.farm/aplink.farm.hpp"
-#include "thirdparty/utils.hpp"
 
 static constexpr eosio::name active_permission{"active"_n};
 
@@ -14,15 +11,15 @@ using namespace xdao;
 using namespace std;
 using namespace eosio;
 
-inline int64_t get_precision(const symbol &s) {
-    int64_t digit = s.precision();
-    CHECK(digit >= 0 && digit <= 18, "precision digit " + std::to_string(digit) + " should be in range[0,18]");
-    return calc_precision(digit);
-}
+// inline int64_t get_precision(const symbol &s) {
+//     int64_t digit = s.precision();
+//     CHECK(digit >= 0 && digit <= 18, "precision digit " + std::to_string(digit) + " should be in range[0,18]");
+//     return calc_precision(digit);
+// }
 
-inline int64_t get_precision(const asset &a) {
-    return get_precision(a.symbol);
-}
+// inline int64_t get_precision(const asset &a) {
+//     return get_precision(a.symbol);
+// }
 
 void fixswap::init(const name& fee_collector, const uint32_t& fee_ratio){
     require_auth(get_self());
@@ -89,7 +86,7 @@ void fixswap::ontransfer(name from, name to, asset quantity, string memo)
         if(params[4].length() > 0){
             swap_order.code = params[4];
         }
-        swap_order.expired_at = current_time_point() + default_expired_secs;
+        swap_order.expired_at = time_point_sec(current_time_point()) + default_expired_secs;
 
         _db.set(swap_order, get_self());
         _global.set( _gstate, get_self());
@@ -98,7 +95,7 @@ void fixswap::ontransfer(name from, name to, asset quantity, string memo)
         auto swap_id = to_uint64(params[1], "swap id error:");
         auto swap_order = swap_t(swap_id);
         CHECKC( _db.get(swap_order), err::RECORD_NOT_FOUND, "cannot found swap order" )
-        CHECKC( current_time_point < swap_order.expired_at , err::TIME_EXPIRED, "swap order expired")
+        CHECKC( time_point_sec(current_time_point()) < swap_order.expired_at , err::TIME_EXPIRED, "swap order expired")
 
         if(swap_order.taker != name(0)) {
             CHECKC( swap_order.taker == from, err::NO_AUTH, "no auth to swap order" )
@@ -110,6 +107,9 @@ void fixswap::ontransfer(name from, name to, asset quantity, string memo)
             string hexstr = to_hex(bytes.data(), bytes.size());
             CHECKC( hexstr == swap_order.code, err::NO_AUTH, "auth failed: code mismatch: " + data + " | " + hexstr)
         }
+        // extended_asset take_asset = std::get<extended_asset>(swap_order.take_asset);
+        // extended_asset make_asset = std::get<extended_asset>(swap_order.make_asset);
+
         CHECKC( quantity == swap_order.take_asset.quantity, err::SYMBOL_MISMATCH, "swap quantity mismatch" )
         CHECKC( get_first_receiver() == swap_order.take_asset.contract, err::SYMBOL_MISMATCH, "quantity contract mismatch" )
 
@@ -147,6 +147,116 @@ void fixswap::ontransfer(name from, name to, asset quantity, string memo)
     }
 }
 
+// void fixswap::onnftsawp(name from, name to, vector< nasset >& assets, string memo){
+//     if(from == get_self() || to != get_self()) return;
+//     CHECKC( _gstate.status == swap_status_t::initialized, err::PAUSED, "contract is maintaining" )
+    
+//     CHECKC( assets.size() != 1, err::PARAM_ERROR, "assets size must be equal to 1" )
+
+//     nasset quantity = assets[0];
+//     CHECKC( quantity.amount>0, err::NOT_POSITIVE, "swap quanity must be positive" )
+
+//     vector<string_view> params = split(memo, ":");
+//     CHECKC( params.size() > 0, err::PARAM_ERROR, "unsupport memo" )
+
+//     if(params.size() == 4 && params[0] == "nftmake"){
+//         auto swap_order = swap_t(_gstate.swap_id++);
+//         swap_order.maker = from;
+//         swap_order.make_asset = quantity;
+
+//         if(params[1].length() > 0){
+//             name taker(params[1]);
+//             CHECKC( is_account(taker), err::ACCOUNT_INVALID, "cannot found taker account" )
+//             swap_order.taker = taker;
+//         }
+        
+//         //pid|id|amount
+//         vector<string_view> nftinfo = split(params[2], "|");
+//         uint64_t pid = to_uint64(nftinfo[0], "pid error");
+//         uint64_t id = to_uint64(nftinfo[1], "id error");
+//         uint64_t take_amount = to_uint64(nftinfo[2], "amount error");
+
+//         CHECKC( take_amount > 0, err::ACCOUNT_INVALID, "take quanity must be positive" )
+//         swap_order.take_asset = nasset(pid, id, take_amount);
+//         // asset take_quant = asset_from_string(params[2]);
+
+//         // name take_contract = name(params[3]);
+//         // CHECKC( is_account(take_contract), err::ACCOUNT_INVALID, "cannot found take quantity contract" )
+
+//         // swap_order.take_asset = extended_asset(take_quant, take_contract);
+//         if(params[3].length() > 0){
+//             swap_order.code = params[4];
+//         }
+//         swap_order.expired_at = time_point_sec(current_time_point()) + default_expired_secs;
+
+//         _db.set(swap_order, get_self());
+//         _global.set( _gstate, get_self());
+//     }
+//     else if(params.size() == 3 && params[0] == "take"){
+//         auto swap_id = to_uint64(params[1], "swap id error:");
+//         auto swap_order = swap_t(swap_id);
+//         CHECKC( _db.get(swap_order), err::RECORD_NOT_FOUND, "cannot found swap order" )
+//         CHECKC( time_point_sec(current_time_point()) < swap_order.expired_at , err::TIME_EXPIRED, "swap order expired")
+
+//         if(swap_order.taker != name(0)) {
+//             CHECKC( swap_order.taker == from, err::NO_AUTH, "no auth to swap order" )
+//         }
+//         //
+//         else if(swap_order.code.size() != 0){
+//             string data = string(params[2]);
+//             checksum256 digest = sha256(&data[0], data.size());
+//             auto bytes = digest.extract_as_byte_array();
+//             string hexstr = to_hex(bytes.data(), bytes.size());
+//             CHECKC( hexstr == swap_order.code, err::NO_AUTH, "auth failed: code mismatch: " + data + " | " + hexstr)
+//         }
+//         nasset take_asset = std::get<nasset>(swap_order.take_asset);
+//         nasset make_asset = std::get<nasset>(swap_order.make_asset);
+
+//         CHECKC( quantity.amount == take_asset.amount, err::SYMBOL_MISMATCH, "swap quantity mismatch" )
+//         // CHECKC( get_first_receiver() == take_asset.contract, err::SYMBOL_MISMATCH, "quantity contract mismatch" )
+
+//         vector<nasset> make_quants = { make_asset };
+//         TRANSFER_N( NFT_BANK, from, make_quants, "swap nft: " + to_string(swap_order.id) );
+
+//         vector<nasset> take_quants = { take_asset };
+//         TRANSFER_N( NFT_BANK, swap_order.maker, take_quants, "swap nft: " + to_string(swap_order.id) );
+
+
+//         // TRANSFER(make_asset.contract, 
+//         //     from, 
+//         //     swap_order.make_asset.quantity, 
+//         //     "Swap with " + swap_order.make_asset.quantity.to_string());
+
+//         // asset fee = swap_order.take_asset.quantity * _gstate.fee_ratio / percent_boost;
+
+//         // TRANSFER(swap_order.take_asset.contract, 
+//         //     swap_order.maker, 
+//         //     swap_order.take_asset.quantity - fee, 
+//         //     "Swap with " + swap_order.take_asset.quantity.to_string());
+        
+//         // if(fee.amount > 0){
+//         //     TRANSFER(swap_order.take_asset.contract, 
+//         //         _gstate.fee_collector, 
+//         //         fee, 
+//         //         "Swap fee of " + to_string(swap_id));
+
+//         //     if (_gstate.farm_lease_id > 0 && _gstate.farm_scales.count(swap_order.take_asset.get_extended_symbol())){
+//         //         auto scale = _gstate.farm_scales.at(swap_order.take_asset.get_extended_symbol());
+//         //         auto value = multiply_decimal64( fee.amount, get_precision(APLINK_SYMBOL), get_precision(fee.symbol));
+//         //         value = value * scale / percent_boost;
+//         //         asset apples = asset(0, APLINK_SYMBOL);
+//         //         aplink::farm::available_apples(APLINK_FARM, _gstate.farm_lease_id, apples);
+//         //         if(apples.amount >= value && value > 0)
+//         //             ALLOT(  APLINK_FARM, _gstate.farm_lease_id, swap_order.maker, asset(value, APLINK_SYMBOL), 
+//         //                     "fixswap allot: "+to_string(swap_id) );
+//         //     }
+//         // }
+
+//         _db.del(swap_order);
+//     }
+
+// }
+
 void fixswap::cancel(const name& maker, const uint64_t& swap_id){
     require_auth(maker);
     
@@ -156,7 +266,8 @@ void fixswap::cancel(const name& maker, const uint64_t& swap_id){
     CHECKC( _db.get(swap_order), err::RECORD_NOT_FOUND, "cannot found swap order" )
 
     CHECKC( swap_order.maker == maker, err::NO_AUTH, "no auth to cancel order" )
-
+    
+    // extended_asset make_asset = std::get<extended_asset>(swap_order.make_asset);
     TRANSFER(swap_order.make_asset.contract, 
         swap_order.maker, 
         swap_order.make_asset.quantity, 

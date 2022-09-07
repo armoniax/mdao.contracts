@@ -1,13 +1,16 @@
 #include <xdao.propose/xdao.propose.hpp>
 #include <xdao.info/xdao.info.db.hpp>
 #include <xdao.gov/xdao.gov.db.hpp>
-#include <xdaostg/xdaostg.hpp>
+#include <xdao.stg/xdao.stg.hpp>
 #include <thirdparty/utils.hpp>
 #include <set>
 
 ACTION xdaopropose::create(const name& creator,const string& name, const string& desc,
                             const uint64_t& stgid, const uint32_t& votes)
 {
+    auto conf = _conf();
+    require_auth( conf.managers[manager::GOV] );
+    
     propose_t::idx_t proposes(_self, _self.value);
     auto id = proposes.available_primary_key();
     proposes.emplace( _self, [&]( auto& row ) {
@@ -80,6 +83,8 @@ ACTION xdaopropose::start(const name& owner, const uint64_t& proposeid)
 ACTION xdaopropose::excute(const name& owner, const uint64_t& proposeid)
 {
     auto conf = _conf();
+    require_auth( conf.managers[manager::GOV] );
+
     CHECKC( conf.status != conf_status::MAINTAIN, propose_err::NOT_AVAILABLE, "under maintenance" );
 
     propose_t propose(proposeid);
@@ -176,7 +181,6 @@ ACTION xdaopropose::setaction(const name& owner, const uint64_t& proposeid,
 
     _db.set(propose, _self);
 }
-
 
 void xdaopropose::_check_proposal_params(const action_data_variant& data_var,  const name& action_name, const name& action_account)
 {

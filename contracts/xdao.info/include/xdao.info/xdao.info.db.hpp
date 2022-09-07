@@ -6,6 +6,7 @@
 #include <eosio/privileged.hpp>
 #include <eosio/name.hpp>
 #include <map>
+#include <set>
 
 using namespace eosio;
 
@@ -16,51 +17,12 @@ namespace xdao {
 
 #define INFO_TG_TBL [[eosio::table, eosio::contract("xdaoinfotest")]]
 
-struct evm_symbol{
-    string address;
-    string symbol;
-    friend bool operator < (const evm_symbol& symbol1, const evm_symbol& symbol2);
-    EOSLIB_SERIALIZE(evm_symbol, (address)(symbol) )
-};
-
-bool operator < (const evm_symbol& symbol1, const evm_symbol& symbol2) {
-    return symbol1.address < symbol2.address;
-}
-
-
-struct evm_info {
-    string          evm_wallet_address;
-    string          evm_governance;
-    set<evm_symbol> evmtokens;
-    string          chain;
-
-    // uint64_t    primary_key()const { return code.value; }
-    // uint64_t    scope() const { return 0; }
-
-    // evm_info_t() {}
-    // evm_info_t(const name& c): code(c) {}
-
-    // typedef eosio::multi_index<"evminfos"_n, evm_info_t> idx_t;
-
-    EOSLIB_SERIALIZE( evm_info, (evm_wallet_address)(evm_governance)(evmtokens)(chain) )
-
-};
-
 struct amc_info {
     optional<uint64_t>   wallet_id;
     optional<uint64_t>   governance_id;
-    set<extended_symbol> tokens;
-
-    // uint64_t    primary_key()const { return code.value; }
-    // uint64_t    scope() const { return 0; }
-
-    // amc_info_t() {}
-    // amc_info_t(const name& c): code(c) {}
-
-    // typedef eosio::multi_index<"amcinfos"_n, amc_info_t> idx_t;
+    vector<extended_symbol> tokens;
 
     EOSLIB_SERIALIZE( amc_info, (wallet_id)(governance_id)(tokens))
-
 };
 
 struct INFO_TG_TBL details_t {
@@ -78,7 +40,6 @@ struct INFO_TG_TBL details_t {
     string                  group_id;
     time_point_sec          created_at;
     amc_info                amc_info;
-    evm_info                evm_info;
     details_t() {}
     details_t(const name& c): code(c) {}
 
@@ -94,7 +55,7 @@ struct INFO_TG_TBL details_t {
     > idx_t;
 // 
     EOSLIB_SERIALIZE( details_t, (code)(type)(status)(creator)(title)(logo)
-                        (desc)(tags)(links)(strategy_id)(dapps)(group_id)(created_at)(amc_info)(evm_info) )
+                        (desc)(tags)(links)(strategy_id)(dapps)(group_id)(created_at)(amc_info) )
 
 };
 
@@ -105,5 +66,25 @@ struct [[eosio::table]] account {
 };
 
 typedef eosio::multi_index< "accounts"_n, account > accounts;
+
+
+ 
+struct [[eosio::table]] currency_stats
+{
+    asset supply;
+    asset max_supply;
+    name issuer;
+    bool is_paused = false;
+    name fee_receiver;
+    uint16_t gas_ratio = 0;
+    uint16_t fee_ratio = 0;         // fee ratio, boost 10000
+    asset min_fee_quantity;         // min fee quantity
+    std::string fullname;
+
+    uint64_t primary_key() const { return supply.symbol.code().raw(); }
+};
+
+typedef eosio::multi_index<"stat"_n, currency_stats> stats;
+
 
 } //xdao

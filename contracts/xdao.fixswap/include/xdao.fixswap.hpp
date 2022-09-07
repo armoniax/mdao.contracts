@@ -4,8 +4,9 @@
 #include <eosio/eosio.hpp>
 #include <string>
 #include <algorithm>
-#include "fixswapdb.hpp"
-
+#include "xdao.fixswapdb.hpp"
+#include <thirdparty/utils.hpp>
+#include <eosio.token/eosio.token.hpp>
 using namespace std;
 using namespace eosio;
 using namespace wasm::db;
@@ -14,6 +15,7 @@ namespace xdao
 {
 using std::pair;
 using std::string;
+static constexpr name      NFT_BANK    = "amax.ntoken"_n;
 
 class [[eosio::contract("fixswap")]] fixswap : public contract
 {
@@ -57,6 +59,9 @@ public:
      */
     [[eosio::on_notify("*::transfer")]] 
     void ontransfer(name from, name to, asset quantity, string memo);
+
+    // [[eosio::on_notify("amax.ntoken::transfer")]] 
+    // void onnftsawp(name from, name to, vector< nasset >& assets, string memo);
 
     /**
      * cancel, cancel a swap order and getback asset

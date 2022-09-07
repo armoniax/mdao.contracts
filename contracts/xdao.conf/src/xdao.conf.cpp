@@ -40,3 +40,9 @@ ACTION xdaoconf::managerconf( const map<name, name>& managers )
         _gstate.managers[item.first] = item.second;
     }
 }
+
+ACTION xdaoconf::setlimitcode( const symbol_code& symbolcode )
+{
+    require_auth( _self );
+    _gstate.limited_symbols.insert(symbolcode);
+}

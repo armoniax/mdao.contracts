@@ -4,12 +4,12 @@ target_include_directories(xdao.info
    PUBLIC
    ${CMAKE_CURRENT_SOURCE_DIR}/include
    ${CMAKE_CURRENT_SOURCE_DIR}/include/xdao.info
-   ${CMAKE_CURRENT_SOURCE_DIR}/../xdaostg/include
+   ${CMAKE_CURRENT_SOURCE_DIR}/../xdao.stg/include
    ${CMAKE_CURRENT_SOURCE_DIR}/../xdao.conf/include
    ${CMAKE_CURRENT_SOURCE_DIR}/../xdao.gov/include
+   ${CMAKE_CURRENT_SOURCE_DIR}/../xdao.token/include
 
 )
-
 set_target_properties(xdao.info
    PROPERTIES
    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")

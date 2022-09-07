@@ -4,7 +4,7 @@
 
 #include "picomath.hpp"
 #include "thirdparty/utils.hpp"
-#include "xdaostgdb.hpp"
+#include "xdao.stgdb.hpp"
 #include "eosio.token/eosio.token.hpp"
 #include "aplink.token/aplink.token.hpp"
 
@@ -14,7 +14,7 @@ using namespace wasm::db;
 using namespace picomath;
 
 namespace xdao {
-class [[eosio::contract("xdaostg")]] strategy : public contract {
+class [[eosio::contract("xdao.stg")]] strategy : public contract {
 private:
     dbc                 _db;
     global_singleton    _global;

@@ -30,6 +30,7 @@ public:
 
     ~xdaoconf() {
         _global.set( _gstate, get_self() );
+
     }
 
     [[eosio::action]]
@@ -44,4 +45,6 @@ public:
     [[eosio::action]]
     void managerconf( const map<name, name>& managers );
 
+    [[eosio::action]]
+    void setlimitcode( const symbol_code& symbolcode );
 };

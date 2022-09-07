@@ -23,8 +23,8 @@ static constexpr uint32_t MAX_ALGO_SIZE = 256;
 
 namespace wasm { namespace db {
 
-#define STG_TABLE [[eosio::table, eosio::contract("xdaostg")]]
-#define STG_TABLE_NAME(name) [[eosio::table(name), eosio::contract("xdaostg")]]
+#define STG_TABLE [[eosio::table, eosio::contract("xdao.stg")]]
+#define STG_TABLE_NAME(name) [[eosio::table(name), eosio::contract("xdao.stg")]]
 
 struct STG_TABLE_NAME("global") global_t {
     name conf_contract;

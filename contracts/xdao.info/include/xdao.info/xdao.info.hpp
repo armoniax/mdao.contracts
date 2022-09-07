@@ -5,7 +5,7 @@
 #include <eosio/singleton.hpp>
 #include <eosio/time.hpp>
 #include <xdao.conf/xdao.conf.hpp>
-#include <xdaostg/xdaostgdb.hpp>
+#include <xdao.stg/xdao.stgdb.hpp>
 #include <xdao.gov/xdao.gov.hpp>
 #include "xdao.info.db.hpp"
 
@@ -43,7 +43,10 @@ enum class info_err: uint8_t {
     STRATEGY_NOT_FOUND  = 12,
     CANNOT_ZERO         = 13,
     GOVERNANCE_NOT_FOUND= 14,
-    SYSTEM_ERROR        = 15
+    SYSTEM_ERROR        = 15,
+    NO_AUTH             = 16,
+    NOT_POSITIVE        = 17,
+    NOT_ALLOW           = 18
 };
 
 class [[eosio::contract("xdaoinfotest")]] xdaoinfo : public contract {
@@ -83,31 +86,23 @@ public:
     void binddapps(const name& owner, const name& code, const set<app_info>& dapps);
 
     [[eosio::action]]
-    void bindevmgov(const name& owner, const name& code, const string& evmgov);
-
-    [[eosio::action]]
     void bindamcgov(const name& owner, const name& code, const uint64_t& govid);
-
-    [[eosio::action]]
-    void bindevmtoken(const name& owner, const name& code, const evm_symbol& evmtoken);
 
     [[eosio::action]]
     void bindamctoken(const name& owner, const name& code, const extended_symbol& amctoken);
 
     [[eosio::action]]
-    void bindevmwal(const name& owner, const name& code, const string& evmwallet, const string& chain);
-
-    [[eosio::action]]
     void bindamcwal(const name& owner, const name& code, const uint64_t& walletid);
 
     [[eosio::action]]
-    void delamcparam(const name& owner, const name& code, set<extended_symbol> tokens);
-
-    [[eosio::action]]
-    void delevmparam(const name& owner, const name& code, set<evm_symbol> tokens);
+    void delamcparam(const name& owner, const name& code, vector<extended_symbol> tokens);
 
     [[eosio::action]]
     void updatestatus(const name& code, const bool& isenable);
 
     ACTION recycledb(uint32_t max_rows);
+
+    [[eosio::action]]
+    void createtoken(const name& code, const name& owner, const uint16_t& taketranratio, 
+                    const uint16_t& takegasratio, const string& fullname, const asset& maximum_supply);
 };

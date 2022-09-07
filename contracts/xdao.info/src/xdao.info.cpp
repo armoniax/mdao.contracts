@@ -1,6 +1,8 @@
 #include <xdao.info/xdao.info.hpp>
-#include <xdaostg/xdaostg.hpp>
+#include <xdao.stg/xdao.stg.hpp>
+#include <xdao.token/xdao.token.hpp>
 #include <set>
+
 #define AMAX_TRANSFER(bank, to, quantity, memo) \
 { action(permission_level{get_self(), "active"_n }, bank, "transfer"_n, std::make_tuple( _self, to, quantity, memo )).send(); }
 
@@ -60,7 +62,6 @@ ACTION xdaoinfo::upgradedao(name from, name to, asset quantity, string memo)
     detail.logo      =   string(parts[3]);
     detail.created_at=   time_point_sec(current_time_point());
     detail.amc_info  =   amc_info();
-    detail.evm_info  =   evm_info();
 
     _db.set(detail, _self);
 }
@@ -107,7 +108,7 @@ ACTION xdaoinfo::updatedao(const name& owner, const name& code, const string& lo
         extended_symbol amctoken(ac->balance.symbol, name(symcontract));
 
         CHECKC((detail.amc_info.tokens.size()+1) <= conf.amc_token_seats_max, info_err::SIZE_TOO_MUCH, "token size more than limit" );
-        detail.amc_info.tokens.insert(amctoken);         
+        detail.amc_info.tokens.push_back(amctoken);         
         
     }
 
@@ -152,22 +153,6 @@ ACTION xdaoinfo::binddapps(const name& owner, const name& code, const set<app_in
 
 }
 
-ACTION xdaoinfo::bindevmgov(const name& owner, const name& code, const string& evmgov)
-{
-    require_auth( owner );
-    auto conf = _conf();
-
-    details_t detail(code);
-    CHECKC( _db.get(detail) ,info_err::RECORD_NOT_FOUND, "record not found");
-    CHECKC( detail.creator == owner, info_err::PERMISSION_DENIED, "only the creator can operate" );
-    CHECKC( conf.status != conf_status::MAINTAIN, info_err::NOT_AVAILABLE, "under maintenance" );
-    CHECKC( detail.status == info_status::RUNNING, info_err::NOT_AVAILABLE, "under maintenance" );
-
-    detail.evm_info.evm_governance = evmgov;
-    _db.set(detail, _self);
-
-}
-
 ACTION xdaoinfo::bindamcgov(const name& owner, const name& code, const uint64_t& govid)
 {
     require_auth( owner );
@@ -192,29 +177,6 @@ ACTION xdaoinfo::bindamcgov(const name& owner, const name& code, const uint64_t&
        
 }
 
-ACTION xdaoinfo::bindevmtoken(const name& owner, const name& code, const evm_symbol& evmtoken)
-{
-    require_auth( owner );
-    auto conf = _conf();
-
-    details_t detail(code);
-    CHECKC( _db.get(detail) ,info_err::RECORD_NOT_FOUND, "record not found");
-    CHECKC( detail.creator == owner, info_err::PERMISSION_DENIED, "only the creator can operate" );
-    CHECKC( conf.status != conf_status::MAINTAIN, info_err::NOT_AVAILABLE, "under maintenance" );
-    CHECKC( detail.status == info_status::RUNNING, info_err::NOT_AVAILABLE, "under maintenance" );
-
-    // evm_info evminfo;
-    // CHECKC( !_db.get(evminfo) ,info_err::RECORD_EXITS, "record exits");
-    // CHECKC( (evminfo.evmtokens.size()+1) <= conf.evm_token_seats_max, info_err::SIZE_TOO_MUCH, "token size more than limit" );
-
-    // evminfo.evmtokens.insert(evmtoken);
-    // _db.set(evminfo, _self);
-    CHECKC((detail.evm_info.evmtokens.size()+1) <= conf.evm_token_seats_max, info_err::SIZE_TOO_MUCH, "token size more than limit" );
-    detail.evm_info.evmtokens.insert(evmtoken);         
-    _db.set(detail, _self);
-
-}
-
 ACTION xdaoinfo::bindamctoken(const name& owner, const name& code, const extended_symbol& amctoken)
 {
     require_auth( owner );
@@ -225,7 +187,6 @@ ACTION xdaoinfo::bindamctoken(const name& owner, const name& code, const extende
     CHECKC( detail.creator == owner, info_err::PERMISSION_DENIED, "only the creator can operate" );
     CHECKC( conf.status != conf_status::MAINTAIN, info_err::NOT_AVAILABLE, "under maintenance" );
     CHECKC( detail.status == info_status::RUNNING, info_err::NOT_AVAILABLE, "under maintenance" );
-
     // amc_info amcinfo;
     // CHECKC( !_db.get(amcinfo) ,info_err::RECORD_EXITS, "record exits");
     // CHECKC((amcinfo.tokens.size()+1) <= conf.amc_token_seats_max, info_err::SIZE_TOO_MUCH, "token size more than limit" );
@@ -233,30 +194,7 @@ ACTION xdaoinfo::bindamctoken(const name& owner, const name& code, const extende
     // amcinfo.tokens.insert(amctoken);
     // _db.set(amcinfo,_self);
     CHECKC((detail.amc_info.tokens.size()+1) <= conf.amc_token_seats_max, info_err::SIZE_TOO_MUCH, "token size more than limit" );
-    detail.amc_info.tokens.insert(amctoken); 
-}
-//
-ACTION xdaoinfo::bindevmwal(const name& owner, const name& code, const string& evmwallet, const string& chain)
-{
-    require_auth( owner );
-    auto conf = _conf();
-
-    details_t detail(code);
-    CHECKC( _db.get(detail) ,info_err::RECORD_NOT_FOUND, "record not found");
-    CHECKC( detail.creator == owner, info_err::PERMISSION_DENIED, "only the creator can operate" );
-    CHECKC( conf.status != conf_status::MAINTAIN, info_err::NOT_AVAILABLE, "under maintenance" );
-    CHECKC( detail.status == info_status::RUNNING, info_err::NOT_AVAILABLE, "under maintenance" );
-
-    // evm_info evminfo;
-    // CHECKC( !_db.get(evminfo) ,info_err::RECORD_EXITS, "record exits");
-
-    // evminfo.chain = chain;
-    // evminfo.evm_wallet_address = evmwallet;
-    // detail.evm_info = evminfo;
-    detail.evm_info.chain = chain;   
-    detail.evm_info.evm_wallet_address = evmwallet;   
-    _db.set( detail, _self);
-
+    detail.amc_info.tokens.push_back(amctoken); 
 }
 
 ACTION xdaoinfo::bindamcwal(const name& owner, const name& code, const uint64_t& walletid)
@@ -280,7 +218,7 @@ ACTION xdaoinfo::bindamcwal(const name& owner, const name& code, const uint64_t&
 
 }
 
-ACTION xdaoinfo::delamcparam(const name& owner, const name& code, set<extended_symbol> tokens)
+ACTION xdaoinfo::delamcparam(const name& owner, const name& code, vector<extended_symbol> tokens)
 {
     require_auth( owner );
     auto conf = _conf();
@@ -294,31 +232,11 @@ ACTION xdaoinfo::delamcparam(const name& owner, const name& code, set<extended_s
     // amc_info_t amcinfo(code);
     // CHECKC( !_db.get(amcinfo) ,info_err::RECORD_EXITS, "record exits");
 
-    for(set<extended_symbol>::iterator token_iter=tokens.begin();token_iter!=tokens.end();token_iter++){
-        detail.amc_info.tokens.erase(*token_iter);
+    for(vector<extended_symbol>::iterator token_iter=tokens.begin();token_iter!=tokens.end();token_iter++){
+        detail.amc_info.tokens.erase(token_iter);
     }
     _db.set( detail, _self);
 
-}
-
-ACTION xdaoinfo::delevmparam(const name& owner, const name& code, set<evm_symbol> tokens)
-{
-    require_auth( owner );
-    auto conf = _conf();
-    details_t detail(code);
-    CHECKC( _db.get(detail) ,info_err::RECORD_NOT_FOUND, "record not found");
-    CHECKC( detail.creator == owner, info_err::PERMISSION_DENIED, "only the creator can operate" );
-    CHECKC( conf.status != conf_status::MAINTAIN, info_err::NOT_AVAILABLE, "under maintenance" );
-    CHECKC( detail.status == info_status::RUNNING, info_err::NOT_AVAILABLE, "under maintenance" );
-
-    // evm_info_t evminfo(code);
-    // CHECKC( !_db.get(evminfo) ,info_err::RECORD_EXITS, "record exits");
-
-    for( set<evm_symbol>::iterator token_iter = tokens.begin(); token_iter!=tokens.end(); token_iter++ ){
-        detail.evm_info.evmtokens.erase(*token_iter);
-    }
-
-    _db.set(detail, _self);
 }
 
 ACTION xdaoinfo::updatestatus(const name& code, const bool& isenable)
@@ -329,12 +247,7 @@ ACTION xdaoinfo::updatestatus(const name& code, const bool& isenable)
     details_t detail(code);
     CHECKC( _db.get(detail) ,info_err::RECORD_NOT_FOUND, "record not found");
 
-    if(isenable){
-        detail.status = info_status::RUNNING;
-    }else{
-        detail.status = info_status::BLOCK;
-    }
-
+    detail.status = isenable ? info_status::RUNNING : info_status::BLOCK;
     _db.set(detail, _self);
 
 }
@@ -346,6 +259,33 @@ void xdaoinfo::recycledb(uint32_t max_rows) {
     for (size_t count = 0; count < max_rows && detail_itr != details_tbl.end(); count++) {
         detail_itr = details_tbl.erase(detail_itr);
     }
+}
+
+ACTION xdaoinfo::createtoken(const name& code, const name& owner, const uint16_t& taketranratio, 
+                            const uint16_t& takegasratio, const string& fullname, const asset& maximum_supply)
+{
+    auto conf = _conf();
+    require_auth( owner );
+
+    symbol_code supply_code = maximum_supply.symbol.code();
+    CHECKC( supply_code.length() > 3, info_err::NO_AUTH, "cannot create limited token" )
+    CHECKC( maximum_supply.amount > 0, info_err::NOT_POSITIVE, "not positive quantity:" + maximum_supply.to_string() )
+    CHECKC( 0 == conf.limited_symbols.count(supply_code) ,info_err::NOT_ALLOW, "token not allowed to create" );
+
+    stats statstable( XDAO_TOKEN, supply_code.raw() );
+    CHECKC( statstable.find(supply_code.raw()) == statstable.end(), info_err::CODE_REPEAT, "token already exist")
+    CHECKC( fullname.size() <= 20, info_err::SIZE_TOO_MUCH, "fullname has more than 20 bytes")
+
+    details_t detail(code);
+    CHECKC( _db.get(detail) ,info_err::RECORD_NOT_FOUND, "record not found" );
+    CHECKC( detail.creator == owner ,info_err::PERMISSION_DENIED, "only the creator can operate" );
+    CHECKC((detail.amc_info.tokens.size()+1) <= conf.amc_token_seats_max, info_err::SIZE_TOO_MUCH, "token size more than limit" );
+
+    XTOKEN_CREATE_TOKEN(XDAO_TOKEN, owner, maximum_supply, taketranratio, takegasratio, fullname)
+
+    detail.amc_info.tokens.push_back(extended_symbol(maximum_supply.symbol, XDAO_TOKEN)); 
+    _db.set(detail, _self);
+
 }
 
 const xdaoinfo::conf_t& xdaoinfo::_conf() {

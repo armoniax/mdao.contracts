@@ -1,4 +1,4 @@
-#include "xdaostg/xdaostg.hpp"
+#include "xdao.stg/xdao.stg.hpp"
 #include "thirdparty/utils.hpp"
 
 using namespace xdao;
