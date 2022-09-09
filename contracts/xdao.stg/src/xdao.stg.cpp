@@ -5,7 +5,6 @@ using namespace xdao;
 using namespace picomath;
 
 void strategy::create( const name& creator, 
-            const name& type, 
             const string& stg_name, 
             const string& stg_algo,
             const asset& require_apl,
@@ -22,20 +21,11 @@ void strategy::create( const name& creator,
     auto strategy           = strategy_t(pid);
     strategy.id             = pid;
     strategy.creator        = creator;
-    strategy.type           = type;
     strategy.stg_name       = stg_name;
     strategy.stg_algo       = stg_algo;
     strategy.require_apl    = require_apl;
     strategy.status         = strategy_status::testing;
     strategy.created_at     = current_time_point();
-
-
-    if(type != strategy_type::unlimited){
-        CHECKC( is_account( ref_contract ), err::ACCOUNT_INVALID, "Contract account invalid" )
-        CHECKC( token::get_supply( ref_contract, require_symbol_code).amount>0, err::SYMBOL_MISMATCH, "cannot find valid token in "+ref_contract.to_string() );
-        strategy.ref_contract           = ref_contract;
-        strategy.require_symbol_code    = require_symbol_code;
-    }
 
     _db.set( strategy, creator );
 }
@@ -57,6 +47,7 @@ void strategy::setalgo( const name& creator,
 
 void strategy::verify( const name& creator,
                 const uint64_t& stg_id, 
+                const uint64_t& value,
                 const name& account,
                 const uint64_t& respect_weight ){
     require_auth( creator );
@@ -68,7 +59,7 @@ void strategy::verify( const name& creator,
     CHECKC( _db.get( stg ), err::RECORD_NOT_FOUND, "strategy not found: " + to_string( stg_id ) )
     CHECKC( stg.status != strategy_status::published, err::NO_AUTH, "cannot verify published strategy" )
 
-    int32_t weight = _cal_stg_weight( stg, account );
+    int32_t weight = cal_weight( get_self(), value, account , stg_id);
     CHECKC( weight == respect_weight, err::UNRESPECT_RESULT, "algo result weight is: "+to_string(weight) )
 
     stg.status = strategy_status::tested;
