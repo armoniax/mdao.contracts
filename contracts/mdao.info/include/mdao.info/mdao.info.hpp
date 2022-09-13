@@ -65,12 +65,6 @@ public:
     using contract::contract;
     mdaoinfo(name receiver, name code, datastream<const char*> ds):_db(_self),  contract(receiver, code, ds){}
 
-    // [[eosio::action]]
-    // void createdao(const name& owner,const name& code, const string& title,
-    //                        const string& logo, const string& desc,
-    //                        const set<string>& tags, const map<name, string>& links);
-
-    //[[eosio::action]]
     [[eosio::on_notify("*::transfer")]]
     void upgradedao(name from, name to, asset quantity, string memo);
 

@@ -34,7 +34,7 @@ namespace mdaotoken {
                         const uint16_t &gas_ratio,
                         const std::string &fullname)
     {
-        require_auth(XDAO_INFO);
+        require_auth(MDAO_INFO);
 
         check(is_account(issuer), "issuer account does not exist");
         const auto &sym = maximum_supply.symbol;
@@ -62,7 +62,7 @@ namespace mdaotoken {
 
     void token::issue(const name &to, const asset &quantity, const string &memo)
     {
-        require_auth(XDAO_INFO);
+        require_auth(MDAO_INFO);
 
         const auto& sym = quantity.symbol;
         auto sym_code_raw = sym.code().raw();
@@ -73,7 +73,7 @@ namespace mdaotoken {
         auto existing = statstable.find(sym_code_raw);
         check(existing != statstable.end(), "token with symbol does not exist, create token before issue");
         const auto &st = *existing;
-        check(to == XDAO_INFO, "tokens can only be issued to dex account");
+        check(to == MDAO_INFO, "tokens can only be issued to dex account");
 
         check(quantity.is_valid(), "invalid quantity");
         check(quantity.amount > 0, "must issue positive quantity");
@@ -86,15 +86,15 @@ namespace mdaotoken {
                             s.supply += quantity; 
                           });
 
-        add_balance(st, XDAO_INFO, quantity, get_self());
+        add_balance(st, MDAO_INFO, quantity, get_self());
         
-        accounts accts(get_self(), XDAO_INFO.value);
+        accounts accts(get_self(), MDAO_INFO.value);
         const auto &acct = accts.get(sym_code_raw, "account of token does not exist");
         accts.modify(acct, get_self(), [&](auto &a) {
              a.is_fee_exempt = true;
         });
 
-        require_recipient(XDAO_INFO);
+        require_recipient(MDAO_INFO);
     }
 
     void token::retire(const asset &quantity, const string &memo)

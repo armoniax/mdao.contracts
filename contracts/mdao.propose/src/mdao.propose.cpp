@@ -1,15 +1,15 @@
-#include <xdao.propose/xdao.propose.hpp>
-#include <xdao.info/xdao.info.db.hpp>
-#include <xdao.gov/xdao.gov.db.hpp>
-#include <xdao.stg/xdao.stg.hpp>
+#include <mdao.propose/mdao.propose.hpp>
+#include <mdao.info/mdao.info.db.hpp>
+#include <mdao.gov/mdao.gov.db.hpp>
+#include <mdao.stg/mdao.stg.hpp>
 #include <thirdparty/utils.hpp>
 #include <set>
 
-ACTION xdaopropose::create(const name& creator,const string& name, const string& desc,
+ACTION mdaopropose::create(const name& creator,const string& name, const string& desc,
                             const uint64_t& stgid, const uint32_t& votes)
 {
     auto conf = _conf();
-    require_auth( conf.managers[manager::GOV] );
+    require_auth( conf.managers[manager_type::GOV] );
     
     propose_t::idx_t proposes(_self, _self.value);
     auto id = proposes.available_primary_key();
@@ -27,7 +27,7 @@ ACTION xdaopropose::create(const name& creator,const string& name, const string&
 
 }
 
-ACTION xdaopropose::cancel(const name& owner, const uint64_t& proposeid)
+ACTION mdaopropose::cancel(const name& owner, const uint64_t& proposeid)
 {
     require_auth( owner );
 
@@ -42,7 +42,7 @@ ACTION xdaopropose::cancel(const name& owner, const uint64_t& proposeid)
     _db.set(propose, _self);
 }
 
-ACTION xdaopropose::addplan( const name& owner, const uint64_t& proposeid, const string& title )
+ACTION mdaopropose::addplan( const name& owner, const uint64_t& proposeid, const string& title )
 {
     require_auth( owner );
 
@@ -62,7 +62,7 @@ ACTION xdaopropose::addplan( const name& owner, const uint64_t& proposeid, const
 
 }
 
-ACTION xdaopropose::start(const name& owner, const uint64_t& proposeid)
+ACTION mdaopropose::start(const name& owner, const uint64_t& proposeid)
 {
     require_auth( owner );
 
@@ -80,10 +80,10 @@ ACTION xdaopropose::start(const name& owner, const uint64_t& proposeid)
 
 }
 
-ACTION xdaopropose::excute(const name& owner, const uint64_t& proposeid)
+ACTION mdaopropose::excute(const name& owner, const uint64_t& proposeid)
 {
     auto conf = _conf();
-    require_auth( conf.managers[manager::GOV] );
+    require_auth( conf.managers[manager_type::GOV] );
 
     CHECKC( conf.status != conf_status::MAINTAIN, propose_err::NOT_AVAILABLE, "under maintenance" );
 
@@ -98,7 +98,7 @@ ACTION xdaopropose::excute(const name& owner, const uint64_t& proposeid)
     _db.set(propose, _self);
 }
 
-ACTION xdaopropose::votefor(const name& voter, const uint64_t& proposeid, const uint32_t optid)
+ACTION mdaopropose::votefor(const name& voter, const uint64_t& proposeid, const uint32_t optid)
 {
     require_auth( voter );
 
@@ -113,7 +113,7 @@ ACTION xdaopropose::votefor(const name& voter, const uint64_t& proposeid, const 
     uint128_t union_id = get_union_id(voter,proposeid);
     CHECKC( vote_index.find(union_id) == vote_index.end() ,propose_err::VOTED, "account have voted" );
 
-    int stg_weight = xdao::strategy::cal_stg_weight(XDAO_STG, voter, propose.vote_stgid);
+    int stg_weight = mdao::strategy::cal_weight(MDAO_STG, 0, voter, propose.vote_stgid);
     CHECKC( stg_weight > 0, propose_err::INSUFFICIENT_VOTES, "insufficient votes" );
 
     auto id = votes.available_primary_key();
@@ -134,7 +134,7 @@ ACTION xdaopropose::votefor(const name& voter, const uint64_t& proposeid, const 
     _db.set(propose, _self);
 }
 
-ACTION xdaopropose::setaction(const name& owner, const uint64_t& proposeid,
+ACTION mdaopropose::setaction(const name& owner, const uint64_t& proposeid,
                                 const uint32_t& optid,  const name& action_name,
                                 const name& action_account, const std::vector<char>& packed_action_data)
 {
@@ -182,14 +182,14 @@ ACTION xdaopropose::setaction(const name& owner, const uint64_t& proposeid,
     _db.set(propose, _self);
 }
 
-void xdaopropose::_check_proposal_params(const action_data_variant& data_var,  const name& action_name, const name& action_account)
+void mdaopropose::_check_proposal_params(const action_data_variant& data_var,  const name& action_name, const name& action_account)
 {
 
     switch (action_name.value){
         case proposal_action_type::updatedao.value:{
             updatedao_data data = std::get<updatedao_data>(data_var);
 
-            details_t::idx_t details(XDAO_INFO, XDAO_INFO.value);
+            details_t::idx_t details(MDAO_INFO, MDAO_INFO.value);
             const auto detail = details.find(data.code.value);
             CHECKC(detail != details.end(), propose_err::RECORD_NOT_FOUND, "record not found");
 
@@ -208,7 +208,7 @@ void xdaopropose::_check_proposal_params(const action_data_variant& data_var,  c
         case proposal_action_type::setpropstg.value:{
             setpropstg_data data = std::get<setpropstg_data>(data_var);
 
-            gov_t::idx_t govs(XDAO_GOV, XDAO_GOV.value);
+            gov_t::idx_t govs(MDAO_GOV, MDAO_GOV.value);
             const auto gov = govs.find(data.daocode.value);
             CHECKC(gov != govs.end(), propose_err::RECORD_NOT_FOUND, "record not found");
 
@@ -223,7 +223,7 @@ void xdaopropose::_check_proposal_params(const action_data_variant& data_var,  c
             }
 
             if(!data.proposestg.empty()){
-                strategy_t::idx_t stg(XDAO_STG, XDAO_STG.value);
+                strategy_t::idx_t stg(MDAO_STG, MDAO_STG.value);
                 for( set<uint64_t>::iterator proposestg_iter = data.proposestg.begin(); proposestg_iter != data.proposestg.end(); proposestg_iter++ ){
                     CHECKC(stg.find(*proposestg_iter) != stg.end(), propose_err::STRATEGY_NOT_FOUND, "strategy not found:"+to_string(*proposestg_iter) );
                 }
@@ -239,7 +239,7 @@ void xdaopropose::_check_proposal_params(const action_data_variant& data_var,  c
     }
 }
 
-void xdaopropose::recycledb(uint32_t max_rows) {
+void mdaopropose::recycledb(uint32_t max_rows) {
     require_auth( _self );
     propose_t::idx_t propose_tbl(_self, _self.value);
     auto propose_itr = propose_tbl.begin();
@@ -248,9 +248,9 @@ void xdaopropose::recycledb(uint32_t max_rows) {
     }
 }
 
-const xdaopropose::conf_t& xdaopropose::_conf() {
+const mdaopropose::conf_t& mdaopropose::_conf() {
     if (!_conf_ptr) {
-        _conf_tbl_ptr = make_unique<conf_table_t>(XDAO_CONF, XDAO_CONF.value);
+        _conf_tbl_ptr = make_unique<conf_table_t>(MDAO_CONF, MDAO_CONF.value);
         CHECKC(_conf_tbl_ptr->exists(), propose_err::SYSTEM_ERROR, "conf table not existed in contract" );
         _conf_ptr = make_unique<conf_t>(_conf_tbl_ptr->get());
     }

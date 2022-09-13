@@ -1,17 +1,17 @@
-add_contract(xdaoinfotest xdao.info ${CMAKE_CURRENT_SOURCE_DIR}/src/xdao.info.cpp)
+add_contract(mdaoinfotest mdao.info ${CMAKE_CURRENT_SOURCE_DIR}/src/mdao.info.cpp)
 
-target_include_directories(xdao.info
+target_include_directories(mdao.info
    PUBLIC
    ${CMAKE_CURRENT_SOURCE_DIR}/include
-   ${CMAKE_CURRENT_SOURCE_DIR}/include/xdao.info
-   ${CMAKE_CURRENT_SOURCE_DIR}/../xdao.stg/include
-   ${CMAKE_CURRENT_SOURCE_DIR}/../xdao.conf/include
-   ${CMAKE_CURRENT_SOURCE_DIR}/../xdao.gov/include
-   ${CMAKE_CURRENT_SOURCE_DIR}/../xdao.token/include
+   ${CMAKE_CURRENT_SOURCE_DIR}/include/mdao.info
+   ${CMAKE_CURRENT_SOURCE_DIR}/../mdao.stg/include
+   ${CMAKE_CURRENT_SOURCE_DIR}/../mdao.conf/include
+   ${CMAKE_CURRENT_SOURCE_DIR}/../mdao.gov/include
+   ${CMAKE_CURRENT_SOURCE_DIR}/../mdao.token/include
 
 )
-set_target_properties(xdao.info
+set_target_properties(mdao.info
    PROPERTIES
    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
 
-target_compile_options( xdao.info PUBLIC -R${CMAKE_CURRENT_SOURCE_DIR}/ricardian -R${CMAKE_CURRENT_BINARY_DIR}/ricardian )
+target_compile_options( mdao.info PUBLIC -R${CMAKE_CURRENT_SOURCE_DIR}/ricardian -R${CMAKE_CURRENT_BINARY_DIR}/ricardian )

@@ -20,13 +20,13 @@ using namespace eosio;
 static constexpr symbol AMAX_SYMBOL            = SYMBOL("AMAX", 8);
 
 static constexpr name AMAX_TOKEN{"amax.token"_n};
-static constexpr name XDAO_INFO{"mdaoinfotest"_n};
-static constexpr name XDAO_CONF{"mdaoconftest"_n};
-static constexpr name XDAO_STG{"mdao.stg"_n};
-static constexpr name XDAO_GOV{"mdao.gov"_n};
-static constexpr name XDAO_WALLET{"mdao.wallet"_n};
-static constexpr name XDAO_TOKEN{"mdaotoken111"_n};
-static constexpr name XDAO_PROPOSE{"mdaopropose"_n};
+static constexpr name MDAO_INFO{"mdaoinfotest"_n};
+static constexpr name MDAO_CONF{"mdaoconftest"_n};
+static constexpr name MDAO_STG{"mdao.stg"_n};
+static constexpr name MDAO_GOV{"mdao.gov"_n};
+static constexpr name MDAO_WALLET{"mdao.wallet"_n};
+static constexpr name MDAO_TOKEN{"mdaotoken111"_n};
+static constexpr name MDAO_PROPOSE{"mdaopropose"_n};
 
 static constexpr name AMAX_MULSIGN{"amax.mulsign"_n};
 
@@ -102,12 +102,12 @@ struct [[eosio::table("global"), eosio::contract("mdaoconftest")]] conf_global_t
     asset token_create_fee = asset(1'0000'0000, AMAX_SYMBOL);
 
     map<name, name>   managers {
-        { manager_type::INFO, XDAO_INFO },
-        { manager_type::STRATEGY, XDAO_STG },
-        { manager_type::WALLET, XDAO_WALLET },
-        { manager_type::TOKEN, XDAO_TOKEN },
-        { manager_type::PROPOSE, XDAO_PROPOSE },
-        { manager_type::GOV, XDAO_GOV },
+        { manager_type::INFO, MDAO_INFO },
+        { manager_type::STRATEGY, MDAO_STG },
+        { manager_type::WALLET, MDAO_WALLET },
+        { manager_type::TOKEN, MDAO_TOKEN },
+        { manager_type::PROPOSE, MDAO_PROPOSE },
+        { manager_type::GOV, MDAO_GOV },
 
     };
 

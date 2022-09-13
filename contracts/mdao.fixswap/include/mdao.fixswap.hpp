@@ -4,14 +4,14 @@
 #include <eosio/eosio.hpp>
 #include <string>
 #include <algorithm>
-#include "xdao.fixswapdb.hpp"
+#include "mdao.fixswapdb.hpp"
 #include <thirdparty/utils.hpp>
 #include <eosio.token/eosio.token.hpp>
 using namespace std;
 using namespace eosio;
 using namespace wasm::db;
 
-namespace xdao
+namespace mdao
 {
 using std::pair;
 using std::string;

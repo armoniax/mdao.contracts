@@ -13,15 +13,6 @@ using namespace wasm::db;
 using namespace mdao;
 using namespace std;
 
-// static constexpr symbol   AM_SYMBOL = symbol(symbol_code("AMAX"), 8);
-
-// static constexpr name AMAX_TOKEN{"amax.token"_n};
-// static constexpr name XDAO_CONF{"mdao.conf"_n};
-// static constexpr name XDAO_STG{"mdao.stg"_n};
-// static constexpr name XDAO_GOV{"mdao.gov"_n};
-// static constexpr name XDAO_VOTE{"mdao.vote"_n};
-// static constexpr name AMAX_MULSIGN{"amax.mulsign"_n};
-
 namespace propose_status {
     static constexpr name CREATED    = "create"_n;
     static constexpr name RUNNING    = "running"_n;

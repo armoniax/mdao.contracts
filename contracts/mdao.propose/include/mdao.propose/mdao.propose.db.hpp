@@ -7,12 +7,12 @@
 #include <eosio/action.hpp>
 #include <map>
 
-namespace xdao {
+namespace mdao {
 
 using namespace std;
 using namespace eosio;
 
-#define TG_TBL [[eosio::table, eosio::contract("xdao.propose")]]
+#define TG_TBL [[eosio::table, eosio::contract("mdao.propose")]]
 
 static uint128_t get_union_id(const name& account, const uint64_t& proposal_id){
     return ( (uint128_t)account.value ) << 64 | proposal_id;

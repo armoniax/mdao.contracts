@@ -4,7 +4,7 @@
 
 #include "picomath.hpp"
 #include "thirdparty/utils.hpp"
-#include "xdao.stgdb.hpp"
+#include "mdao.stgdb.hpp"
 #include "eosio.token/eosio.token.hpp"
 #include "aplink.token/aplink.token.hpp"
 
@@ -13,8 +13,8 @@ using namespace eosio;
 using namespace wasm::db;
 using namespace picomath;
 
-namespace xdao {
-class [[eosio::contract("xdaostg")]] strategy : public contract {
+namespace mdao {
+class [[eosio::contract("mdao.stg")]] strategy : public contract {
 private:
     dbc                 _db;
     global_singleton    _global;
@@ -84,6 +84,6 @@ public:
          CHECKC(result.isOk(), err::PARAM_ERROR, result.getError());
          int32_t weight = int32_t(floor(result.getResult()));
          return weight;
-      }
+   }
 };
 }

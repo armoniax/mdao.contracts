@@ -1,12 +1,12 @@
-#include <xdao.info/xdao.info.hpp>
-#include <xdao.stg/xdao.stg.hpp>
-#include <xdao.token/xdao.token.hpp>
+#include <mdao.info/mdao.info.hpp>
+#include <mdao.stg/mdao.stg.hpp>
+#include <mdao.token/mdao.token.hpp>
 #include <set>
 
 #define AMAX_TRANSFER(bank, to, quantity, memo) \
 { action(permission_level{get_self(), "active"_n }, bank, "transfer"_n, std::make_tuple( _self, to, quantity, memo )).send(); }
 
-ACTION xdaoinfo::upgradedao(name from, name to, asset quantity, string memo)
+ACTION mdaoinfo::upgradedao(name from, name to, asset quantity, string memo)
 {   if (from == _self || to != _self) return;
     auto conf = _conf();
     CHECKC( quantity == conf.dao_upgrade_fee, info_err::INCORRECT_FEE, "incorrect handling fee" );
@@ -37,7 +37,7 @@ ACTION xdaoinfo::upgradedao(name from, name to, asset quantity, string memo)
     _db.set(detail, _self);
 }
 
-ACTION xdaoinfo::updatedao(const name& owner, const name& code, const string& logo, 
+ACTION mdaoinfo::updatedao(const name& owner, const name& code, const string& logo, 
                             const string& desc,const map<name, string>& links,
                             const string& symcode, string symcontract, const string& groupid)
 {   
@@ -77,7 +77,7 @@ ACTION xdaoinfo::updatedao(const name& owner, const name& code, const string& lo
     _db.set(detail, _self);
 }
 
-ACTION xdaoinfo::setstrategy(const name& owner, const name& code, const name& stgtype, const uint64_t& stgid)
+ACTION mdaoinfo::setstrategy(const name& owner, const name& code, const name& stgtype, const uint64_t& stgid)
 {
     require_auth( owner );
     auto conf = _conf();
@@ -88,14 +88,14 @@ ACTION xdaoinfo::setstrategy(const name& owner, const name& code, const name& st
     CHECKC( conf.status != conf_status::MAINTAIN, info_err::NOT_AVAILABLE, "under maintenance" );
     CHECKC( detail.status == info_status::RUNNING, info_err::NOT_AVAILABLE, "under maintenance" );
 
-    strategy_t::idx_t stg(XDAO_STG, XDAO_STG.value);
+    strategy_t::idx_t stg(MDAO_STG, MDAO_STG.value);
     CHECKC(stg.find(stgid) != stg.end(), info_err::STRATEGY_NOT_FOUND, "strategy not found");
     detail.strategys[stgtype] = stgid;
 
     _db.set(detail, _self);
 }
 
-ACTION xdaoinfo::binddapps(const name& owner, const name& code, const set<app_info>& dapps)
+ACTION mdaoinfo::binddapps(const name& owner, const name& code, const set<app_info>& dapps)
 {
     require_auth( owner );
     auto conf = _conf();
@@ -115,7 +115,7 @@ ACTION xdaoinfo::binddapps(const name& owner, const name& code, const set<app_in
 
 }
 
-ACTION xdaoinfo::bindgov(const name& owner, const name& code, const uint64_t& govid)
+ACTION mdaoinfo::bindgov(const name& owner, const name& code, const uint64_t& govid)
 {
     CHECKC( false, info_err::NOT_AVAILABLE, "under maintenance" );
 
@@ -128,7 +128,7 @@ ACTION xdaoinfo::bindgov(const name& owner, const name& code, const uint64_t& go
     CHECKC( conf.status != conf_status::MAINTAIN, info_err::NOT_AVAILABLE, "under maintenance" );
     CHECKC( detail.status == info_status::RUNNING, info_err::NOT_AVAILABLE, "under maintenance" );
 
-    gov_t::idx_t gov(XDAO_GOV, XDAO_GOV.value);
+    gov_t::idx_t gov(MDAO_GOV, MDAO_GOV.value);
     CHECKC(gov.find(govid) != gov.end(), info_err::GOVERNANCE_NOT_FOUND, "governance not found");
 
 
@@ -136,7 +136,7 @@ ACTION xdaoinfo::bindgov(const name& owner, const name& code, const uint64_t& go
        
 }
 
-ACTION xdaoinfo::bindtoken(const name& owner, const name& code, const extended_symbol& token)
+ACTION mdaoinfo::bindtoken(const name& owner, const name& code, const extended_symbol& token)
 {
     require_auth( owner );
     auto conf = _conf();
@@ -151,7 +151,7 @@ ACTION xdaoinfo::bindtoken(const name& owner, const name& code, const extended_s
     detail.tokens.push_back(token); 
 }
 
-ACTION xdaoinfo::bindwal(const name& owner, const name& code, const uint64_t& walletid)
+ACTION mdaoinfo::bindwal(const name& owner, const name& code, const uint64_t& walletid)
 {
     CHECKC( false, info_err::NOT_AVAILABLE, "under maintenance" );
 
@@ -168,7 +168,7 @@ ACTION xdaoinfo::bindwal(const name& owner, const name& code, const uint64_t& wa
 
 }
 
-ACTION xdaoinfo::delparam(const name& owner, const name& code, vector<extended_symbol> tokens)
+ACTION mdaoinfo::delparam(const name& owner, const name& code, vector<extended_symbol> tokens)
 {
     require_auth( owner );
     auto conf = _conf();
@@ -186,7 +186,7 @@ ACTION xdaoinfo::delparam(const name& owner, const name& code, vector<extended_s
 
 }
 
-ACTION xdaoinfo::updatestatus(const name& code, const bool& isenable)
+ACTION mdaoinfo::updatestatus(const name& code, const bool& isenable)
 {
     auto conf = _conf();
     require_auth( conf.managers[manager_type::INFO] );
@@ -199,7 +199,7 @@ ACTION xdaoinfo::updatestatus(const name& code, const bool& isenable)
 
 }
 
-void xdaoinfo::recycledb(uint32_t max_rows) {
+void mdaoinfo::recycledb(uint32_t max_rows) {
     require_auth( _self );
     details_t::idx_t details_tbl(_self, _self.value);
     auto detail_itr = details_tbl.begin();
@@ -208,7 +208,7 @@ void xdaoinfo::recycledb(uint32_t max_rows) {
     }
 }
 
-ACTION xdaoinfo::createtoken(const name& code, const name& owner, const uint16_t& taketranratio, 
+ACTION mdaoinfo::createtoken(const name& code, const name& owner, const uint16_t& taketranratio, 
                             const uint16_t& takegasratio, const string& fullname, const asset& maximum_supply)
 {
     CHECKC( false, info_err::NOT_AVAILABLE, "under maintenance" );
@@ -222,7 +222,7 @@ ACTION xdaoinfo::createtoken(const name& code, const name& owner, const uint16_t
     CHECKC( supply_code.length() > 3, info_err::NO_AUTH, "cannot create limited token" )
     CHECKC( !conf.limited_symbols.count(supply_code) ,info_err::NOT_ALLOW, "token not allowed to create" );
 
-    stats statstable( XDAO_TOKEN, supply_code.raw() );
+    stats statstable( MDAO_TOKEN, supply_code.raw() );
     CHECKC( statstable.find(supply_code.raw()) == statstable.end(), info_err::CODE_REPEAT, "token already exist")
 
     details_t detail(code);
@@ -230,16 +230,16 @@ ACTION xdaoinfo::createtoken(const name& code, const name& owner, const uint16_t
     CHECKC( detail.creator == owner ,info_err::PERMISSION_DENIED, "only the creator can operate" );
     CHECKC((detail.tokens.size()+1) <= conf.token_seats_max, info_err::SIZE_TOO_MUCH, "token size more than limit" );
 
-    XTOKEN_CREATE_TOKEN(XDAO_TOKEN, owner, maximum_supply, taketranratio, takegasratio, fullname)
+    XTOKEN_CREATE_TOKEN(MDAO_TOKEN, owner, maximum_supply, taketranratio, takegasratio, fullname)
 
-    detail.tokens.push_back(extended_symbol(maximum_supply.symbol, XDAO_TOKEN)); 
+    detail.tokens.push_back(extended_symbol(maximum_supply.symbol, MDAO_TOKEN)); 
     _db.set(detail, _self);
 
 }
 
-const xdaoinfo::conf_t& xdaoinfo::_conf() {
+const mdaoinfo::conf_t& mdaoinfo::_conf() {
     if (!_conf_ptr) {
-        _conf_tbl_ptr = make_unique<conf_table_t>(XDAO_CONF, XDAO_CONF.value);
+        _conf_tbl_ptr = make_unique<conf_table_t>(MDAO_CONF, MDAO_CONF.value);
         CHECKC(_conf_tbl_ptr->exists(), info_err::SYSTEM_ERROR, "conf table not existed in contract" );
         _conf_ptr = make_unique<conf_t>(_conf_tbl_ptr->get());
     }

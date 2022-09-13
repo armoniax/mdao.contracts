@@ -1,7 +1,7 @@
-#include "xdao.stg/xdao.stg.hpp"
+#include "mdao.stg/mdao.stg.hpp"
 #include "thirdparty/utils.hpp"
 
-using namespace xdao;
+using namespace mdao;
 using namespace picomath;
 
 void strategy::create( const name& creator, 

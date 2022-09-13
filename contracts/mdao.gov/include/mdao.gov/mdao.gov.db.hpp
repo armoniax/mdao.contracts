@@ -11,12 +11,12 @@
 using namespace eosio;
 
 
-namespace xdao {
+namespace mdao {
 
 using namespace std;
 using namespace eosio;
 
-#define GOV_TG_TBL [[eosio::table, eosio::contract("xdao.gov")]]
+#define GOV_TG_TBL [[eosio::table, eosio::contract("mdao.gov")]]
 
 struct GOV_TG_TBL gov_t {
     name            dao_name;

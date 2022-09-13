@@ -16,10 +16,10 @@ static constexpr symbol   AM_SYMBOL = symbol(symbol_code("AMAX"), 8);
 static constexpr uint64_t PROPOSE_STG_PERMISSION_AGING = 24 * 3600;
 
 // static constexpr name AMAX_TOKEN{"amax.token"_n};
-// static constexpr name XDAO_CONF{"mdao.conf"_n};
-// static constexpr name XDAO_STG{"mdao.stg"_n};
-// static constexpr name XDAO_GOV{"mdao.gov"_n};
-// static constexpr name XDAO_VOTE{"mdao.vote"_n};
+// static constexpr name MDAO_CONF{"mdao.conf"_n};
+// static constexpr name MDAO_STG{"mdao.stg"_n};
+// static constexpr name MDAO_GOV{"mdao.gov"_n};
+// static constexpr name MDAO_VOTE{"mdao.vote"_n};
 // static constexpr name AMAX_MULSIGN{"amax.mulsign"_n};
 
 namespace gov_status {
