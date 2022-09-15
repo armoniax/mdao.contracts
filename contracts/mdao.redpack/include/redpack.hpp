@@ -28,7 +28,7 @@ enum class redpack_type: uint8_t {
    MEAN         = 1
 };
 
-class [[eosio::contract("mdaoredpackx")]] redpack: public eosio::contract {
+class [[eosio::contract("mdao.redpack")]] redpack: public eosio::contract {
 private:
     dbc                 _db;
     global_singleton    _global;
