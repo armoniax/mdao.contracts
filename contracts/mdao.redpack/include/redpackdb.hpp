@@ -51,7 +51,7 @@ namespace redpack_status {
 };
 
 uint128_t get_unionid( const name& rec, uint64_t packid ) {
-     return ( (uint128_t) rec.value << 64 ) | (packid & 0x00000000FFFFFFFF);
+     return ( (uint128_t) rec.value << 64 ) | packid;
 }
 
 struct TG_TBL redpack_t {
