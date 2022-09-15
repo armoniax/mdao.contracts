@@ -32,13 +32,18 @@ ACTION mdaoconf::setmanager( const name& manage_type, const name& manager )
 ACTION mdaoconf::setblacksym( const symbol_code& code, const bool& is_add )
 {
     require_auth( _self );
-    _gstate.black_symbols.insert(code);
+    if(is_add){
+        _gstate.black_symbols.insert(code);
+    }else{
+        _gstate.black_symbols.erase(code);
+    }
+    
 }
 
-ACTION mdaoconf::setsystem( const name& token_contract, const name& ntoken_contract, uint16_t stake_delay_days )
+ACTION mdaoconf::setsystem( const name& token_contract, const name& ntoken_contract, uint16_t stake_period_days )
 {    
     require_auth( _self );
     if(token_contract.length() != 0)    _gstate.token_contracts.insert(token_contract);
     if(ntoken_contract.length() != 0)   _gstate.ntoken_contracts.insert(ntoken_contract);
-    if(stake_delay_days != 0)           _gstate.stake_period_days = stake_period_days;
+    if(stake_period_days != 0)           _gstate.stake_period_days = stake_period_days;
 }

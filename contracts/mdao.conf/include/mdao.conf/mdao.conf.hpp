@@ -30,16 +30,15 @@ public:
 
     ~mdaoconf() {
         _global.set( _gstate, get_self() );
-
     }
 
     ACTION init( const name& fee_taker, const app_info& app_info, const asset& dao_upg_fee, const name& admin, const name& status );
 
     ACTION setseat( uint16_t& dappmax );
 
-    ACTION setmansge( const name& manage_type, const name& manager );
+    ACTION setmanager( const name& manage_type, const name& manager );
 
-    ACTION setblacksym( const symbol_code& code );
+    ACTION setblacksym( const symbol_code& code, const bool& is_add  );
 
     ACTION setsystem( const name& token_contract, const name& ntoken_contract, uint16_t stake_delay_days );
 
