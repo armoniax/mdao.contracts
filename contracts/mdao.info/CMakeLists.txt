@@ -1,9 +1,8 @@
-add_contract(mdaoinfotest mdao.info ${CMAKE_CURRENT_SOURCE_DIR}/src/mdao.info.cpp)
+add_contract(mdao.info mdao.info ${CMAKE_CURRENT_SOURCE_DIR}/src/mdao.info.cpp)
 
 target_include_directories(mdao.info
    PUBLIC
    ${CMAKE_CURRENT_SOURCE_DIR}/include
-   ${CMAKE_CURRENT_SOURCE_DIR}/include/mdao.info
    ${CMAKE_CURRENT_SOURCE_DIR}/../mdao.stg/include
    ${CMAKE_CURRENT_SOURCE_DIR}/../mdao.conf/include
    ${CMAKE_CURRENT_SOURCE_DIR}/../mdao.gov/include

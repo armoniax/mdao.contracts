@@ -5,8 +5,7 @@
 #include <eosio/singleton.hpp>
 #include <eosio/time.hpp>
 #include <mdao.conf/mdao.conf.hpp>
-#include <mdao.stg/mdao.stgdb.hpp>
-#include <mdao.gov/mdao.gov.hpp>
+#include <thirdparty/wasm_db.hpp>
 #include "mdao.info.db.hpp"
 
 using namespace eosio;
@@ -49,7 +48,7 @@ enum class info_err: uint8_t {
     NOT_ALLOW           = 18
 };
 
-class [[eosio::contract("mdaoinfotest")]] mdaoinfo : public contract {
+class [[eosio::contract("mdao.info")]] mdaoinfo : public contract {
 
 using conf_t = mdao::conf_global_t;
 using conf_table_t = mdao::conf_global_singleton;
@@ -65,8 +64,8 @@ public:
     using contract::contract;
     mdaoinfo(name receiver, name code, datastream<const char*> ds):_db(_self),  contract(receiver, code, ds){}
 
-    [[eosio::on_notify("*::transfer")]]
-    void upgradedao(name from, name to, asset quantity, string memo);
+    [[eosio::on_notify("amax.token::transfer")]]
+    void onupgradedao(name from, name to, asset quantity, string memo);
 
     [[eosio::action]]
     void updatedao(const name& owner, const name& code, const string& logo, 
@@ -74,29 +73,20 @@ public:
                             const string& symcode, string symcontract, const string& groupid);
 
     [[eosio::action]]
-    void setstrategy(const name& owner, const name& code, const name& stgtype, const uint64_t& stgid);
-
-    [[eosio::action]]
     void binddapps(const name& owner, const name& code, const set<app_info>& dapps);
 
-    [[eosio::action]]
-    void bindgov(const name& owner, const name& code, const uint64_t& govid);
+    // [[eosio::action]]
+    // void bindgov(const name& owner, const name& code, const uint64_t& govid);
 
     [[eosio::action]]
     void bindtoken(const name& owner, const name& code, const extended_symbol& token);
-
-    [[eosio::action]]
-    void bindwal(const name& owner, const name& code, const uint64_t& walletid);
-
-    [[eosio::action]]
-    void delparam(const name& owner, const name& code, vector<extended_symbol> tokens);
 
     [[eosio::action]]
     void updatestatus(const name& code, const bool& isenable);
 
     ACTION recycledb(uint32_t max_rows);
 
-    [[eosio::action]]
-    void createtoken(const name& code, const name& owner, const uint16_t& taketranratio, 
-                    const uint16_t& takegasratio, const string& fullname, const asset& maximum_supply);
+    // [[eosio::action]]
+    // void createtoken(const name& code, const name& owner, const uint16_t& taketranratio, 
+    //                 const uint16_t& takegasratio, const string& fullname, const asset& maximum_supply);
 };

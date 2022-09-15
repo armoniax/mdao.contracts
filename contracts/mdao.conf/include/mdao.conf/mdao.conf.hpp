@@ -10,7 +10,7 @@
 using namespace eosio;
 using namespace mdao;
 
-class [[eosio::contract("mdaoconftest")]] mdaoconf : public contract {
+class [[eosio::contract("mdao.conf")]] mdaoconf : public contract {
 private:
     conf_global_t            _gstate;
     conf_global_singleton    _global;
@@ -33,21 +33,14 @@ public:
 
     }
 
-    [[eosio::action]]
-    void init( const name& feetaker, const app_info& appinfo, const asset& daoupgfee, const name& admin );
+    ACTION init( const name& fee_taker, const app_info& app_info, const asset& dao_upg_fee, const name& admin, const name& status );
 
-    [[eosio::action]]
-    void daoconf( const name& feetaker,const app_info& appinfo, const name& status, const asset& daoupgfee );
+    ACTION setseat( uint16_t& dappmax );
 
-    [[eosio::action]]
-    void seatconf( const uint16_t& amctokenmax, const uint16_t& evmtokenmax, uint16_t& dappmax );
+    ACTION setmansge( const name& manage_type, const name& manager );
 
-    [[eosio::action]]
-    ACTION managerconf( const name& managetype, const name& manager );
+    ACTION setblacksym( const symbol_code& code );
 
-    [[eosio::action]]
-    void setlimitcode( const symbol_code& symbolcode );
+    ACTION setsystem( const name& token_contract, const name& ntoken_contract, uint16_t stake_delay_days );
 
-    [[eosio::action]]
-    void reset();
 };

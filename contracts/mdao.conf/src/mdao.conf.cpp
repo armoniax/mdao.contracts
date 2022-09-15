@@ -1,51 +1,44 @@
 #include <mdao.conf/mdao.conf.hpp>
 
-ACTION mdaoconf::init( const name& feetaker, const app_info& appinfo, const asset& daoupgfee, const name& admin )
+ACTION mdaoconf::init( const name& fee_taker, const app_info& app_info, const asset& dao_upg_fee, const name& admin, const name& status )
 {
     require_auth( _self );
-    check( is_account(feetaker), "feetaker not exits" );
-    check(daoupgfee.symbol == AMAX_SYMBOL, "quantity symbol mismatch with daoupgfee symbol");
-    _gstate.appinfo = appinfo;
-    _gstate.fee_taker = feetaker;
-    _gstate.dao_upgrade_fee = daoupgfee;
-    _gstate.dao_admin = admin;
-
-}
-
-ACTION mdaoconf::daoconf( const name& feetaker,const app_info& appinfo, const name& status, const asset& daoupgfee )
-{
-    require_auth( _self );
-    check(  conf_status::INITIAL == status  || conf_status::RUNNING == status || conf_status::MAINTAIN == status, "status illegal" );
-    check(daoupgfee.amount > 0, "daoupgfee must positive quantity");
-    check(daoupgfee.symbol == AMAX_SYMBOL, "quantity symbol mismatch with daoupgfee symbol");
-
-    _gstate.appinfo = appinfo;
+    check( is_account(fee_taker), "feetaker not exits" );
+    check( dao_upg_fee.symbol == AMAX_SYMBOL, "quantity symbol mismatch with daoupgfee symbol" );
+    check( conf_status::INITIAL == status || conf_status::RUNNING == status || conf_status::PENDING == status, "status illegal" );
+    _gstate.appinfo = app_info;
+    _gstate.fee_taker = fee_taker;
+    _gstate.upgrade_fee = dao_upg_fee;
+    _gstate.admin = admin;
     _gstate.status = status;
-    _gstate.dao_upgrade_fee = daoupgfee;
-    _gstate.fee_taker = feetaker;
+
 }
 
-ACTION mdaoconf::seatconf( const uint16_t& amctokenmax, const uint16_t& evmtokenmax, uint16_t& dappmax )
+ACTION mdaoconf::setseat( uint16_t& dappmax )
 {
     require_auth( _self );
-    _gstate.token_seats_max = amctokenmax;
     _gstate.dapp_seats_max = dappmax;
 }
 
-ACTION mdaoconf::managerconf( const name& managetype, const name& manager )
+ACTION mdaoconf::setmanager( const name& manage_type, const name& manager )
 {
     require_auth( _self );
-    check( manager_type::INFO == managetype || manager_type::STRATEGY == managetype || manager_type::WALLET == managetype || manager_type::TOKEN == managetype, "manager illegal" );
-    _gstate.managers[managetype] = manager;
+    // check( manager_type::INFO == managetype || manager_type::STRATEGY == managetype 
+    //         || manager_type::WALLET == managetype || manager_type::TOKEN == managetype, "manager illegal" );
+    check( manager_type::INFO == manage_type, "manager illegal" );
+    _gstate.managers[manage_type] = manager;
 }
 
-ACTION mdaoconf::setlimitcode( const symbol_code& symbolcode )
+ACTION mdaoconf::setblacksym( const symbol_code& code, const bool& is_add )
 {
     require_auth( _self );
-    _gstate.limited_symbols.insert(symbolcode);
+    _gstate.black_symbols.insert(code);
 }
 
-ACTION mdaoconf::reset()
-{
+ACTION mdaoconf::setsystem( const name& token_contract, const name& ntoken_contract, uint16_t stake_delay_days )
+{    
     require_auth( _self );
+    if(token_contract.length() != 0)    _gstate.token_contracts.insert(token_contract);
+    if(ntoken_contract.length() != 0)   _gstate.ntoken_contracts.insert(ntoken_contract);
+    if(stake_delay_days != 0)           _gstate.stake_period_days = stake_period_days;
 }

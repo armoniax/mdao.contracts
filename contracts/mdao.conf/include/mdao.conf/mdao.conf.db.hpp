@@ -16,35 +16,33 @@ namespace mdao {
 using namespace std;
 using namespace eosio;
 #define SYMBOL(sym_code, precision) symbol(symbol_code(sym_code), precision)
-#define CONF_TG_TBL [[eosio::table, eosio::contract("mdaoconftest")]]
+#define CONF_TG_TBL [[eosio::table, eosio::contract("mdao.conf")]]
 static constexpr symbol AMAX_SYMBOL            = SYMBOL("AMAX", 8);
 
 static constexpr name AMAX_TOKEN{"amax.token"_n};
-static constexpr name MDAO_INFO{"mdaoinfotest"_n};
-static constexpr name MDAO_CONF{"mdaoconftest"_n};
-static constexpr name MDAO_STG{"mdao.stg"_n};
-static constexpr name MDAO_GOV{"mdao.gov"_n};
-static constexpr name MDAO_WALLET{"mdao.wallet"_n};
-static constexpr name MDAO_TOKEN{"mdaotoken111"_n};
-static constexpr name MDAO_PROPOSE{"mdaopropose"_n};
-
-static constexpr name AMAX_MULSIGN{"amax.mulsign"_n};
+static constexpr name MDAO_INFO{"mdao.info"_n};
+static constexpr name MDAO_CONF{"mdao.conf"_n};
+// static constexpr name MDAO_STG{"mdao.stg"_n};
+// static constexpr name MDAO_GOV{"mdao.gov"_n};
+// static constexpr name MDAO_WALLET{"mdao.wallet"_n};
+// static constexpr name MDAO_TOKEN{"mdaotoken111"_n};
+// static constexpr name MDAO_PROPOSE{"mdaopropose"_n};
 
 namespace conf_status {
     static constexpr name INITIAL    = "initial"_n;
     static constexpr name RUNNING    = "running"_n;
-    static constexpr name MAINTAIN   = "maintain"_n;
+    static constexpr name PENDING    = "pending"_n;
     static constexpr name CANCEL     = "cancel"_n;
 
 };
 
 namespace manager_type {
     static constexpr name INFO       = "info"_n;
-    static constexpr name STRATEGY   = "strategy"_n;
-    static constexpr name WALLET     = "wallet"_n;
-    static constexpr name TOKEN      = "token"_n;
-    static constexpr name GOV        = "gov"_n;
-    static constexpr name PROPOSE    = "propose"_n;
+    // static constexpr name STRATEGY   = "strategy"_n;
+    // static constexpr name WALLET     = "wallet"_n;
+    // static constexpr name TOKEN      = "token"_n;
+    // static constexpr name GOV        = "gov"_n;
+    // static constexpr name PROPOSE    = "propose"_n;
 
 };
 
@@ -53,7 +51,9 @@ struct app_info {
     string app_version;
     string url;
     string logo;
+
     friend bool operator < (const app_info& appinfo1, const app_info& appinfo2);
+
     EOSLIB_SERIALIZE(app_info, (app_name)(app_version)(url)(logo) )
 };
 
@@ -61,15 +61,14 @@ bool operator < (const app_info& appinfo1, const app_info& appinfo2) {
     return appinfo1.app_name < appinfo2.app_name;
 }
 
-struct [[eosio::table("global"), eosio::contract("mdaoconftest")]] conf_global_t {
+struct [[eosio::table("global"), eosio::contract("mdao.conf")]] conf_global_t {
     app_info          appinfo;
     name              status = conf_status::INITIAL;
     name              fee_taker;
-    asset             dao_upgrade_fee;
-    uint16_t          token_seats_max = 200;
-    uint16_t          dapp_seats_max = 200;
-    name              dao_admin;
-    set<symbol_code>  limited_symbols {
+    asset             upgrade_fee;
+    uint16_t          dapp_seats_max = 5;
+    name              admin;
+    set<symbol_code>  black_symbols {
         symbol_code("USDT"), symbol_code("DOGE"), symbol_code("WBTC"),
         symbol_code("SHIB"), symbol_code("AVAX"), symbol_code("LINK"),
         symbol_code("MATIC"), symbol_code("NEAR"), symbol_code("ALGO"),
@@ -96,22 +95,23 @@ struct [[eosio::table("global"), eosio::contract("mdaoconftest")]] conf_global_t
         symbol_code("TIME"), symbol_code("WICC"), symbol_code("MUSDT"),
         symbol_code("MBTC"), symbol_code("MSOL"), symbol_code("MBNB"),
         symbol_code("MBUSD"), symbol_code("MUSDC"), symbol_code("METH"),
-        symbol_code("METC")
+        symbol_code("METC"), symbol_code("AMAX"), symbol_code("APLINK")
     };//Token creation restrictions
-    
     asset token_create_fee = asset(1'0000'0000, AMAX_SYMBOL);
-
     map<name, name>   managers {
         { manager_type::INFO, MDAO_INFO },
-        { manager_type::STRATEGY, MDAO_STG },
-        { manager_type::WALLET, MDAO_WALLET },
-        { manager_type::TOKEN, MDAO_TOKEN },
-        { manager_type::PROPOSE, MDAO_PROPOSE },
-        { manager_type::GOV, MDAO_GOV },
-
+        // { manager_type::STRATEGY, MDAO_STG },
+        // { manager_type::WALLET, MDAO_WALLET },
+        // { manager_type::TOKEN, MDAO_TOKEN },
+        // { manager_type::PROPOSE, MDAO_PROPOSE },
+        // { manager_type::GOV, MDAO_GOV },
     };
+    set<name> token_contracts;
+    set<name> ntoken_contracts;
+    uint16_t  stake_period_days = 2;
 
-    EOSLIB_SERIALIZE( conf_global_t, (appinfo)(status)(fee_taker)(dao_upgrade_fee)(token_seats_max)(dapp_seats_max)(dao_admin)(limited_symbols)(token_create_fee)(managers) )
+    EOSLIB_SERIALIZE( conf_global_t, (appinfo)(status)(fee_taker)(upgrade_fee)(dapp_seats_max)
+                    (admin)(black_symbols)(token_create_fee)(managers)(token_contracts)(ntoken_contracts)(stake_period_days) )
 };
 
 

@@ -216,3 +216,19 @@ asset asset_from_string(string_view from)
 
     return asset(amount.value, sym);
 }
+
+template<typename charT>
+struct my_equal {
+    bool operator()(charT ch1, charT ch2) {
+        return std::toupper(ch1) == std::toupper(ch2);
+    }
+};
+
+template<typename T>
+int find_substr( const T& str1, const T& str2 )
+{
+    typename T::const_iterator it = std::search( str1.begin(), str1.end(), 
+        str2.begin(), str2.end(), my_equal<typename T::value_type>() );
+    if ( it != str1.end() ) return it - str1.begin();
+    else return -1; // not found
+}
