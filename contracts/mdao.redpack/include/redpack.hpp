@@ -53,6 +53,8 @@ public:
     //[[eosio::action]]
     [[eosio::on_notify("*::transfer")]] void ontransfer(name from, name to, asset quantity, string memo);
 
+    ACTION claimredpack( const name& claimer, const name& code, const string& pwhash );
+    
     [[eosio::action]] void claim( const name& claimer, const name& code, const string& pwhash );
 
     [[eosio::action]] void cancel( const name& code );

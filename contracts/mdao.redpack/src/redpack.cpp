@@ -74,6 +74,11 @@ void redpack::ontransfer( name from, name to, asset quantity, string memo )
    });
 
 }
+
+void redpack::claimredpack( const name& claimer, const name& code, const string& pwhash ) {
+    claim( claimer, code, pwhash );
+}
+
 void redpack::claim( const name& claimer, const name& code, const string& pwhash )
 {
     require_auth( _gstate.tg_admin );
