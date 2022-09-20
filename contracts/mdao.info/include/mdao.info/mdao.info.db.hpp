@@ -17,6 +17,7 @@ static constexpr uint64_t   seconds_per_day       = 24 * 3600;
 static constexpr string_view     aplink_limit          = "aplink";
 static constexpr string_view     armonia_limit         = "armonia";
 static constexpr string_view     amax_limit            = "amax";
+static constexpr string_view     meta_limit            = "meta";
 
 namespace mdao {
 

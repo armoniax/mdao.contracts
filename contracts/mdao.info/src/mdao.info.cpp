@@ -10,19 +10,27 @@ ACTION mdaoinfo::onupgradedao(name from, name to, asset quantity, string memo)
 {   if (from == _self || to != _self) return;
     auto conf = _conf();
     CHECKC( quantity >= conf.upgrade_fee, info_err::INCORRECT_FEE, "incorrect handling fee" );
+
     auto parts = split( memo, "|" );
     CHECKC( parts.size() == 4, info_err::INVALID_FORMAT, "expected format: 'code | title | desc | logo" );
-
-    bool is_not_contain_amax    = find_substr(string_view(parts[0]), amax_limit)    == -1 ? true : false;
-    bool is_not_contain_aplink  = find_substr(string_view(parts[0]), aplink_limit)  == -1 ? true : false;
-    bool is_not_contain_armonia = find_substr(string_view(parts[0]), armonia_limit) == -1 ? true : false;
-    CHECKC( (conf.admin == from)||(conf.admin != from && is_not_contain_amax && is_not_contain_aplink && is_not_contain_armonia), 
-                     info_err::INVALID_FORMAT, "code cannot include aplink,amax,armonia");
     
-    CHECKC( (string(parts[0]).size() == 12) || (conf.admin == from && string(parts[0]).size() <= 12), info_err::INVALID_FORMAT, "code length is more than 12 bytes");
-    CHECKC( string(parts[1]).size() <= 32, info_err::INVALID_FORMAT, "title length is more than 32 bytes");
-    CHECKC( string(parts[2]).size() <= 128, info_err::INVALID_FORMAT, "desc length is more than 128 bytes");
-    CHECKC( string(parts[3]).size() <= 64, info_err::INVALID_FORMAT, "logo length is more than 64 bytes");
+    string_view code = string_view(parts[0]);
+    bool is_not_contain_amax    = find_substr(code, amax_limit)    == -1 ? true : false;
+    bool is_not_contain_aplink  = find_substr(code, aplink_limit)  == -1 ? true : false;
+    bool is_not_contain_armonia = find_substr(code, armonia_limit) == -1 ? true : false;
+    bool is_not_contain_meta    = find_substr(code, meta_limit)    == -1 ? true : false;
+    CHECKC( (conf.admin == from) || (conf.admin != from && is_not_contain_amax && is_not_contain_aplink && is_not_contain_armonia && is_not_contain_meta), 
+                     info_err::INVALID_FORMAT, "code cannot include aplink,amax,armonia,meta");
+    CHECKC( (code.size() == 12) || (conf.admin == from && code.size() <= 12), info_err::INVALID_FORMAT, "code length is more than 12 bytes");
+
+    string_view title = string_view(parts[1]);
+    CHECKC( title.size() <= 32, info_err::INVALID_FORMAT, "title length is more than 32 bytes");
+
+    string_view desc = string_view(parts[2]);
+    CHECKC( desc.size() <= 128, info_err::INVALID_FORMAT, "desc length is more than 128 bytes");
+
+    string_view logo = string_view(parts[3]);
+    CHECKC( logo.size() <= 64, info_err::INVALID_FORMAT, "logo length is more than 64 bytes");
 
     AMAX_TRANSFER(AMAX_TOKEN, conf.fee_taker, quantity, string("upgrade fee collection"));
 
@@ -31,14 +39,14 @@ ACTION mdaoinfo::onupgradedao(name from, name to, asset quantity, string memo)
     checksum256 sec_index = HASH256(string(parts[1]));             
     CHECKC( info_index.find(sec_index) == info_index.end(), info_err::TITLE_REPEAT, "title already existing!" );
 
-    dao_info_t info((name(parts[0])));
+    dao_info_t info((name(code)));
     CHECKC( !_db.get(info), info_err::CODE_REPEAT, "code already existing!" );
 
     info.creator   =   from;
     info.status    =   info_status::RUNNING;
-    info.title     =   string(parts[1]);
-    info.desc      =   string(parts[2]);
-    info.logo      =   string(parts[3]);
+    info.title     =   title;
+    info.desc      =   desc;
+    info.logo      =   logo;
     info.created_at=   current_time_point();
 
     _db.set(info, _self);
@@ -83,6 +91,35 @@ ACTION mdaoinfo::updatedao(const name& owner, const name& code, const string& lo
         info.token = token;
     }
 
+    _db.set(info, _self);
+}
+
+ACTION mdaoinfo::deldao(const name& admin, const name& code)
+{   
+    require_auth( admin );
+    auto conf = _conf();      
+    CHECKC( conf.status != conf_status::PENDING, info_err::NOT_AVAILABLE, "under maintenance" );
+    CHECKC( conf.admin == admin, info_err::PERMISSION_DENIED, "only the admin can operate" );
+
+    dao_info_t info(code);
+    CHECKC( _db.get(info) ,info_err::RECORD_NOT_FOUND, "record not found" ); 
+
+    _db.del(info);
+}
+
+ACTION mdaoinfo::transferdao(const name& owner, const name& code, const name& receiver)
+{   
+    require_auth( owner );
+    auto conf = _conf();      
+    CHECKC( conf.status != conf_status::PENDING, info_err::NOT_AVAILABLE, "under maintenance" );
+    CHECKC( is_account(receiver), info_err::ACCOUNT_NOT_EXITS, "receiver does not exist" );
+
+    dao_info_t info(code);
+    CHECKC( _db.get(info) ,info_err::RECORD_NOT_FOUND, "record not found" );
+    CHECKC( info.creator == owner, info_err::PERMISSION_DENIED, "only the creator can operate" );
+    CHECKC( info.status == info_status::RUNNING, info_err::NOT_AVAILABLE, "under maintenance" );
+    
+    info.creator = receiver;
     _db.set(info, _self);
 }
 

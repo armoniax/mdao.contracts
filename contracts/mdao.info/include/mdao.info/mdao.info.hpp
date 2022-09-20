@@ -45,7 +45,8 @@ enum class info_err: uint8_t {
     SYSTEM_ERROR        = 15,
     NO_AUTH             = 16,
     NOT_POSITIVE        = 17,
-    NOT_ALLOW           = 18
+    NOT_ALLOW           = 18,
+    ACCOUNT_NOT_EXITS   = 19
 };
 
 class [[eosio::contract("mdao.info")]] mdaoinfo : public contract {
@@ -89,4 +90,10 @@ public:
     // [[eosio::action]]
     // void createtoken(const name& code, const name& owner, const uint16_t& taketranratio, 
     //                 const uint16_t& takegasratio, const string& fullname, const asset& maximum_supply);
+
+    [[eosio::action]]
+    void deldao(const name& admin, const name& code);
+
+    [[eosio::action]]
+    void transferdao(const name& owner, const name& code, const name& receiver);
 };
