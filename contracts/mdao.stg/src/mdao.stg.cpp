@@ -7,6 +7,7 @@ using namespace picomath;
 void strategy::create( const name& creator, 
             const string& stg_name, 
             const string& stg_algo,
+            const name& type,
             const asset& require_apl,
             const symbol_code& require_symbol_code,
             const name& ref_contract ){
@@ -23,6 +24,7 @@ void strategy::create( const name& creator,
     strategy.creator        = creator;
     strategy.stg_name       = stg_name;
     strategy.stg_algo       = stg_algo;
+    strategy.type           = type;
     strategy.require_apl    = require_apl;
     strategy.status         = strategy_status::testing;
     strategy.created_at     = current_time_point();

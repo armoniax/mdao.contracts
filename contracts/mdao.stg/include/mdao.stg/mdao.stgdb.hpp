@@ -40,18 +40,19 @@ namespace strategy_status {
     static constexpr eosio::name published          = "published"_n;
 };
 
-// namespace strategy_type {
-//     static constexpr eosio::name unlimited          = "unlimited"_n;
-//     static constexpr eosio::name tokenbalance       = "tokenbalance"_n;
-//     // static constexpr eosio::name tokenstaking       = "tokenstaking"_n;
-//     // static constexpr eosio::name nftbalance         = "nftbalance"_n;
-//     // static constexpr eosio::name nftstaking         = "nftstaking"_n;
-// };
+namespace strategy_type {
+    static constexpr eosio::name publicvote         = "publicvote"_n;
+    static constexpr eosio::name tokenbalance       = "tokenbalance"_n;
+    static constexpr eosio::name tokenstaking       = "tokenstaking"_n;
+    static constexpr eosio::name nftbalance         = "nftbalance"_n;
+    static constexpr eosio::name nftstaking         = "nftstaking"_n;
+};
 
 struct STG_TABLE strategy_t {
     uint64_t        id;
     name            creator;
     name            status;
+    name            type;
     string          stg_name;
     string          stg_algo;
     asset           require_apl;
@@ -70,7 +71,7 @@ struct STG_TABLE strategy_t {
         indexed_by<"creatoridx"_n,  const_mem_fun<strategy_t, uint128_t, &strategy_t::by_creator> >
     > idx_t;
 
-    EOSLIB_SERIALIZE( strategy_t, (id)(creator)(status)(stg_name)
+    EOSLIB_SERIALIZE( strategy_t, (id)(creator)(status)(stg_name)(type)
         (stg_algo)(require_apl)(require_symbol_code)(ref_contract)(created_at) )
 };
 };
