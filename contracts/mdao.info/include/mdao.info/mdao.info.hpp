@@ -72,6 +72,14 @@ public:
     void updatedao(const name& owner, const name& code, const string& logo, 
                             const string& desc,const map<name, string>& links,
                             const string& symcode, string symcontract, const string& groupid);
+    [[eosio::action]]
+    void deldao(const name& admin, const name& code);
+
+    [[eosio::action]]
+    void transferdao(const name& owner, const name& code, const name& receiver);
+
+    [[eosio::action]]
+    void updatecode(const name& admin, const name& code, const name& new_code);
 
     [[eosio::action]]
     void binddapps(const name& owner, const name& code, const set<app_info>& dapps);
@@ -91,9 +99,4 @@ public:
     // void createtoken(const name& code, const name& owner, const uint16_t& taketranratio, 
     //                 const uint16_t& takegasratio, const string& fullname, const asset& maximum_supply);
 
-    [[eosio::action]]
-    void deldao(const name& admin, const name& code);
-
-    [[eosio::action]]
-    void transferdao(const name& owner, const name& code, const name& receiver);
 };

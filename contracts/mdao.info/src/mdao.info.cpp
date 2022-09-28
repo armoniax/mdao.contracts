@@ -123,6 +123,24 @@ ACTION mdaoinfo::transferdao(const name& owner, const name& code, const name& re
     _db.set(info, _self);
 }
 
+ACTION mdaoinfo::updatecode(const name& admin, const name& code, const name& new_code)
+{   
+    require_auth( admin );
+    auto conf = _conf();      
+    CHECKC( conf.status != conf_status::PENDING, info_err::NOT_AVAILABLE, "under maintenance" );
+    CHECKC( conf.admin == admin, info_err::PERMISSION_DENIED, "only the admin can operate" );
+
+    dao_info_t info(code);
+    CHECKC( _db.get(info) ,info_err::RECORD_NOT_FOUND, "record not found" );
+    CHECKC( info.status == info_status::RUNNING, info_err::NOT_AVAILABLE, "under maintenance" );
+
+    dao_info_t new_info(new_code);
+    CHECKC( !_db.get(new_info) ,info_err::RECORD_EXITS, "new code is already exists" );
+
+    info.dao_code = new_code;
+    _db.set(info, _self);
+}
+
 ACTION mdaoinfo::binddapps(const name& owner, const name& code, const set<app_info>& dapps)
 {
     require_auth( owner );
