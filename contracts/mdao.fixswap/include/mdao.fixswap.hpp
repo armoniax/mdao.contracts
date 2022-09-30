@@ -37,7 +37,7 @@ public:
     void init(const name& fee_collector, const uint32_t& fee_ratio);
 
     [[eosio::action]]
-    void setfee(const name& fee_collector, const uint32_t& fee_ratio);
+    void setfee(const name& fee_collector, const uint32_t& take_fee_ratio, const uint32_t& make_fee_ratio);
 
     [[eosio::action]]
     void setfarm(const uint64_t& farm_lease_id, const map<extended_symbol, uint32_t>& farm_scales);
@@ -48,13 +48,14 @@ public:
      * @param to must be this contract name
      * @param quantity transfer quantity
      * @param memo memo
-     *          make:{taker(optional)}:{take_quantity}:{take_contract}:{code(optional)}
+     *          make:{orderno}:{taker(optional)}:{take_quantity}:{take_contract}:{code(optional)}
+     *              orderno: orderno for swap
      *              taker: account who can swap quantity, for everybody if empty
      *              take_quantity: asset to swap from taker
      *              take_contract: the asset contract name
      *              code: the hashcode for swap code, for everybody if empty
-     *          take:{swap_id}:{code(optional)}
-     *              swap_id: swap order id
+     *          take:{orderno}:{code(optional)}
+     *              orderno: swap orderno
      *              code: the plain text of swap code
      */
     [[eosio::on_notify("*::transfer")]] 
@@ -67,7 +68,7 @@ public:
      * cancel, cancel a swap order and getback asset
      */
     [[eosio::action]]
-    void cancel(const name& maker, const uint64_t& swap_id);
+    void cancel(const name& maker, const name& orderno);
 };
 
 }
