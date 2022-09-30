@@ -29,7 +29,6 @@ static constexpr symbol   APLINK_SYMBOL              = SYMBOL("APL", 4);
 
 using checksum256 = fixed_bytes<32>;
 
-// typedef std::variant<nasset, extended_asset> variant_asset;
 
 namespace swap_status_t {
     static constexpr eosio::name created        = "created"_n;
@@ -49,40 +48,42 @@ namespace wasm
     {
         name status = swap_status_t::created;
         name fee_collector;
-        uint32_t fee_ratio      = 30;
+        uint32_t make_fee_ratio      = 20;
+        uint32_t take_fee_ratio      = 20;
         uint64_t swap_id        = 0;
+        set<name> supported_contracts;
 
         uint64_t farm_lease_id  = 0;
         map <extended_symbol, uint32_t> farm_scales;
-        EOSLIB_SERIALIZE(gswap_t, (status)(fee_collector)(fee_ratio)(swap_id)(farm_lease_id)(farm_scales))
+        EOSLIB_SERIALIZE(gswap_t, (status)(fee_collector)(make_fee_ratio)(take_fee_ratio)(swap_id)(supported_contracts)(farm_lease_id)(farm_scales))
     };
 
     typedef eosio::singleton<"global"_n, gswap_t> gswap_singleton;
 
     struct SWAP_TBL swap_t
     {
+        name orderno;
         uint64_t id;
         name type;
         name maker;
         name taker = name(0);
-        // variant_asset make_asset;
-        // variant_asset take_asset;
         extended_asset make_asset;
         extended_asset take_asset;
         string code;
+        time_point_sec  created_at;
         time_point_sec  expired_at;
        
-        uint64_t primary_key() const { return id; }
+        uint64_t primary_key() const { return orderno.value; }
         uint64_t by_maker()const { return maker.value; }
 
         swap_t() {}
-        swap_t(const uint64_t &pid) : id(pid) {}
+        swap_t(const name &porderno) : orderno(porderno) {}
 
         typedef eosio::multi_index<"tswaps"_n, swap_t,
             indexed_by<"maker"_n, const_mem_fun<swap_t, uint64_t, &swap_t::by_maker> >
         > idx_t;
 
-        EOSLIB_SERIALIZE(swap_t, (id)(type)(maker)(taker)(make_asset)(take_asset)(code)(expired_at))
+        EOSLIB_SERIALIZE(swap_t, (orderno)(id)(type)(maker)(taker)(make_asset)(take_asset)(code)(created_at)(expired_at))
     };
 }
 }
