@@ -65,8 +65,8 @@ void fixswap::ontransfer(name from, name to, asset quantity, string memo)
 {
     if(from == get_self() || to != get_self()) return;
     CHECKC( _gstate.status == swap_status_t::initialized, err::PAUSED, "contract is maintaining" )
-
     CHECKC( quantity.amount>0, err::NOT_POSITIVE, "swap quanity must be positive" )
+    CHECKC( _gstate.supported_contracts.count(get_first_receiver()), err::SYMBOL_MISMATCH, "unsupport token contract" )
 
     vector<string_view> params = split(memo, ":");
     CHECKC( params.size() > 0, err::PARAM_ERROR, "unsupport memo" )
