@@ -5,8 +5,6 @@
 #include "picomath.hpp"
 #include "thirdparty/utils.hpp"
 #include "mdao.stgdb.hpp"
-#include "eosio.token/eosio.token.hpp"
-#include "aplink.token/aplink.token.hpp"
 
 using std::string;
 using namespace eosio;
@@ -36,7 +34,6 @@ public:
                 const string& stg_name, 
                 const string& stg_algo,
                 const name& type,
-                const asset& require_apl,
                 const name& ref_contract,
                 const uint64_t& ref_sym);
 
@@ -46,7 +43,6 @@ public:
                 const string& stg_name, 
                 const uint64_t& balance_value,
                 const name& type,
-                const asset& require_apl,
                 const name& ref_contract,
                 const uint64_t& ref_sym);
 
@@ -81,12 +77,6 @@ public:
         auto db = dbc(stg_contract_account);
         auto stg = strategy_t(stg_id);
         check(db.get(stg), "cannot find strategy");
-        auto apl_balance = asset(0, APL_SYMBOL);
-
-         if(stg.require_apl.amount > 0) {
-            apl_balance = aplink::token::get_sum_balance(APL_BANK, account, APL_SYMBOL.code());
-            CHECKC(apl_balance.amount >= stg.require_apl.amount, err::UNRESPECT_RESULT, "required APL not enough: "+apl_balance.to_string())
-         }
 
          PicoMath pm;
          auto &x = pm.addVariable("x");

@@ -8,12 +8,10 @@ void strategy::create( const name& creator,
             const string& stg_name, 
             const string& stg_algo,
             const name& type,
-            const asset& require_apl,
             const name& ref_contract,
             const uint64_t& ref_sym){
     require_auth(creator);
 
-    CHECKC( require_apl.symbol == APL_SYMBOL && require_apl.amount >= 0, err::SYMBOL_MISMATCH, "only support non-negtive APL" )
     CHECKC( stg_name.size() < MAX_CONTENT_SIZE, err::OVERSIZED, "stg_name length should less than "+ to_string(MAX_CONTENT_SIZE) )
     CHECKC( stg_algo.size() < MAX_ALGO_SIZE, err::OVERSIZED, "stg_algo length should less than "+ to_string(MAX_ALGO_SIZE) )
 
@@ -25,7 +23,6 @@ void strategy::create( const name& creator,
     strategy.stg_name       = stg_name;
     strategy.stg_algo       = stg_algo;
     strategy.type           = type;
-    strategy.require_apl    = require_apl;
     strategy.ref_sym        = ref_sym;
     strategy.ref_contract   = ref_contract;
     strategy.status         = strategy_status::testing;
@@ -39,12 +36,10 @@ void strategy::balancestg(const name& creator,
                 const string& stg_name, 
                 const uint64_t& balance_value,
                 const name& type,
-                const asset& require_apl,
                 const name& ref_contract,
                 const uint64_t& ref_sym){
     require_auth(creator);
 
-    CHECKC( require_apl.symbol == APL_SYMBOL && require_apl.amount >= 0, err::SYMBOL_MISMATCH, "only support non-negtive APL" )
     CHECKC( stg_name.size() < MAX_CONTENT_SIZE, err::OVERSIZED, "stg_name length should less than "+ to_string(MAX_CONTENT_SIZE) )
     
     string stg_algo = "min(x-"+ to_string(balance_value) + ",1)";
@@ -57,7 +52,6 @@ void strategy::balancestg(const name& creator,
     strategy.stg_name       = stg_name;
     strategy.stg_algo       = stg_algo;
     strategy.type           = type;
-    strategy.require_apl    = require_apl;
     strategy.ref_sym        = ref_sym;
     strategy.ref_contract   = ref_contract;
     strategy.status         = strategy_status::published;
