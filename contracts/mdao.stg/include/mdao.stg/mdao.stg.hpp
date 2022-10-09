@@ -37,8 +37,18 @@ public:
                 const string& stg_algo,
                 const name& type,
                 const asset& require_apl,
-                const symbol_code& require_symbol_code,
-                const name& ref_contracts);
+                const name& ref_contract,
+                const uint64_t& ref_sym);
+
+
+    [[eosio::action]]
+    void balancestg(const name& creator, 
+                const string& stg_name, 
+                const uint64_t& balance_value,
+                const name& type,
+                const asset& require_apl,
+                const name& ref_contract,
+                const uint64_t& ref_sym);
 
     [[eosio::action]]
     void setalgo(const name& creator, 
