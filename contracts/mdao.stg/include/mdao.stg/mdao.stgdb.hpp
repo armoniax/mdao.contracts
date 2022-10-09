@@ -58,6 +58,7 @@ struct STG_TABLE strategy_t {
     asset           require_apl;
     symbol_code     require_symbol_code;
     name            ref_contract;
+    uint64_t        ref_sym;
     time_point_sec  created_at;
 
     strategy_t() {}
@@ -72,7 +73,7 @@ struct STG_TABLE strategy_t {
     > idx_t;
 
     EOSLIB_SERIALIZE( strategy_t, (id)(creator)(status)(stg_name)(type)
-        (stg_algo)(require_apl)(require_symbol_code)(ref_contract)(created_at) )
+        (stg_algo)(require_apl)(require_symbol_code)(ref_contract)(ref_sym)(created_at) )
 };
 };
 }
