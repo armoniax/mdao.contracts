@@ -22,9 +22,9 @@ namespace mdao
     {
         name dao_code;
 
-        map<name, uint64_t> stake_assets;
-        // map<name, uint64_t> stake_nfts;
-        uint32_t user_count;
+        map<name, asset> token_stake;
+        // map<name, uint64_t> nft_stake;
+        // uint32_t user_count;
 
         uint64_t primary_key() const { return dao_code.value; }
         uint64_t scope() const { return 0; }
@@ -32,23 +32,23 @@ namespace mdao
         stake_t() {}
         stake_t(const name &c) : dao_code(c) {}
 
-        EOSLIB_SERIALIZE(stake_t, (dao_code)(stake_assets)(stake_nfts)(user_count));
+        EOSLIB_SERIALIZE(stake_t, (dao_code)(token_stake)(stake_nfts)(user_count));
 
         typedef eosio::multi_index<"stake"_n, stake_t> idx_t;
     };
 
-    struct [[eosio::table]] user_stake
+    struct [[eosio::table]] user_stake_t
     {
         uint64_t id;
         name account;
         name dao_code;
-        map<name, uint64_t> token_stake;
+        map<name, asset> token_stake;
         // map<name, uint64_t> nft_stake;
         time_point_sec freeze_until;
 
-        user_stake() {}
+        user_stake_t() {}
 
-        typedef eosio::multi_index<"user_stake"_n, user_stake> idx_t;
+        typedef eosio::multi_index<"user_stake"_n, user_stake_t> idx_t;
     };
 
     // struct [[eosio::table]] nft_ownership

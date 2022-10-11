@@ -42,13 +42,12 @@ public:
     using contract::contract;
     mdaostake(name receiver, name code, datastream<const char *> ds) : _db(_self), contract(receiver, code, ds) {}
 
-    ACTION stakeToken(const name &account, const name &daocode, const map<name, uint64_t> &tokens);
+    ACTION stakeToken(const name &account, const name &daocode, const map<name, asset> &tokens, const uint64_t &locktime);
 
-    // ACTION stakeNft(const name &account, const name &daocode, const map<name, uint64_t> &nfts);
+    // ACTION stakeNft(const name &account, const name &daocode, const map<name, uint64_t> &nfts, const uint64_t &locktime);
 
     ACTION withdrawToken(const name &account, const name &daocode, const map<name, uint64_t> &tokens);
 
     // ACTION withdrawNft(const name &account, const name &daocode, const map<name, uint64_t> &nfts);
 
-    ACTION expendUnlockLine(const name &account, const name &daocode, const uint64_t &delay);
 };
