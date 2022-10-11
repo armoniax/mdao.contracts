@@ -46,7 +46,8 @@ enum class info_err: uint8_t {
     NO_AUTH             = 16,
     NOT_POSITIVE        = 17,
     NOT_ALLOW           = 18,
-    ACCOUNT_NOT_EXITS   = 19
+    ACCOUNT_NOT_EXITS   = 19,
+    TOKEN_NOT_EXIST     = 20
 };
 
 class [[eosio::contract("mdao.info")]] mdaoinfo : public contract {
@@ -84,9 +85,6 @@ public:
     [[eosio::action]]
     void binddapps(const name& owner, const name& code, const set<app_info>& dapps);
 
-    // [[eosio::action]]
-    // void bindgov(const name& owner, const name& code, const uint64_t& govid);
-
     [[eosio::action]]
     void bindtoken(const name& owner, const name& code, const extended_symbol& token);
 
@@ -95,8 +93,13 @@ public:
 
     ACTION recycledb(uint32_t max_rows);
 
-    // [[eosio::action]]
-    // void createtoken(const name& code, const name& owner, const uint16_t& taketranratio, 
-    //                 const uint16_t& takegasratio, const string& fullname, const asset& maximum_supply);
+    [[eosio::action]]
+    void createtoken(const name& code, const name& owner, const uint16_t& transfer_ratio, 
+                     const string& fullname, const asset& maximum_supply, const string& metadata);
 
+    [[eosio::action]]
+    void issuetoken(const name& owner, const name& code, const name& to, 
+                            const asset& quantity, const string& memo);
+
+    void _check_permission( dao_info_t& info, const name& dao_code, const name& owner, const conf_t& conf );
 };
