@@ -46,7 +46,7 @@ public:
 
     // ACTION stakeNft(const name &account, const name &daocode, const map<name, uint64_t> &nfts, const uint64_t &locktime);
 
-    ACTION withdrawToken(const name &account, const name &daocode, const map<name, uint64_t> &tokens);
+    ACTION withdrawToken(const name &account, const name &daocode, const map<name, asset> &tokens);
 
     // ACTION withdrawNft(const name &account, const name &daocode, const map<name, uint64_t> &nfts);
 

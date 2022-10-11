@@ -32,7 +32,7 @@ namespace mdao
         stake_t() {}
         stake_t(const name &c) : dao_code(c) {}
 
-        EOSLIB_SERIALIZE(stake_t, (dao_code)(token_stake)(stake_nfts)(user_count));
+        EOSLIB_SERIALIZE(stake_t, (dao_code)(token_stake));
 
         typedef eosio::multi_index<"stake"_n, stake_t> idx_t;
     };
@@ -46,7 +46,7 @@ namespace mdao
         // map<name, uint64_t> nft_stake;
         time_point_sec freeze_until;
 
-        user_stake_t() {}
+        user_stake_t(name acc, name daocode) {}
 
         typedef eosio::multi_index<"user_stake"_n, user_stake_t> idx_t;
     };
