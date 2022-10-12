@@ -5,10 +5,8 @@
 #include <eosio/singleton.hpp>
 #include <eosio/time.hpp>
 #include "mdao.stake.db.hpp"
-#include <thirdparty/wasm_db.hpp>
 
 using namespace eosio;
-using namespace wasm::db;
 using namespace mdao;
 using namespace std;
 
@@ -25,14 +23,13 @@ enum class stake_err : uint8_t
     UNDEFINED = 1
 };
 
-class [[eosio::contract("mdao.stake")]] mdaostake : public contract
+class [[eosio::contract]] mdaostake : public contract
 {
 
     // using conf_t = mdao::conf_global_t;
     // using conf_table_t = mdao::conf_global_singleton;
 
-private:
-    dbc _db;
+// private:
     // std::unique_ptr<conf_table_t> _conf_tbl_ptr;
     // std::unique_ptr<conf_t> _conf_ptr;
 
@@ -40,13 +37,17 @@ private:
 
 public:
     using contract::contract;
-    mdaostake(name receiver, name code, datastream<const char *> ds) : _db(_self), contract(receiver, code, ds) {}
+    mdaostake(name receiver, name code, datastream<const char *> ds) : contract(receiver, code, ds), userstaketable(receiver, receiver.value), daostaketable(receiver, receiver.value) {}
 
-    ACTION stakeToken(const name &account, const name &daocode, const map<name, asset> &tokens, const uint64_t &locktime);
+    user_stake_idx_t userstaketable;
+
+    dao_stake_idx_t daostaketable;
+
+    ACTION staketoken(const name &account, const name &daocode, const map<name, asset> &tokens, const uint64_t &locktime);
 
     // ACTION stakeNft(const name &account, const name &daocode, const map<name, uint64_t> &nfts, const uint64_t &locktime);
 
-    ACTION withdrawToken(const name &account, const name &daocode, const map<name, asset> &tokens);
+    ACTION unlocktoken(const name &account, const name &daocode, const map<name, asset> &tokens);
 
     // ACTION withdrawNft(const name &account, const name &daocode, const map<name, uint64_t> &nfts);
 
