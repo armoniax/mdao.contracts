@@ -25,15 +25,7 @@ enum class stake_err : uint8_t
 
 class [[eosio::contract]] mdaostake : public contract
 {
-
-    // using conf_t = mdao::conf_global_t;
-    // using conf_table_t = mdao::conf_global_singleton;
-
 // private:
-    // std::unique_ptr<conf_table_t> _conf_tbl_ptr;
-    // std::unique_ptr<conf_t> _conf_ptr;
-
-    // const conf_t &_conf();
 
 public:
     using contract::contract;
@@ -43,12 +35,12 @@ public:
 
     dao_stake_idx_t daostaketable;
 
-    ACTION staketoken(const name &account, const name &daocode, const map<name, asset> &tokens, const uint64_t &locktime);
+    ACTION staketoken(const name &account, const name &daocode, const map<symbol, asset> &tokens, const uint64_t &locktime);
 
-    // ACTION stakeNft(const name &account, const name &daocode, const map<name, uint64_t> &nfts, const uint64_t &locktime);
+    // ACTION stakenft(const name &account, const name &daocode, const map<name, nasset> &nfts, const uint64_t &locktime);
 
-    ACTION unlocktoken(const name &account, const name &daocode, const map<name, asset> &tokens);
+    ACTION unlocktoken(const name &account, const name &daocode, const map<symbol, asset> &tokens);
 
-    // ACTION withdrawNft(const name &account, const name &daocode, const map<name, uint64_t> &nfts);
+    // ACTION unlocknft(const name &account, const name &daocode, const map<name, nasset> &nfts);
 
 };

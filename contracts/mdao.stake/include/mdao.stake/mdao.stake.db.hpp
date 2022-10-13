@@ -5,6 +5,8 @@
 #include <eosio/singleton.hpp>
 #include <eosio/privileged.hpp>
 #include <eosio/name.hpp>
+// #include <eosio.token/eosio.token.hpp>
+#include <amax.ntoken/amax.ntoken.hpp>
 
 #include <map>
 
@@ -19,7 +21,7 @@ namespace mdao
     {
         name daocode;
 
-        map<name, asset> token_stake;
+        map<symbol, asset> token_stake;
         // map<name, uint64_t> nft_stake;
         uint32_t user_count;
 
@@ -39,7 +41,7 @@ namespace mdao
         uint64_t id;
         name account;
         name daocode;
-        map<name, asset> token_stake;
+        map<symbol, asset> token_stake;
         // map<name, uint64_t> nft_stake;
         time_point_sec freeze_until;
 
