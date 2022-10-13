@@ -16,13 +16,14 @@ namespace mdao
 {
     using namespace std;
     using namespace eosio;
+    using namespace amax;
 
     struct [[eosio::table]] dao_stake_t
     {
         name daocode;
 
-        map<symbol, asset> token_stake;
-        // map<name, uint64_t> nft_stake;
+        map<symbol, uint64_t> token_stake;
+        map<uint64_t, uint64_t> nft_stake;
         uint32_t user_count;
 
         uint64_t primary_key() const { return daocode.value; }
@@ -41,8 +42,8 @@ namespace mdao
         uint64_t id;
         name account;
         name daocode;
-        map<symbol, asset> token_stake;
-        // map<name, uint64_t> nft_stake;
+        map<symbol, uint64_t> token_stake;
+        map<uint64_t, uint64_t> nft_stake;
         time_point_sec freeze_until;
 
         user_stake_t() {}
@@ -52,7 +53,7 @@ namespace mdao
         uint64_t by_account() const { return account.value; }
         uint64_t by_daocode() const { return daocode.value; }
 
-        EOSLIB_SERIALIZE(user_stake_t, (id)(account)(daocode)(token_stake)(freeze_until))
+        EOSLIB_SERIALIZE(user_stake_t, (id)(account)(daocode)(token_stake)(nft_stake)(freeze_until))
     };
 
     typedef eosio::multi_index<"usrstake"_n, user_stake_t,

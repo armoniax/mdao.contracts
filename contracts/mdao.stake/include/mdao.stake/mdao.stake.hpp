@@ -35,12 +35,12 @@ public:
 
     dao_stake_idx_t daostaketable;
 
-    ACTION staketoken(const name &account, const name &daocode, const map<symbol, asset> &tokens, const uint64_t &locktime);
+    ACTION staketoken(const name &account, const name &daocode, const vector<asset> &tokens, const uint64_t &locktime);
 
-    // ACTION stakenft(const name &account, const name &daocode, const map<name, nasset> &nfts, const uint64_t &locktime);
+    ACTION unlocktoken(const name &account, const name &daocode, const vector<asset> &tokens);
 
-    ACTION unlocktoken(const name &account, const name &daocode, const map<symbol, asset> &tokens);
+    ACTION stakenft(const name &account, const name &daocode, const vector<nasset> &nfts, const uint64_t &locktime);
 
-    // ACTION unlocknft(const name &account, const name &daocode, const map<name, nasset> &nfts);
+    ACTION unlocknft(const name &account, const name &daocode, const vector<nasset> &nfts);
 
 };
