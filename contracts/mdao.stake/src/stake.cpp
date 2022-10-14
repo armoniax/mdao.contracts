@@ -16,14 +16,20 @@ ACTION mdaostake::staketoken(const name &account, const name &daocode, const vec
         dao_stake.user_count = uint64_t(0);
     }
     // find record at userstake table
-    uint64_t id = auto_hash_key(account, daocode);
-    user_stake_t user_stake(daocode,account);
-    if( !_db.get(user_stake) ) {
-        // user not found
+    user_stake_t::idx_t user_stake_table(_self, _self.value);
+    auto user_stake_index = user_stake_table.get_index<"unionid"_n>();
+    auto user_stake_iter = user_stake_index.find(get_unionid(account,daocode));
+    user_stake_t user_stake(daocode, account);
+    if(user_stake_iter == user_stake_index.end()) {
+        // record not fount
         user_stake.token_stake = map<symbol, uint64_t>();
         user_stake.nft_stake = map<uint64_t, uint64_t>();
         user_stake.freeze_until = time_point_sec(uint32_t(0));
         dao_stake.user_count ++;
+    } else {
+        // record exsit
+        user_stake.id = user_stake_iter->id;
+        CHECK(_db.get(user_stake), "no stake record");
     }
     // iterate over the input and stake token
     vector<asset>::const_iterator in_iter = tokens.begin();
@@ -49,8 +55,11 @@ ACTION mdaostake::unlocktoken(const name &account, const name &daocode, const ve
     dao_stake_t dao_stake(daocode);
     CHECK(_db.get(dao_stake), "dao not found");
     // find record at userstake table
-    uint64_t id = auto_hash_key(account, daocode);
-    user_stake_t user_stake(daocode, account);
+    user_stake_t::idx_t user_stake_table(_self, _self.value);
+    auto user_stake_index = user_stake_table.get_index<"unionid"_n>();
+    auto user_stake_iter = user_stake_index.find(get_unionid(account,daocode));
+    CHECK(user_stake_iter != user_stake_index.end(), "no stake record");
+    user_stake_t user_stake(user_stake_iter->id, daocode, account);
     CHECK(_db.get(user_stake), "no stake record");
 
     CHECK( time_point_sec(current_time_point())>user_stake.freeze_until, "still in lock" )
@@ -89,15 +98,20 @@ ACTION mdaostake::stakenft(const name &account, const name &daocode, const vecto
         dao_stake.user_count = uint64_t(0);
     }
     // find record at userstake table
-    uint64_t id = auto_hash_key(account, daocode);
-    user_stake_t user_stake(daocode,account);
-    if (!_db.get(user_stake))
-    {
-        // user not found
+    user_stake_t::idx_t user_stake_table(_self, _self.value);
+    auto user_stake_index = user_stake_table.get_index<"unionid"_n>();
+    auto user_stake_iter = user_stake_index.find(get_unionid(account,daocode));
+    user_stake_t user_stake(daocode, account);
+    if(user_stake_iter == user_stake_index.end()) {
+        // record not fount
         user_stake.token_stake = map<symbol, uint64_t>();
         user_stake.nft_stake = map<uint64_t, uint64_t>();
         user_stake.freeze_until = time_point_sec(uint32_t(0));
-        dao_stake.user_count++;
+        dao_stake.user_count ++;
+    } else {
+        // record exsit
+        user_stake.id = user_stake_iter->id;
+        CHECK(_db.get(user_stake), "no stake record");
     }
     // iterate over the input and stake nft
     vector<nasset>::const_iterator in_iter = nfts.begin();
@@ -124,8 +138,11 @@ ACTION mdaostake::unlocknft(const name &account, const name &daocode, const vect
     dao_stake_t dao_stake(daocode);
     CHECK(_db.get(dao_stake), "dao not found");
     // find record at userstake table
-    uint64_t id = auto_hash_key(account, daocode);
-    user_stake_t user_stake(daocode, account);
+    user_stake_t::idx_t user_stake_table(_self, _self.value);
+    auto user_stake_index = user_stake_table.get_index<"unionid"_n>();
+    auto user_stake_iter = user_stake_index.find(get_unionid(account,daocode));
+    CHECK(user_stake_iter != user_stake_index.end(), "no stake record");
+    user_stake_t user_stake(user_stake_iter->id, daocode, account);
     CHECK(_db.get(user_stake), "no stake record");
 
     CHECK(time_point_sec(current_time_point()) > user_stake.freeze_until, "still in lock")
@@ -153,8 +170,11 @@ ACTION mdaostake::unlocknft(const name &account, const name &daocode, const vect
 ACTION mdaostake::extendlock(const name &account, const name &daocode, const uint64_t &locktime){
     require_auth( account );
     // find record at userstake table
-    uint64_t id = auto_hash_key(account, daocode);
-    user_stake_t user_stake(daocode, account);
+    user_stake_t::idx_t user_stake_table(_self, _self.value);
+    auto user_stake_index = user_stake_table.get_index<"unionid"_n>();
+    auto user_stake_iter = user_stake_index.find(get_unionid(account,daocode));
+    CHECK(user_stake_iter != user_stake_index.end(), "no stake record");
+    user_stake_t user_stake(user_stake_iter->id, daocode, account);
     CHECK(_db.get(user_stake), "no stake record");
     time_point_sec new_unlockline = time_point_sec(current_time_point()) + locktime;
     if(user_stake.freeze_until>new_unlockline) {

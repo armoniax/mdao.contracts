@@ -39,8 +39,6 @@ namespace mdao
     
     uint128_t get_unionid(name account, name daocode) { return (uint128_t(account.value)<<64 | (uint128_t(daocode.value)<<64));}
 
-    uint64_t auto_hash_key(name account, name daocode) { return account.value ^ daocode.value; }
-
     struct [[eosio::table]] user_stake_t
     {
         uint64_t id;
@@ -51,9 +49,8 @@ namespace mdao
         time_point_sec freeze_until;
 
         user_stake_t() {}
-        user_stake_t(const name& code, const name& acc): account(acc), daocode(code) {
-            id = auto_hash_key(acc,code);
-        }
+        user_stake_t(const name& code, const name& acc): account(acc), daocode(code) {}
+        user_stake_t(const uint64_t &id, const name& code, const name& acc): id(id), daocode(code), account(account) {}
 
         uint64_t primary_key() const { return id; }
         uint64_t by_account() const { return account.value; }
