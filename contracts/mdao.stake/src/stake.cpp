@@ -5,206 +5,161 @@
 ACTION mdaostake::staketoken(const name &account, const name &daocode, const vector<asset> &tokens, const uint64_t &locktime)
 {
     require_auth( account );
-    uint64_t id = auto_hash_key(account, daocode);
     time_point_sec new_unlockline = time_point_sec(current_time_point()) + locktime;
     // @todo dao, user check
     // find record at daostake table
-    auto dao_stake_iter = daostaketable.find(daocode.value);
-    if( dao_stake_iter == daostaketable.end() ) {
-        dao_stake_iter = daostaketable.emplace(_self, [&](auto& u){
-            u.daocode = daocode;
-            u.token_stake = map<symbol, uint64_t>();
-            u.user_count = uint64_t(0);
-        });
+    dao_stake_t dao_stake(daocode);
+    if( !_db.get(dao_stake) ) {
+        dao_stake.daocode = daocode;
+        dao_stake.token_stake = map<symbol, uint64_t>();
+        dao_stake.nft_stake = map<uint64_t, uint64_t>();
+        dao_stake.user_count = uint64_t(0);
     }
-    uint64_t user_count =  dao_stake_iter -> user_count;
     // find record at userstake table
-    auto user_stake_iter = userstaketable.find(id);
-    if( user_stake_iter == userstaketable.end() ) {
+    uint64_t id = auto_hash_key(account, daocode);
+    user_stake_t user_stake(daocode,account);
+    if( !_db.get(user_stake) ) {
         // user not found
-        user_stake_iter = userstaketable.emplace(_self, [&](auto& u) {
-            u.id = id;
-            u.account = account;
-            u.daocode = daocode;
-            u.token_stake = map<symbol, uint64_t>();
-            u.nft_stake = map<uint64_t, uint64_t>();
-            u.freeze_until = time_point_sec(uint32_t(0));
-        });
-        // new user
-        user_count ++;
-    } else {
-        CHECK(account.value==user_stake_iter->account.value, "conflict account");
-        CHECK(daocode.value==user_stake_iter->daocode.value, "conflict daocode");
+        user_stake.token_stake = map<symbol, uint64_t>();
+        user_stake.nft_stake = map<uint64_t, uint64_t>();
+        user_stake.freeze_until = time_point_sec(uint32_t(0));
+        dao_stake.user_count ++;
     }
-    // copy token stake map
-    map<symbol, uint64_t> new_dao_staked_token = dao_stake_iter->token_stake;
-    map<symbol, uint64_t> new_user_staked_token = user_stake_iter->token_stake;
     // iterate over the input and stake token
     vector<asset>::const_iterator in_iter = tokens.begin();
     for (; in_iter!= tokens.end(); in_iter++) {
         asset token = *in_iter;
         CHECK( (token.is_valid() && token.amount>0), "stake amount invalid" );
         // TRANSFER( account,self,amount,"stake" );
-        new_user_staked_token[token.symbol] += token.amount;
-        new_dao_staked_token[token.symbol] += token.amount;
+        dao_stake.token_stake[token.symbol] += token.amount;
+        user_stake.token_stake[token.symbol] += token.amount;
     }
-    if(user_stake_iter->freeze_until>new_unlockline) {
-        new_unlockline = user_stake_iter->freeze_until;
+    if(user_stake.freeze_until<new_unlockline) {
+        user_stake.freeze_until = new_unlockline;
     }
     // update database
-    userstaketable.modify(user_stake_iter,_self,[&](auto& u) {
-        u.token_stake = new_user_staked_token;
-        u.freeze_until = new_unlockline;
-    });
-    daostaketable.modify(dao_stake_iter,_self,[&](auto& u) {
-        u.token_stake = new_dao_staked_token;
-        u.user_count = user_count;
-    });
+    _db.set(user_stake, _self);
+    _db.set(dao_stake, _self);
 }
 
 ACTION mdaostake::unlocktoken(const name &account, const name &daocode, const vector<asset> &tokens)
 {
     require_auth( account );
-    uint64_t id = auto_hash_key(account, daocode);
     // find record at daostake table
-    auto dao_stake_iter = daostaketable.find(daocode.value);
-    CHECK(dao_stake_iter != daostaketable.end(), "dao not found");
+    dao_stake_t dao_stake(daocode);
+    CHECK(_db.get(dao_stake), "dao not found");
     // find record at userstake table
-    auto user_stake_iter = userstaketable.find(id);
-    CHECK(user_stake_iter != userstaketable.end(), "no stake record");
-    CHECK(account.value == user_stake_iter->account.value, "conflict account");
-    CHECK(daocode.value == user_stake_iter->daocode.value, "conflict daocode");
+    uint64_t id = auto_hash_key(account, daocode);
+    user_stake_t user_stake(daocode, account);
+    CHECK(_db.get(user_stake), "no stake record");
 
-    CHECK( time_point_sec(current_time_point())>user_stake_iter->freeze_until, "still in lock" )
-    // copy token stake map
-    map<symbol, uint64_t> new_dao_staked_token = dao_stake_iter->token_stake;
-    map<symbol, uint64_t> new_user_staked_token = user_stake_iter->token_stake;
+    CHECK( time_point_sec(current_time_point())>user_stake.freeze_until, "still in lock" )
     // iterate over the input and withdraw token
     vector<asset>::const_iterator out_iter = tokens.begin();
     for (; out_iter!= tokens.end(); out_iter++) {
         asset token = *out_iter;
-        CHECK( token.amount<=new_user_staked_token[token.symbol], "stake amount not enough" );
+        CHECK( token.amount<=user_stake.token_stake[token.symbol], "stake amount not enough" );
         // TRANSFER(self, account, amount, "stake");
-        new_user_staked_token[token.symbol] -= token.amount;
-        new_dao_staked_token[token.symbol] -= token.amount;
-        if(new_user_staked_token[token.symbol]==0) {
-            new_user_staked_token.erase(token.symbol);
-            if (new_dao_staked_token[token.symbol] == 0)
+        user_stake.token_stake[token.symbol] -= token.amount;
+        dao_stake.token_stake[token.symbol] -= token.amount;
+        if(user_stake.token_stake[token.symbol]==0) {
+            user_stake.token_stake.erase(token.symbol);
+            if (dao_stake.token_stake[token.symbol] == 0)
             {
-                new_dao_staked_token.erase(token.symbol);
+                dao_stake.token_stake.erase(token.symbol);
             }
         }
     }
     // update database
-    userstaketable.modify(user_stake_iter,_self,[&](auto& u) {
-        u.token_stake = new_user_staked_token;
-        // u.freeze_until = 0;
-    });
-    daostaketable.modify(dao_stake_iter,_self,[&](auto& u) {
-        u.token_stake = new_dao_staked_token;
-    });
+    _db.set(user_stake, _self);
+    _db.set(dao_stake, _self);
 }
 
 ACTION mdaostake::stakenft(const name &account, const name &daocode, const vector<nasset> &nfts, const uint64_t &locktime)
 {
     require_auth( account );
-    uint64_t id = auto_hash_key(account, daocode);
     time_point_sec new_unlockline = time_point_sec(current_time_point()) + locktime;
     // @todo dao, user check
     // find record at daostake table
-    auto dao_stake_iter = daostaketable.find(daocode.value);
-    if( dao_stake_iter == daostaketable.end() ) {
-        dao_stake_iter = daostaketable.emplace(_self, [&](auto& u){
-            u.daocode = daocode;
-            u.token_stake = map<symbol, uint64_t>();
-            u.nft_stake = map<uint64_t, uint64_t>();
-            u.user_count = uint64_t(0);
-        });
+    dao_stake_t dao_stake(daocode);
+    if( !_db.get(dao_stake) ) {
+        dao_stake.daocode = daocode;
+        dao_stake.token_stake = map<symbol, uint64_t>();
+        dao_stake.nft_stake = map<uint64_t, uint64_t>();
+        dao_stake.user_count = uint64_t(0);
     }
-    uint64_t user_count =  dao_stake_iter -> user_count;
     // find record at userstake table
-    auto user_stake_iter = userstaketable.find(id);
-    if( user_stake_iter == userstaketable.end() ) {
+    uint64_t id = auto_hash_key(account, daocode);
+    user_stake_t user_stake(daocode,account);
+    if (!_db.get(user_stake))
+    {
         // user not found
-        user_stake_iter = userstaketable.emplace(_self, [&](auto& u) {
-            u.id = id;
-            u.account = account;
-            u.daocode = daocode;
-            u.token_stake = map<symbol, uint64_t>();
-            u.nft_stake = map<uint64_t, uint64_t>();
-            u.freeze_until = time_point_sec(uint32_t(0));
-        });
-        // new user
-        user_count ++;
-    } else {
-        CHECK(account.value==user_stake_iter->account.value, "conflict account");
-        CHECK(daocode.value==user_stake_iter->daocode.value, "conflict daocode");
+        user_stake.token_stake = map<symbol, uint64_t>();
+        user_stake.nft_stake = map<uint64_t, uint64_t>();
+        user_stake.freeze_until = time_point_sec(uint32_t(0));
+        dao_stake.user_count++;
     }
-    // copy nft stake map
-    map<uint64_t, uint64_t> new_dao_staked_nft = dao_stake_iter->nft_stake;
-    map<uint64_t, uint64_t> new_user_staked_nft = user_stake_iter->nft_stake;
     // iterate over the input and stake nft
     vector<nasset>::const_iterator in_iter = nfts.begin();
     for (; in_iter!= nfts.end(); in_iter++) {
         nasset ntoken = *in_iter;
         CHECK((ntoken.is_valid() && ntoken.amount > 0), "stake amount invalid");
         // TRANSFER_N( account,self,amount,"stake" );
-        new_user_staked_nft[ntoken.symbol.raw()] += ntoken.amount;
-        new_dao_staked_nft[ntoken.symbol.raw()] += ntoken.amount;
+        dao_stake.nft_stake[ntoken.symbol.raw()] += ntoken.amount;
+        user_stake.nft_stake[ntoken.symbol.raw()] += ntoken.amount;
     }
-    if(user_stake_iter->freeze_until>new_unlockline) {
-        new_unlockline = user_stake_iter->freeze_until;
+    if (user_stake.freeze_until < new_unlockline)
+    {
+        user_stake.freeze_until = new_unlockline;
     }
     // update database
-    userstaketable.modify(user_stake_iter,_self,[&](auto& u) {
-        u.nft_stake = new_user_staked_nft;
-        u.freeze_until = new_unlockline;
-    });
-    daostaketable.modify(dao_stake_iter,_self,[&](auto& u) {
-        u.nft_stake = new_dao_staked_nft;
-        u.user_count = user_count;
-    });
+    _db.set(user_stake, _self);
+    _db.set(dao_stake, _self);
 }
 
 ACTION mdaostake::unlocknft(const name &account, const name &daocode, const vector<nasset> &nfts)
 {
     require_auth( account );
-    uint64_t id = auto_hash_key(account, daocode);
     // find record at daostake table
-    auto dao_stake_iter = daostaketable.find(daocode.value);
-    CHECK(dao_stake_iter != daostaketable.end(), "dao not found");
+    dao_stake_t dao_stake(daocode);
+    CHECK(_db.get(dao_stake), "dao not found");
     // find record at userstake table
-    auto user_stake_iter = userstaketable.find(id);
-    CHECK(user_stake_iter != userstaketable.end(), "no stake record");
-    CHECK(account.value == user_stake_iter->account.value, "conflict account");
-    CHECK(daocode.value == user_stake_iter->daocode.value, "conflict daocode");
+    uint64_t id = auto_hash_key(account, daocode);
+    user_stake_t user_stake(daocode, account);
+    CHECK(_db.get(user_stake), "no stake record");
 
-    CHECK( time_point_sec(current_time_point())>user_stake_iter->freeze_until, "still in lock" )
-    // copy nft stake map
-    map<uint64_t, uint64_t> new_dao_staked_nft = dao_stake_iter->nft_stake;
-    map<uint64_t, uint64_t> new_user_staked_nft = user_stake_iter->nft_stake;
+    CHECK(time_point_sec(current_time_point()) > user_stake.freeze_until, "still in lock")
     // iterate over the input and withdraw nft
     vector<nasset>::const_iterator out_iter = nfts.begin();
     for (; out_iter!= nfts.end(); out_iter++) {
         nasset ntoken = *out_iter;
-        CHECK( ntoken.amount<=new_user_staked_nft[ntoken.symbol.raw()], "stake amount not enough" );
+        CHECK( ntoken.amount<=user_stake.nft_stake[ntoken.symbol.raw()], "stake amount not enough" );
         // TRANSFER(self, account, amount, "stake");
-        new_user_staked_nft[ntoken.symbol.raw()] -= ntoken.amount;
-        new_dao_staked_nft[ntoken.symbol.raw()] -= ntoken.amount;
-        if(new_user_staked_nft[ntoken.symbol.raw()]==0) {
-            new_user_staked_nft.erase(ntoken.symbol.raw());
-            if (new_dao_staked_nft[ntoken.symbol.raw()] == 0)
+        user_stake.nft_stake[ntoken.symbol.raw()] -= ntoken.amount;
+        dao_stake.nft_stake[ntoken.symbol.raw()] -= ntoken.amount;
+        if(user_stake.nft_stake[ntoken.symbol.raw()]==0) {
+            user_stake.nft_stake.erase(ntoken.symbol.raw());
+            if (dao_stake.nft_stake[ntoken.symbol.raw()] == 0)
             {
-                new_dao_staked_nft.erase(ntoken.symbol.raw());
+                dao_stake.nft_stake.erase(ntoken.symbol.raw());
             }
         }
     }
     // update database
-    userstaketable.modify(user_stake_iter,_self,[&](auto& u) {
-        u.nft_stake = new_user_staked_nft;
-        // u.freeze_until = 0;
-    });
-    daostaketable.modify(dao_stake_iter,_self,[&](auto& u) {
-        u.nft_stake = new_dao_staked_nft;
-    });
+    _db.set(user_stake, _self);
+    _db.set(dao_stake, _self);
+}
+
+ACTION mdaostake::extendlock(const name &account, const name &daocode, const uint64_t &locktime){
+    require_auth( account );
+    // find record at userstake table
+    uint64_t id = auto_hash_key(account, daocode);
+    user_stake_t user_stake(daocode, account);
+    CHECK(_db.get(user_stake), "no stake record");
+    time_point_sec new_unlockline = time_point_sec(current_time_point()) + locktime;
+    if(user_stake.freeze_until>new_unlockline) {
+        new_unlockline = user_stake.freeze_until;
+    }
+    // update database
+    _db.set(user_stake, _self);
 }

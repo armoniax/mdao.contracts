@@ -27,15 +27,19 @@ namespace mdao
         uint32_t user_count;
 
         uint64_t primary_key() const { return daocode.value; }
+        uint64_t scope() const { return 0; }
 
         dao_stake_t() {}
-        // dao_stake_t(const name &c) : daocode(c) {}
+        dao_stake_t(const name& code): daocode(code) {}
 
         EOSLIB_SERIALIZE(dao_stake_t, (daocode)(token_stake)(user_count));
+        typedef eosio::multi_index<"daostake"_n, dao_stake_t> idx_t;
 
     };
     
-    typedef eosio::multi_index<"daostake"_n, dao_stake_t> dao_stake_idx_t;
+    uint128_t get_unionid(name account, name daocode) { return (uint128_t(account.value)<<64 | (uint128_t(daocode.value)<<64));}
+
+    uint64_t auto_hash_key(name account, name daocode) { return account.value ^ daocode.value; }
 
     struct [[eosio::table]] user_stake_t
     {
@@ -47,31 +51,23 @@ namespace mdao
         time_point_sec freeze_until;
 
         user_stake_t() {}
-        // user_stake_t(const uint64_t& pid): id(pid) {}
+        user_stake_t(const name& code, const name& acc): account(acc), daocode(code) {
+            id = auto_hash_key(acc,code);
+        }
 
         uint64_t primary_key() const { return id; }
         uint64_t by_account() const { return account.value; }
         uint64_t by_daocode() const { return daocode.value; }
+        uint128_t by_unionid() const { return mdao::get_unionid(account, daocode); }
+        uint64_t scope() const { return 0; }
 
         EOSLIB_SERIALIZE(user_stake_t, (id)(account)(daocode)(token_stake)(nft_stake)(freeze_until))
+    
+        typedef eosio::multi_index<"usrstake"_n, user_stake_t,
+            eosio::indexed_by<"userid"_n, const_mem_fun<user_stake_t, uint64_t, &user_stake_t::by_account>>,
+            eosio::indexed_by<"daocodeid"_n, const_mem_fun<user_stake_t, uint64_t, &user_stake_t::by_daocode>>,
+            eosio::indexed_by<"unionid"_n, const_mem_fun<user_stake_t, uint128_t, &user_stake_t::by_unionid>>>
+            idx_t;
     };
-
-    typedef eosio::multi_index<"usrstake"_n, user_stake_t,
-        eosio::indexed_by<"userid"_n, const_mem_fun<user_stake_t, uint64_t, &user_stake_t::by_account>>,
-        eosio::indexed_by<"daocodeid"_n, const_mem_fun<user_stake_t, uint64_t, &user_stake_t::by_daocode>>>
-        user_stake_idx_t;
-
-
-    uint64_t auto_hash_key(name account, name daocode) { return account.value ^ daocode.value; }
-    // struct [[eosio::table]] nft_ownership
-    // {
-    //     name symbol;
-    //     uint32_t index;
-    //     name owner;
-
-    //     nft_ownership() {}
-
-    //     typedef eosio::multi_index<"nft_ownership"_n, nft_ownership> idx_t;
-    // };
 
 } // amax

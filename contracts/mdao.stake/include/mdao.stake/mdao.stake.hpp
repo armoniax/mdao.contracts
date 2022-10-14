@@ -5,10 +5,13 @@
 #include <eosio/singleton.hpp>
 #include <eosio/time.hpp>
 #include "mdao.stake.db.hpp"
+#include <thirdparty/wasm_db.hpp>
+
 
 using namespace eosio;
 using namespace mdao;
 using namespace std;
+using namespace wasm::db;
 
 // static constexpr name AMAX_TOKEN{"amax.token"_n};
 // static constexpr name MDAO_CONF{"mdao.conf"_n};
@@ -25,15 +28,12 @@ enum class stake_err : uint8_t
 
 class [[eosio::contract]] mdaostake : public contract
 {
-// private:
+private:
+    dbc _db;
 
 public:
     using contract::contract;
-    mdaostake(name receiver, name code, datastream<const char *> ds) : contract(receiver, code, ds), userstaketable(receiver, receiver.value), daostaketable(receiver, receiver.value) {}
-
-    user_stake_idx_t userstaketable;
-
-    dao_stake_idx_t daostaketable;
+    mdaostake(name receiver, name code, datastream<const char *> ds) : contract(receiver, code, ds), _db(_self) {}
 
     ACTION staketoken(const name &account, const name &daocode, const vector<asset> &tokens, const uint64_t &locktime);
 
@@ -43,4 +43,5 @@ public:
 
     ACTION unlocknft(const name &account, const name &daocode, const vector<nasset> &nfts);
 
+    ACTION extendlock(const name &account, const name &daocode, const uint64_t &locktime);
 };

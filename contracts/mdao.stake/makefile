@@ -1,13 +1,16 @@
-clear:
-	rm -rf ./build/*
+# clear:
+# 	rm -rf ./build/*
 
 compile:
+	rm -rf ./build/*
+	clear
+	echo "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
 	eosio-cpp -abigen ./src/stake.cpp -o ./build/mdaostake.wasm -I ./include/
 
-do:
-	echo "compile"
-	make clear
-	make compile
+# do:
+# 	echo "compile"
+# 	make clear
+# 	make compile
 
 clear-test:
 	rm -rf ./build/*
