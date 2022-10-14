@@ -1,6 +1,7 @@
 #include <mdao.stake/mdao.stake.hpp>
 #include <mdao.stake/mdao.stake.db.hpp>
 #include <thirdparty/utils.hpp>
+#include <thirdparty/safe.hpp>
 
 ACTION mdaostake::staketoken(const name &account, const name &daocode, const vector<asset> &tokens, const uint64_t &locktime)
 {
@@ -37,8 +38,11 @@ ACTION mdaostake::staketoken(const name &account, const name &daocode, const vec
         asset token = *in_iter;
         CHECK( (token.is_valid() && token.amount>0), "stake amount invalid" );
         // TRANSFER( account,self,amount,"stake" );
-        dao_stake.token_stake[token.symbol] += token.amount;
-        user_stake.token_stake[token.symbol] += token.amount;
+        CHECK( token.amount > 0, "invalid amount");
+        dao_stake.token_stake[token.symbol] = 
+            (safe<uint64_t>(dao_stake.token_stake[token.symbol]) + safe<uint64_t>(token.amount)).value;
+        user_stake.token_stake[token.symbol] = 
+            (safe<uint64_t>(user_stake.token_stake[token.symbol]) + safe<uint64_t>(token.amount)).value;
     }
     if(user_stake.freeze_until<new_unlockline) {
         user_stake.freeze_until = new_unlockline;
@@ -69,8 +73,11 @@ ACTION mdaostake::unlocktoken(const name &account, const name &daocode, const ve
         asset token = *out_iter;
         CHECK( token.amount<=user_stake.token_stake[token.symbol], "stake amount not enough" );
         // TRANSFER(self, account, amount, "stake");
-        user_stake.token_stake[token.symbol] -= token.amount;
-        dao_stake.token_stake[token.symbol] -= token.amount;
+        CHECK( token.amount > 0, "invalid amount");
+        user_stake.token_stake[token.symbol] =
+            (safe<uint64_t>(dao_stake.token_stake[token.symbol]) - safe<uint64_t>(token.amount)).value;;
+        dao_stake.token_stake[token.symbol] = 
+            (safe<uint64_t>(dao_stake.token_stake[token.symbol]) - safe<uint64_t>(token.amount)).value;;
         if(user_stake.token_stake[token.symbol]==0) {
             user_stake.token_stake.erase(token.symbol);
             if (dao_stake.token_stake[token.symbol] == 0)
@@ -119,8 +126,11 @@ ACTION mdaostake::stakenft(const name &account, const name &daocode, const vecto
         nasset ntoken = *in_iter;
         CHECK((ntoken.is_valid() && ntoken.amount > 0), "stake amount invalid");
         // TRANSFER_N( account,self,amount,"stake" );
-        dao_stake.nft_stake[ntoken.symbol.raw()] += ntoken.amount;
-        user_stake.nft_stake[ntoken.symbol.raw()] += ntoken.amount;
+        CHECK( ntoken.amount > 0, "invalid amount");
+        dao_stake.nft_stake[ntoken.symbol.raw()] =
+            (safe<uint64_t>(dao_stake.nft_stake[ntoken.symbol.raw()]) + safe<uint64_t>(ntoken.amount)).value;
+        user_stake.nft_stake[ntoken.symbol.raw()] =
+            (safe<uint64_t>(user_stake.nft_stake[ntoken.symbol.raw()]) + safe<uint64_t>(ntoken.amount)).value;
     }
     if (user_stake.freeze_until < new_unlockline)
     {
@@ -152,8 +162,11 @@ ACTION mdaostake::unlocknft(const name &account, const name &daocode, const vect
         nasset ntoken = *out_iter;
         CHECK( ntoken.amount<=user_stake.nft_stake[ntoken.symbol.raw()], "stake amount not enough" );
         // TRANSFER(self, account, amount, "stake");
-        user_stake.nft_stake[ntoken.symbol.raw()] -= ntoken.amount;
-        dao_stake.nft_stake[ntoken.symbol.raw()] -= ntoken.amount;
+        CHECK( ntoken.amount > 0, "invalid amount");
+        dao_stake.nft_stake[ntoken.symbol.raw()] =
+            (safe<uint64_t>(dao_stake.nft_stake[ntoken.symbol.raw()]) - safe<uint64_t>(ntoken.amount)).value;
+        user_stake.nft_stake[ntoken.symbol.raw()] =
+            (safe<uint64_t>(user_stake.nft_stake[ntoken.symbol.raw()]) - safe<uint64_t>(ntoken.amount)).value;
         if(user_stake.nft_stake[ntoken.symbol.raw()]==0) {
             user_stake.nft_stake.erase(ntoken.symbol.raw());
             if (dao_stake.nft_stake[ntoken.symbol.raw()] == 0)
