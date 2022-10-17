@@ -30,15 +30,14 @@ ACTION mdaostake::staketoken(const name &account, const name &daocode, const vec
     } else {
         // record exsit
         user_stake.id = user_stake_iter->id;
-        CHECK(_db.get(user_stake), "no stake record");
+        CHECKC(_db.get(user_stake), stake_err::STAKE_NOT_FOUND, "no stake record");
     }
     // iterate over the input and stake token
     vector<asset>::const_iterator in_iter = tokens.begin();
     for (; in_iter!= tokens.end(); in_iter++) {
         asset token = *in_iter;
-        CHECK( (token.is_valid() && token.amount>0), "stake amount invalid" );
+        CHECKC( token.is_valid() && token.amount>0, stake_err::INVALID_PARAMS, "stake amount invalid" );
         // TRANSFER( account,self,amount,"stake" );
-        CHECK( token.amount > 0, "invalid amount");
         dao_stake.token_stake[token.symbol] = 
             (safe<uint64_t>(dao_stake.token_stake[token.symbol]) + safe<uint64_t>(token.amount)).value;
         user_stake.token_stake[token.symbol] = 
@@ -57,23 +56,23 @@ ACTION mdaostake::unlocktoken(const name &account, const name &daocode, const ve
     require_auth( account );
     // find record at daostake table
     dao_stake_t dao_stake(daocode);
-    CHECK(_db.get(dao_stake), "dao not found");
+    CHECKC(_db.get(dao_stake), stake_err::DAO_NOT_FOUND, "dao not found");
     // find record at userstake table
     user_stake_t::idx_t user_stake_table(_self, _self.value);
     auto user_stake_index = user_stake_table.get_index<"unionid"_n>();
     auto user_stake_iter = user_stake_index.find(get_unionid(account,daocode));
-    CHECK(user_stake_iter != user_stake_index.end(), "no stake record");
+    CHECKC(user_stake_iter != user_stake_index.end(), stake_err::STAKE_NOT_FOUND, "no stake record");
     user_stake_t user_stake(user_stake_iter->id, daocode, account);
-    CHECK(_db.get(user_stake), "no stake record");
+    CHECKC(_db.get(user_stake), stake_err::STAKE_NOT_FOUND,"no stake record");
 
-    CHECK( time_point_sec(current_time_point())>user_stake.freeze_until, "still in lock" )
+    CHECKC( time_point_sec(current_time_point())>user_stake.freeze_until, stake_err::STILL_IN_LOCK, "still in lock" )
     // iterate over the input and withdraw token
     vector<asset>::const_iterator out_iter = tokens.begin();
     for (; out_iter!= tokens.end(); out_iter++) {
         asset token = *out_iter;
-        CHECK( token.amount<=user_stake.token_stake[token.symbol], "stake amount not enough" );
+        CHECKC(token.amount > 0 && token.is_valid(), stake_err::INVALID_PARAMS, "invalid amount");
+        CHECKC( token.amount<=user_stake.token_stake[token.symbol], stake_err::UNLOCK_OVERFLOW, "stake amount not enough" );
         // TRANSFER(self, account, amount, "stake");
-        CHECK( token.amount > 0, "invalid amount");
         user_stake.token_stake[token.symbol] =
             (safe<uint64_t>(dao_stake.token_stake[token.symbol]) - safe<uint64_t>(token.amount)).value;;
         dao_stake.token_stake[token.symbol] = 
@@ -118,15 +117,14 @@ ACTION mdaostake::stakenft(const name &account, const name &daocode, const vecto
     } else {
         // record exsit
         user_stake.id = user_stake_iter->id;
-        CHECK(_db.get(user_stake), "no stake record");
+        CHECKC(_db.get(user_stake), stake_err::STAKE_NOT_FOUND, "no stake record");
     }
     // iterate over the input and stake nft
     vector<nasset>::const_iterator in_iter = nfts.begin();
     for (; in_iter!= nfts.end(); in_iter++) {
         nasset ntoken = *in_iter;
-        CHECK((ntoken.is_valid() && ntoken.amount > 0), "stake amount invalid");
+        CHECKC( ntoken.is_valid() && ntoken.amount > 0, stake_err::INVALID_PARAMS, "stake amount invalid");
         // TRANSFER_N( account,self,amount,"stake" );
-        CHECK( ntoken.amount > 0, "invalid amount");
         dao_stake.nft_stake[ntoken.symbol.raw()] =
             (safe<uint64_t>(dao_stake.nft_stake[ntoken.symbol.raw()]) + safe<uint64_t>(ntoken.amount)).value;
         user_stake.nft_stake[ntoken.symbol.raw()] =
@@ -146,23 +144,23 @@ ACTION mdaostake::unlocknft(const name &account, const name &daocode, const vect
     require_auth( account );
     // find record at daostake table
     dao_stake_t dao_stake(daocode);
-    CHECK(_db.get(dao_stake), "dao not found");
+    CHECKC(_db.get(dao_stake), stake_err::DAO_NOT_FOUND, "dao not found");
     // find record at userstake table
     user_stake_t::idx_t user_stake_table(_self, _self.value);
     auto user_stake_index = user_stake_table.get_index<"unionid"_n>();
     auto user_stake_iter = user_stake_index.find(get_unionid(account,daocode));
-    CHECK(user_stake_iter != user_stake_index.end(), "no stake record");
+    CHECKC(user_stake_iter != user_stake_index.end(), stake_err::STAKE_NOT_FOUND, "no stake record");
     user_stake_t user_stake(user_stake_iter->id, daocode, account);
-    CHECK(_db.get(user_stake), "no stake record");
+    CHECKC(_db.get(user_stake), stake_err::STAKE_NOT_FOUND, "no stake record");
 
-    CHECK(time_point_sec(current_time_point()) > user_stake.freeze_until, "still in lock")
+    CHECKC(time_point_sec(current_time_point()) > user_stake.freeze_until, stake_err::STILL_IN_LOCK, "still in lock")
     // iterate over the input and withdraw nft
     vector<nasset>::const_iterator out_iter = nfts.begin();
     for (; out_iter!= nfts.end(); out_iter++) {
         nasset ntoken = *out_iter;
-        CHECK( ntoken.amount<=user_stake.nft_stake[ntoken.symbol.raw()], "stake amount not enough" );
+        CHECKC( ntoken.amount > 0 && ntoken.is_valid(), stake_err::INVALID_PARAMS, "invalid amount");
+        CHECKC( ntoken.amount<=user_stake.nft_stake[ntoken.symbol.raw()], stake_err::UNLOCK_OVERFLOW, "stake amount not enough" );
         // TRANSFER(self, account, amount, "stake");
-        CHECK( ntoken.amount > 0, "invalid amount");
         dao_stake.nft_stake[ntoken.symbol.raw()] =
             (safe<uint64_t>(dao_stake.nft_stake[ntoken.symbol.raw()]) - safe<uint64_t>(ntoken.amount)).value;
         user_stake.nft_stake[ntoken.symbol.raw()] =
@@ -186,9 +184,9 @@ ACTION mdaostake::extendlock(const name &account, const name &daocode, const uin
     user_stake_t::idx_t user_stake_table(_self, _self.value);
     auto user_stake_index = user_stake_table.get_index<"unionid"_n>();
     auto user_stake_iter = user_stake_index.find(get_unionid(account,daocode));
-    CHECK(user_stake_iter != user_stake_index.end(), "no stake record");
+    CHECKC(user_stake_iter != user_stake_index.end(), stake_err::STAKE_NOT_FOUND, "no stake record");
     user_stake_t user_stake(user_stake_iter->id, daocode, account);
-    CHECK(_db.get(user_stake), "no stake record");
+    CHECKC(_db.get(user_stake), stake_err::STAKE_NOT_FOUND, "no stake record");
     time_point_sec new_unlockline = time_point_sec(current_time_point()) + locktime;
     if(user_stake.freeze_until>new_unlockline) {
         new_unlockline = user_stake.freeze_until;

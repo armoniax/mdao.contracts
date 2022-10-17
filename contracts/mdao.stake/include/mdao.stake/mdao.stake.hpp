@@ -23,7 +23,12 @@ using namespace wasm::db;
 
 enum class stake_err : uint8_t
 {
-    UNDEFINED = 1
+    UNDEFINED = 1,
+    STAKE_NOT_FOUND = 2,
+    INVALID_PARAMS = 3,
+    DAO_NOT_FOUND = 4,
+    STILL_IN_LOCK = 5,
+    UNLOCK_OVERFLOW = 6,
 };
 
 class [[eosio::contract]] mdaostake : public contract
@@ -34,8 +39,9 @@ private:
 public:
     using contract::contract;
     mdaostake(name receiver, name code, datastream<const char *> ds) : contract(receiver, code, ds), _db(_self) {}
-
-    ACTION staketoken(const name &account, const name &daocode, const vector<asset> &tokens, const uint64_t &locktime);
+    
+    [[eosio::on_notify("*::transfer")]] 
+    void staketoken(const name &account, const name &daocode, const vector<asset> &tokens, const uint64_t &locktime);
 
     ACTION unlocktoken(const name &account, const name &daocode, const vector<asset> &tokens);
 
