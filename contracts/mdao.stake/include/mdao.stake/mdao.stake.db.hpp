@@ -18,6 +18,16 @@ namespace mdao
     using namespace eosio;
     using namespace amax;
 
+    struct [[eosio::table]] stake_global_t
+    {
+        name manager;
+        set<name> supported_contracts;
+        bool initialized = false;
+
+        EOSLIB_SERIALIZE(stake_global_t, (id)(supported_contracts)(initialized));
+        typedef eosio::singleton<"global"_n, stake_global_t> stake_global_singleton;
+    };
+
     struct [[eosio::table]] dao_stake_t
     {
         name daocode;

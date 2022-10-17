@@ -13,14 +13,6 @@ using namespace mdao;
 using namespace std;
 using namespace wasm::db;
 
-// static constexpr name AMAX_TOKEN{"amax.token"_n};
-// static constexpr name MDAO_CONF{"mdao.conf"_n};
-// static constexpr name MDAO_STG{"mdao.stg"_n};
-// static constexpr name MDAO_GOV{"mdao.gov"_n};
-// static constexpr name MDAO_VOTE{"mdao.vote"_n};
-// static constexpr name MDAO_STAKE{"mdao.stake"_n};
-// static constexpr name AMAX_MULSIGN{"amax.mulsign"_n};
-
 enum class stake_err : uint8_t
 {
     UNDEFINED = 1,
@@ -29,22 +21,31 @@ enum class stake_err : uint8_t
     DAO_NOT_FOUND = 4,
     STILL_IN_LOCK = 5,
     UNLOCK_OVERFLOW = 6,
+    INITIALIZED = 7,
 };
 
 class [[eosio::contract]] mdaostake : public contract
 {
 private:
     dbc _db;
+    stake_global_t _gstate;
+    stake_global_t::stake_global_singleton _global;
 
 public:
     using contract::contract;
-    mdaostake(name receiver, name code, datastream<const char *> ds) : contract(receiver, code, ds), _db(_self) {}
+    mdaostake(name receiver, name code, datastream<const char *> ds) : contract(receiver, code, ds), _db(_self), _global(_self,_self.value) {
+        if (_global.exists()) _gstate = _global.get();
+        else _gstate = stake_global_t{};
+    }
     
+    ACTION init( const name& manager, set<name>supported_contracts );
+
     [[eosio::on_notify("*::transfer")]] 
-    void staketoken(const name &account, const name &daocode, const vector<asset> &tokens, const uint64_t &locktime);
+    ACTION staketoken(const name &account, const name &daocode, const vector<asset> &tokens, const uint64_t &locktime);
 
     ACTION unlocktoken(const name &account, const name &daocode, const vector<asset> &tokens);
 
+    [[eosio::on_notify("*::transfer")]] 
     ACTION stakenft(const name &account, const name &daocode, const vector<nasset> &nfts, const uint64_t &locktime);
 
     ACTION unlocknft(const name &account, const name &daocode, const vector<nasset> &nfts);
