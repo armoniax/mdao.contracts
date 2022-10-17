@@ -22,6 +22,9 @@ enum class stake_err : uint8_t
     STILL_IN_LOCK = 5,
     UNLOCK_OVERFLOW = 6,
     INITIALIZED = 7,
+    UNINITIALIZED = 8,
+    UNSUPPORT_CONTRACT = 9,
+    NOT_POSITIVE = 10,
 };
 
 class [[eosio::contract]] mdaostake : public contract
@@ -40,13 +43,11 @@ public:
     
     ACTION init( const name& manager, set<name>supported_contracts );
 
-    [[eosio::on_notify("*::transfer")]] 
-    ACTION staketoken(const name &account, const name &daocode, const vector<asset> &tokens, const uint64_t &locktime);
+    [[eosio::on_notify("*::transfer")]] ACTION staketoken(const name &from, const name &to, const asset &quantity, const string &memo);
 
     ACTION unlocktoken(const name &account, const name &daocode, const vector<asset> &tokens);
 
-    [[eosio::on_notify("*::transfer")]] 
-    ACTION stakenft(const name &account, const name &daocode, const vector<nasset> &nfts, const uint64_t &locktime);
+    [[eosio::on_notify("*::transfer")]] ACTION stakenft(name from, name to, vector<nasset> &assets, string memo);
 
     ACTION unlocknft(const name &account, const name &daocode, const vector<nasset> &nfts);
 

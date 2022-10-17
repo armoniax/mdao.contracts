@@ -22,10 +22,14 @@ ACTION mdaostake::init( const name& manager, set<name>supported_contracts ) {
     _global.set(_gstate, get_self());
 }
 
-ACTION mdaostake::staketoken(const name &account, const name &daocode, const vector<asset> &tokens, const uint64_t &locktime)
+ACTION mdaostake::staketoken(const name& from, const name& to, const asset& quantity, const string& memo )
 {
-    require_auth( account );
-    time_point_sec new_unlockline = time_point_sec(current_time_point()) + locktime;
+    if(to != get_self()) return;
+    CHECKC( _gstate.initialized, stake_err::UNINITIALIZED, "contract uninitialized" );
+    CHECKC( quantity.amount>0, stake_err::NOT_POSITIVE, "swap quanity must be positive" )
+    name daocode = name(memo);
+    name contract = get_first_receiver();
+    CHECKC( _gstate.supported_contracts.count(contract), stake_err::UNSUPPORT_CONTRACT, "unsupport token contract");
     // @todo dao, user check
     // find record at daostake table
     dao_stake_t dao_stake(daocode);
@@ -38,8 +42,8 @@ ACTION mdaostake::staketoken(const name &account, const name &daocode, const vec
     // find record at userstake table
     user_stake_t::idx_t user_stake_table( get_self(), get_self().value);
     auto user_stake_index = user_stake_table.get_index<"unionid"_n>();
-    auto user_stake_iter = user_stake_index.find(get_unionid(account,daocode));
-    user_stake_t user_stake(daocode, account);
+    auto user_stake_iter = user_stake_index.find(get_unionid(from,daocode));
+    user_stake_t user_stake(daocode, from);
     if(user_stake_iter == user_stake_index.end()) {
         // record not fount
         user_stake.token_stake = map<symbol, uint64_t>();
@@ -51,18 +55,11 @@ ACTION mdaostake::staketoken(const name &account, const name &daocode, const vec
         user_stake.id = user_stake_iter->id;
         CHECKC(_db.get(user_stake), stake_err::STAKE_NOT_FOUND, "no stake record");
     }
-    // iterate over the input and stake token
-    vector<asset>::const_iterator in_iter = tokens.begin();
-    for (; in_iter!= tokens.end(); in_iter++) {
-        asset token = *in_iter;
-        CHECKC( token.is_valid() && token.amount>0, stake_err::INVALID_PARAMS, "stake amount invalid" );
-        // TRANSFER( account,self,amount,"stake" );
-        dao_stake.token_stake[token.symbol] = 
-            (safe<uint64_t>(dao_stake.token_stake[token.symbol]) + safe<uint64_t>(token.amount)).value;
-        user_stake.token_stake[token.symbol] = 
-            (safe<uint64_t>(user_stake.token_stake[token.symbol]) + safe<uint64_t>(token.amount)).value;
-    }
-    user_stake.freeze_until = max(user_stake.freeze_until, new_unlockline);
+    // TRANSFER( account,self,amount,"stake" );
+    dao_stake.token_stake[quantity.symbol] = 
+        (safe<uint64_t>(dao_stake.token_stake[quantity.symbol]) + safe<uint64_t>(quantity.amount)).value;
+    user_stake.token_stake[quantity.symbol] =
+        (safe<uint64_t>(user_stake.token_stake[quantity.symbol]) + safe<uint64_t>(quantity.amount)).value;
     // update database
     _db.set(user_stake, get_self());
     _db.set(dao_stake, get_self());
@@ -70,7 +67,8 @@ ACTION mdaostake::staketoken(const name &account, const name &daocode, const vec
 
 ACTION mdaostake::unlocktoken(const name &account, const name &daocode, const vector<asset> &tokens)
 {
-    require_auth( account );
+    require_auth(account);
+    CHECKC(_gstate.initialized, stake_err::UNINITIALIZED, "contract uninitialized");
     // find record at daostake table
     dao_stake_t dao_stake(daocode);
     CHECKC(_db.get(dao_stake), stake_err::DAO_NOT_FOUND, "dao not found");
@@ -108,10 +106,14 @@ ACTION mdaostake::unlocktoken(const name &account, const name &daocode, const ve
     _db.set(dao_stake, get_self());
 }
 
-ACTION mdaostake::stakenft(const name &account, const name &daocode, const vector<nasset> &nfts, const uint64_t &locktime)
+ACTION mdaostake::stakenft( name from, name to, vector< nasset >& assets, string memo )
 {
-    require_auth( account );
-    time_point_sec new_unlockline = time_point_sec(current_time_point()) + locktime;
+    if(to != get_self()) return;
+    CHECKC( _gstate.initialized, stake_err::UNINITIALIZED, "contract uninitialized" );
+    // CHECKC( quantity.amount>0, stake_err::NOT_POSITIVE, "swap quanity must be positive" )
+    name daocode = name(memo);
+    name contract = get_first_receiver();
+    CHECKC( _gstate.supported_contracts.count(contract), stake_err::UNSUPPORT_CONTRACT, "unsupport token contract");
     // @todo dao, user check
     // find record at daostake table
     dao_stake_t dao_stake(daocode);
@@ -124,8 +126,8 @@ ACTION mdaostake::stakenft(const name &account, const name &daocode, const vecto
     // find record at userstake table
     user_stake_t::idx_t user_stake_table( get_self(),  get_self().value);
     auto user_stake_index = user_stake_table.get_index<"unionid"_n>();
-    auto user_stake_iter = user_stake_index.find(get_unionid(account,daocode));
-    user_stake_t user_stake(daocode, account);
+    auto user_stake_iter = user_stake_index.find(get_unionid(from,daocode));
+    user_stake_t user_stake(daocode, from);
     if(user_stake_iter == user_stake_index.end()) {
         // record not fount
         user_stake.token_stake = map<symbol, uint64_t>();
@@ -138,17 +140,16 @@ ACTION mdaostake::stakenft(const name &account, const name &daocode, const vecto
         CHECKC(_db.get(user_stake), stake_err::STAKE_NOT_FOUND, "no stake record");
     }
     // iterate over the input and stake nft
-    vector<nasset>::const_iterator in_iter = nfts.begin();
-    for (; in_iter!= nfts.end(); in_iter++) {
+    vector<nasset>::const_iterator in_iter = assets.begin();
+    for (; in_iter!= assets.end(); in_iter++) {
         nasset ntoken = *in_iter;
-        CHECKC( ntoken.is_valid() && ntoken.amount > 0, stake_err::INVALID_PARAMS, "stake amount invalid");
+        CHECKC( ntoken.amount > 0, stake_err::INVALID_PARAMS, "stake amount invalid");
         // TRANSFER_N( account,self,amount,"stake" );
         dao_stake.nft_stake[ntoken.symbol.raw()] =
             (safe<uint64_t>(dao_stake.nft_stake[ntoken.symbol.raw()]) + safe<uint64_t>(ntoken.amount)).value;
         user_stake.nft_stake[ntoken.symbol.raw()] =
             (safe<uint64_t>(user_stake.nft_stake[ntoken.symbol.raw()]) + safe<uint64_t>(ntoken.amount)).value;
     }
-    user_stake.freeze_until = max(user_stake.freeze_until, new_unlockline);
     // update database
     _db.set(user_stake,  get_self());
     _db.set(dao_stake,  get_self());
@@ -156,7 +157,8 @@ ACTION mdaostake::stakenft(const name &account, const name &daocode, const vecto
 
 ACTION mdaostake::unlocknft(const name &account, const name &daocode, const vector<nasset> &nfts)
 {
-    require_auth( account );
+    require_auth(account);
+    CHECKC(_gstate.initialized, stake_err::UNINITIALIZED, "contract uninitialized");
     // find record at daostake table
     dao_stake_t dao_stake(daocode);
     CHECKC(_db.get(dao_stake), stake_err::DAO_NOT_FOUND, "dao not found");
