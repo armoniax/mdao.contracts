@@ -43,12 +43,28 @@ public:
     
     ACTION init( const name& manager, set<name>supported_contracts );
 
-    [[eosio::on_notify("*::transfer")]] ACTION staketoken(const name &from, const name &to, const asset &quantity, const string &memo);
+    /**
+     * stake token method
+     * @from 
+     * @to 
+     * @quantity
+     * @memo "daocode"
+    */
+    [[eosio::on_notify("amax.token::transfer")]]
+    ACTION staketoken(const name &from, const name &to, const asset &quantity, const string &memo);
 
     ACTION unlocktoken(const name &account, const name &daocode, const vector<asset> &tokens);
 
-    [[eosio::on_notify("*::transfer")]] ACTION stakenft(name from, name to, vector<nasset> &assets, string memo);
-
+    /**
+     * stake token method
+     * @from
+     * @to
+     * @quantity
+     * @memo "daocode"
+     */
+    [[eosio::on_notify("amax.ntoken::transfer")]]
+    ACTION stakenft(name from, name to, vector<nasset> &assets, string memo);
+    
     ACTION unlocknft(const name &account, const name &daocode, const vector<nasset> &nfts);
 
     ACTION extendlock(const name &account, const name &daocode, const uint64_t &locktime);

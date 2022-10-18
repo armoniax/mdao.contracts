@@ -24,7 +24,7 @@ namespace mdao
         set<name> supported_contracts;
         bool initialized = false;
 
-        EOSLIB_SERIALIZE(stake_global_t, (id)(supported_contracts)(initialized));
+        EOSLIB_SERIALIZE(stake_global_t, (manager)(supported_contracts)(initialized));
         typedef eosio::singleton<"global"_n, stake_global_t> stake_global_singleton;
     };
 
