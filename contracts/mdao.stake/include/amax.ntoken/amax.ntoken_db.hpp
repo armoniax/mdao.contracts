@@ -12,6 +12,8 @@
 #include <map>
 #include <set>
 #include <type_traits>
+#include <./amax.nasset.hpp>
+#include <./amax.nsymbol.hpp>
 
 namespace amax {
 
@@ -21,52 +23,6 @@ using namespace eosio;
 #define HASH256(str) sha256(const_cast<char*>(str.c_str()), str.size())
 #define TBL struct [[eosio::table, eosio::contract("amax.ntoken")]]
 #define NTBL(name) struct [[eosio::table(name), eosio::contract("amax.ntoken")]]
-
-
-struct nsymbol {
-    uint32_t id;
-    uint32_t parent_id;
-
-    nsymbol() {}
-    nsymbol(const uint32_t& i): id(i),parent_id(0) {}
-    nsymbol(const uint32_t& i, const uint32_t& pid): id(i),parent_id(pid) {}
-    nsymbol(const uint64_t& raw): id((uint32_t) raw ),parent_id((uint32_t) raw >> 32) {}
-
-    friend bool operator==(const nsymbol&, const nsymbol&);
-    bool is_valid()const { return( id > parent_id ); }
-    uint64_t raw()const { return( (uint64_t) parent_id << 32 | id ); } 
-
-    EOSLIB_SERIALIZE( nsymbol, (id)(parent_id) )
-};
-
-bool operator==(const nsymbol& symb1, const nsymbol& symb2) { 
-    return( symb1.id == symb2.id && symb1.parent_id == symb2.parent_id ); 
-}
-
-   
-struct nasset {
-    int64_t         amount;
-    nsymbol         symbol;
-
-    nasset() {}
-    nasset(const uint32_t& id): symbol(id), amount(0) {}
-    nasset(const uint32_t& id, const uint32_t& pid): symbol(id, pid), amount(0) {}
-    nasset(const uint32_t& id, const uint32_t& pid, const int64_t& am): symbol(id, pid), amount(am) {}
-    nasset(const int64_t& amt, const nsymbol& symb): amount(amt), symbol(symb) {}
-
-    nasset& operator+=(const nasset& quantity) { 
-        check( quantity.symbol.raw() == this->symbol.raw(), "nsymbol mismatch");
-        this->amount += quantity.amount; return *this;
-    } 
-    nasset& operator-=(const nasset& quantity) { 
-        check( quantity.symbol.raw() == this->symbol.raw(), "nsymbol mismatch");
-        this->amount -= quantity.amount; return *this; 
-    }
-
-    bool is_valid()const { return symbol.is_valid(); }
-    
-    EOSLIB_SERIALIZE( nasset, (amount)(symbol) )
-};
 
 TBL nstats_t {
     nasset          supply;
@@ -103,6 +59,7 @@ TBL nstats_t {
     EOSLIB_SERIALIZE(nstats_t,  (supply)(max_supply)(token_uri)
                                 (ipowner)(notary)(issuer)(issued_at)(notarized_at)(paused) )
 };
+
 
 ///Scope: owner's account
 TBL account_t {

@@ -32,8 +32,8 @@ namespace mdao
     {
         name daocode;
 
-        map<symbol, uint64_t> token_stake;
-        map<uint64_t, uint64_t> nft_stake;
+        map<extended_symbol, uint64_t> token_stake;
+        map<extended_nsymbol, uint64_t> nft_stake;
         uint32_t user_count;
 
         uint64_t primary_key() const { return daocode.value; }
@@ -54,13 +54,13 @@ namespace mdao
         uint64_t id;
         name account;
         name daocode;
-        map<symbol, uint64_t> token_stake;
-        map<uint64_t, uint64_t> nft_stake;
+        map<extended_symbol, uint64_t> token_stake;
+        map<extended_nsymbol, uint64_t> nft_stake;
         time_point_sec freeze_until;
 
         user_stake_t() {}
         user_stake_t(const name& code, const name& acc): account(acc), daocode(code) {}
-        user_stake_t(const uint64_t &id, const name& code, const name& acc): id(id), daocode(code), account(account) {}
+        user_stake_t(const uint64_t &id, const name& code, const name& acc): id(id), daocode(code), account(acc) {}
 
         uint64_t primary_key() const { return id; }
         uint64_t by_account() const { return account.value; }
