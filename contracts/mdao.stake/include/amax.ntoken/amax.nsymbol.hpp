@@ -75,9 +75,26 @@ public:
      *
      * @return boolean - true if both provided extended_symbols are the same
      */
-    friend constexpr bool operator==(const extended_nsymbol &a, const extended_nsymbol &b)
-    {
-        return a.contract == b.contract && a.sym == b.sym;
+    friend constexpr bool operator == ( const extended_nsymbol& a, const extended_nsymbol& b ) {
+        return std::tie( a.sym, a.contract ) == std::tie( b.sym, b.contract );
+    }
+
+    /**
+     * Inverted equivalency operator. Returns true if a != b (are different)
+     *
+     * @return boolean - true if both provided extended_symbols are not the same
+     */
+    friend constexpr bool operator != ( const extended_nsymbol& a, const extended_nsymbol& b ) {
+        return std::tie( a.sym, a.contract ) != std::tie( b.sym, b.contract );
+    }
+
+    /**
+     * Less than operator. Returns true if a < b.
+     *
+     * @return boolean - true if extended_symbol `a` is less than `b`
+     */
+    friend constexpr bool operator < ( const extended_nsymbol& a, const extended_nsymbol& b ) {
+        return std::tie( a.sym, a.contract ) < std::tie( b.sym, b.contract );
     }
 
 private:

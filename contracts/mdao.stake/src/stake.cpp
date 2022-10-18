@@ -8,9 +8,9 @@
     { action(permission_level{get_self(), "active"_n }, bank, "transfer"_n, std::make_tuple(get_self(), to, quantity, memo )).send(); }
 
 // transfer out from contract self
-#define TRANSFERFROM_N(bank,from, to, quants, memo) \
-    {	ntoken::transferfrom_action act{ bank, { {_self, active_perm} } };\
-        act.send( _self, from, to, quants , memo );}
+// #define TRANSFERFROM_N(bank,from, to, quants, memo) \
+//     {	ntoken::transferfrom_action act{ bank, { {_self, active_perm} } };\
+//         act.send( _self, from, to, quants , memo );}
 
 inline uint64_t max(uint64_t a, uint64_t b) { return a>b?a:b; } 
 
@@ -181,7 +181,6 @@ ACTION mdaostake::unlocknft(const name &account, const name &daocode, const vect
         extended_nsymbol sym = ntoken.get_extended_nsymbol();
         CHECKC( ntoken.quantity.amount > 0 && ntoken.quantity.is_valid(), stake_err::INVALID_PARAMS, "invalid amount");
         CHECKC( ntoken.quantity.amount <= user_stake.nft_stake[sym], stake_err::UNLOCK_OVERFLOW, "stake amount not enough" );
-        // TRANSFER(self, account, amount, "stake");
         dao_stake.nft_stake[sym] =
             (safe<uint64_t>(dao_stake.nft_stake[sym]) - safe<uint64_t>(ntoken.quantity.amount)).value;
         user_stake.nft_stake[sym] =

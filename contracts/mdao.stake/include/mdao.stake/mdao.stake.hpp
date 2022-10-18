@@ -65,7 +65,7 @@ public:
     [[eosio::on_notify("amax.ntoken::transfer")]]
     ACTION stakenft(name from, name to, vector<nasset> &assets, string memo);
 
-    ACTION unlocknft(const name &account, const name &daocode, const vector<nasset> &nfts);
+    ACTION unlocknft(const name &account, const name &daocode, const vector<extended_nasset> &nfts);
 
     ACTION extendlock(const name &account, const name &daocode, const uint64_t &locktime);
 };
