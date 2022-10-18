@@ -4,15 +4,12 @@
 #include <thirdparty/safe.hpp>
 
 // transfer out from contract self
-#define TRANSFER_OUT(bank, to, quantity, memo) \
-    { action(permission_level{get_self(), "active"_n }, bank, "transfer"_n, std::make_tuple(get_self(), to, quantity, memo )).send(); }
+#define TRANSFERFROM(bank, from, to, quantity, memo) \
+    { action(permission_level{get_self(), "active"_n }, bank, "transfer"_n, std::make_tuple(from, to, quantity, memo )).send(); }
 
 // transfer out from contract self
-// #define TRANSFERFROM_N(bank,from, to, quants, memo) \
-//     {	ntoken::transferfrom_action act{ bank, { {_self, active_perm} } };\
-//         act.send( _self, from, to, quants , memo );}
-
-inline uint64_t max(uint64_t a, uint64_t b) { return a>b?a:b; } 
+#define TRANSFERFROM_N(bank, from, to, quants, memo) \
+    { action(permission_level{get_self(), "active"_n}, bank, "transfer"_n, std::make_tuple(from, to, quants, memo)).send(); }
 
 ACTION mdaostake::init( const name& manager, set<name>supported_contracts ) {
     require_auth( _self );
@@ -36,9 +33,9 @@ ACTION mdaostake::staketoken(const name& from, const name& to, const asset& quan
     dao_stake_t dao_stake(daocode);
     if( !_db.get(dao_stake) ) {
         dao_stake.daocode = daocode;
-        dao_stake.token_stake = map<extended_symbol, uint64_t>();
-        dao_stake.nft_stake = map<extended_nsymbol, uint64_t>();
-        dao_stake.user_count = uint64_t(0);
+        dao_stake.token_stake = map<extended_symbol, int64_t>();
+        dao_stake.nft_stake = map<extended_nsymbol, int64_t>();
+        dao_stake.user_count = int32_t(0);
     }
     // find record at userstake table
     user_stake_t::idx_t user_stake_table( get_self(), get_self().value);
@@ -47,8 +44,8 @@ ACTION mdaostake::staketoken(const name& from, const name& to, const asset& quan
     user_stake_t user_stake(daocode, from);
     if(user_stake_iter == user_stake_index.end()) {
         // record not fount
-        user_stake.token_stake = map<extended_symbol, uint64_t>();
-        user_stake.nft_stake = map<extended_nsymbol, uint64_t>();
+        dao_stake.token_stake = map<extended_symbol, int64_t>();
+        dao_stake.nft_stake = map<extended_nsymbol, int64_t>();
         user_stake.freeze_until = time_point_sec(uint32_t(0));
         dao_stake.user_count ++;
     } else {
@@ -58,9 +55,9 @@ ACTION mdaostake::staketoken(const name& from, const name& to, const asset& quan
     }
     extended_symbol sym = extended_symbol{quantity.symbol, contract};
     dao_stake.token_stake[sym] = 
-        (safe<uint64_t>(dao_stake.token_stake[sym]) + safe<uint64_t>(quantity.amount)).value;
+        (safe<int64_t>(dao_stake.token_stake[sym]) + safe<int64_t>(quantity.amount)).value;
     user_stake.token_stake[sym] =
-        (safe<uint64_t>(user_stake.token_stake[sym]) + safe<uint64_t>(quantity.amount)).value;
+        (safe<int64_t>(user_stake.token_stake[sym]) + safe<int64_t>(quantity.amount)).value;
     // update database
     _db.set(user_stake, get_self());
     _db.set(dao_stake, get_self());
@@ -89,11 +86,10 @@ ACTION mdaostake::unlocktoken(const name &account, const name &daocode, const ve
         extended_symbol sym = token.get_extended_symbol();
         CHECKC(token.quantity.amount > 0 && token.quantity.is_valid(), stake_err::INVALID_PARAMS, "invalid amount");
         CHECKC(token.quantity.amount <= user_stake.token_stake[sym], stake_err::UNLOCK_OVERFLOW, "stake amount not enough");
-        // TRANSFER(self, account, amount, "stake");
         user_stake.token_stake[sym] =
-            (safe<uint64_t>(dao_stake.token_stake[sym]) - safe<uint64_t>(token.quantity.amount)).value;;
+            (safe<int64_t>(dao_stake.token_stake[sym]) - safe<int64_t>(token.quantity.amount)).value;;
         dao_stake.token_stake[sym] = 
-            (safe<uint64_t>(dao_stake.token_stake[sym]) - safe<uint64_t>(token.quantity.amount)).value;;
+            (safe<int64_t>(dao_stake.token_stake[sym]) - safe<int64_t>(token.quantity.amount)).value;;
         if(user_stake.token_stake[sym]==0) {
             user_stake.token_stake.erase(sym);
             if (dao_stake.token_stake[sym] == 0)
@@ -101,7 +97,7 @@ ACTION mdaostake::unlocktoken(const name &account, const name &daocode, const ve
                 dao_stake.token_stake.erase(sym);
             }
         }
-        TRANSFER_OUT(token.contract, account, token, string("redeem transfer"));
+        TRANSFERFROM(token.contract, get_self(), account, token, string("redeem transfer"));
     }
     // update database
     _db.set(user_stake, get_self());
@@ -121,9 +117,9 @@ ACTION mdaostake::stakenft( name from, name to, vector< nasset >& assets, string
     dao_stake_t dao_stake(daocode);
     if( !_db.get(dao_stake) ) {
         dao_stake.daocode = daocode;
-        dao_stake.token_stake = map<extended_symbol, uint64_t>();
-        dao_stake.nft_stake = map<extended_nsymbol, uint64_t>();
-        dao_stake.user_count = uint64_t(0);
+        dao_stake.token_stake = map<extended_symbol, int64_t>();
+        dao_stake.nft_stake = map<extended_nsymbol, int64_t>();
+        dao_stake.user_count = int32_t(0);
     }
     // find record at userstake table
     user_stake_t::idx_t user_stake_table( get_self(),  get_self().value);
@@ -132,8 +128,8 @@ ACTION mdaostake::stakenft( name from, name to, vector< nasset >& assets, string
     user_stake_t user_stake(daocode, from);
     if(user_stake_iter == user_stake_index.end()) {
         // record not fount
-        user_stake.token_stake = map<extended_symbol, uint64_t>();
-        user_stake.nft_stake = map<extended_nsymbol, uint64_t>();
+        dao_stake.token_stake = map<extended_symbol, int64_t>();
+        dao_stake.nft_stake = map<extended_nsymbol, int64_t>();
         user_stake.freeze_until = time_point_sec(uint32_t(0));
         dao_stake.user_count ++;
     } else {
@@ -147,11 +143,10 @@ ACTION mdaostake::stakenft( name from, name to, vector< nasset >& assets, string
         nasset ntoken = *in_iter;
         extended_nsymbol sym = extended_nsymbol{ntoken.symbol,contract};
         CHECKC( ntoken.amount > 0, stake_err::INVALID_PARAMS, "stake amount invalid");
-        // TRANSFER_N( account,self,amount,"stake" );
         dao_stake.nft_stake[sym] =
-            (safe<uint64_t>(dao_stake.nft_stake[sym]) + safe<uint64_t>(ntoken.amount)).value;
+            (safe<int64_t>(dao_stake.nft_stake[sym]) + safe<int64_t>(ntoken.amount)).value;
         user_stake.nft_stake[sym] =
-            (safe<uint64_t>(user_stake.nft_stake[sym]) + safe<uint64_t>(ntoken.amount)).value;
+            (safe<int64_t>(user_stake.nft_stake[sym]) + safe<int64_t>(ntoken.amount)).value;
     }
     // update database
     _db.set(user_stake,  get_self());
@@ -182,10 +177,10 @@ ACTION mdaostake::unlocknft(const name &account, const name &daocode, const vect
         CHECKC( ntoken.quantity.amount > 0 && ntoken.quantity.is_valid(), stake_err::INVALID_PARAMS, "invalid amount");
         CHECKC( ntoken.quantity.amount <= user_stake.nft_stake[sym], stake_err::UNLOCK_OVERFLOW, "stake amount not enough" );
         dao_stake.nft_stake[sym] =
-            (safe<uint64_t>(dao_stake.nft_stake[sym]) - safe<uint64_t>(ntoken.quantity.amount)).value;
+            (safe<int64_t>(dao_stake.nft_stake[sym]) - safe<int64_t>(ntoken.quantity.amount)).value;
         user_stake.nft_stake[sym] =
-            (safe<uint64_t>(user_stake.nft_stake[sym]) - safe<uint64_t>(ntoken.quantity.amount)).value;
-        // TRANSFERFROM_N(sym.get_contract(),get_self(), account, ntoken.quantity, string("redeem transfer"));
+            (safe<int64_t>(user_stake.nft_stake[sym]) - safe<int64_t>(ntoken.quantity.amount)).value;
+        TRANSFERFROM_N(sym.get_contract(),get_self(), account, ntoken.quantity, string("redeem transfer"));
         if(user_stake.nft_stake[sym]==0) {
             user_stake.nft_stake.erase(sym);
             if (dao_stake.nft_stake[sym] == 0)
@@ -199,7 +194,7 @@ ACTION mdaostake::unlocknft(const name &account, const name &daocode, const vect
     _db.set(dao_stake,  get_self());
 }
 
-ACTION mdaostake::extendlock(const name &account, const name &daocode, const uint64_t &locktime){
+ACTION mdaostake::extendlock(const name &account, const name &daocode, const uint32_t &locktime){
     require_auth( _gstate.manager );
     // find record at userstake table
     user_stake_t::idx_t user_stake_table( get_self(),  get_self().value);

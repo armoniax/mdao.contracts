@@ -67,5 +67,5 @@ public:
 
     ACTION unlocknft(const name &account, const name &daocode, const vector<extended_nasset> &nfts);
 
-    ACTION extendlock(const name &account, const name &daocode, const uint64_t &locktime);
+    ACTION extendlock(const name &account, const name &daocode, const uint32_t &locktime);
 };
