@@ -2,7 +2,7 @@
 
 #include <eosio/asset.hpp>
 // #include <deque>
-#include <./amax.nsymbol.hpp>
+#include "./amax.nsymbol.hpp"
 
 namespace amax {
 
@@ -13,10 +13,10 @@ struct nasset {
     nsymbol         symbol;
 
     nasset() {}
-    nasset(const uint32_t& id): symbol(id), amount(0) {}
-    nasset(const uint32_t& id, const uint32_t& pid): symbol(id, pid), amount(0) {}
-    nasset(const uint32_t& id, const uint32_t& pid, const int64_t& am): symbol(id, pid), amount(am) {}
-    nasset(const int64_t& amt, const nsymbol& symb): amount(amt), symbol(symb) {}
+    constexpr nasset(const uint32_t& id): symbol(id), amount(0) {}
+    constexpr nasset(const uint32_t& id, const uint32_t& pid): symbol(id, pid), amount(0) {}
+    constexpr nasset(const uint32_t& id, const uint32_t& pid, const int64_t& am): symbol(id, pid), amount(am) {}
+    constexpr nasset(const int64_t &amt, const nsymbol &symb) : amount(amt), symbol(symb) {}
 
     // Unary minus operator
     nasset operator-()const {
@@ -61,6 +61,19 @@ struct nasset {
     friend bool operator<( const nasset& a, const nasset& b ) {
         eosio::check( a.symbol == b.symbol, "comparison of assets with different symbols is not allowed" );
         return a.amount < b.amount;
+    }
+
+    /// Comparison operator
+    friend bool operator==( const nasset& a, const nasset& b ) {
+        eosio::check( a.symbol == b.symbol, "comparison of assets with different symbols is not allowed" );
+        return a.amount == b.amount;
+    }
+
+    /// Comparison operator
+    friend bool operator!=( const nasset& a, const nasset& b ) {
+        eosio::check( a.symbol == b.symbol, "comparison of assets with different symbols is not allowed" );
+        return a.amount != b.amount;
+
     }
 
     /**

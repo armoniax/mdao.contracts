@@ -13,7 +13,7 @@ struct nsymbol
     uint32_t parent_id;
 
     nsymbol() {}
-    nsymbol(const uint32_t &i) : id(i), parent_id(0) {}
+    constexpr nsymbol(const uint32_t &i) : id(i), parent_id(0) {}
     constexpr nsymbol(const uint32_t &i, const uint32_t &pid) : id(i), parent_id(pid) {}
 
     friend bool operator==(const nsymbol &, const nsymbol &);
@@ -46,7 +46,7 @@ public:
     /**
      * Default constructor, construct a new extended_symbol
      */
-    constexpr extended_nsymbol() {}
+    extended_nsymbol() {}
 
     /**
      * Construct a new symbol_code object initialising symbol and contract with the passed in symbol and name

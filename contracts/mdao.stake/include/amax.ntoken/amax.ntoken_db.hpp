@@ -12,8 +12,8 @@
 #include <map>
 #include <set>
 #include <type_traits>
-#include <./amax.nasset.hpp>
-#include <./amax.nsymbol.hpp>
+#include "./amax.nasset.hpp"
+#include "./amax.nsymbol.hpp"
 
 namespace amax {
 
