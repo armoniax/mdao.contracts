@@ -14,7 +14,7 @@ static constexpr eosio::name token_active_perm{"active"_n};
     {	mdaotoken::token::issue_action act{ bank, { {_self, token_active_perm} } };\
             act.send( to, quantity, memo );}
 
-#define XTOKEN_RANSFER(bank, to, quantity, memo) \
+#define XTOKEN_TRANSFER(bank, to, quantity, memo) \
     {	mdaotoken::token::transfer_action act{ bank, { {_self, token_active_perm} } };\
             act.send( _self, to, quantity , memo );}
 
@@ -22,10 +22,9 @@ static constexpr eosio::name token_active_perm{"active"_n};
     {	mdaotoken::token::open_action act{ bank, { {_self, token_active_perm} } };\
             act.send( owner, symbol, rampayer);}
 
-#define XTOKEN_CREATE_TOKEN(bank, creator, supply, fee_ratio, gas_ratio, fullname) \
+#define XTOKEN_CREATE_TOKEN(bank, creator, supply, fee_ratio, fullname, dao_code, meta_data) \
     {	mdaotoken::token::create_action act{ bank, { {_self, token_active_perm} } };\
-            act.send( creator, supply, fee_ratio, gas_ratio, fullname);}
-
+            act.send( creator, supply, fee_ratio, fullname, dao_code, meta_data);}
 
 namespace mdaotoken
 {
@@ -45,6 +44,10 @@ namespace mdaotoken
      */
     class [[eosio::contract("mdaotoken111")]] token : public contract
     {
+        
+    using conf_t = mdao::conf_global_t;
+    using conf_table_t = mdao::conf_global_singleton;
+
     public:
         using contract::contract;
 
@@ -64,8 +67,9 @@ namespace mdaotoken
         [[eosio::action]] void create(const name &issuer,
                                       const asset &maximum_supply,
                                       const uint16_t &fee_ratio,
-                                      const uint16_t &gas_ratio,
-                                      const std::string &fullname);
+                                      const std::string &fullname,
+                                      const name &dao_code,                       
+                                      const std::string &meta_data);
         /**
          *  This action issues to `to` account a `quantity` of tokens.
          *
@@ -148,17 +152,8 @@ namespace mdaotoken
          *
          * @param symbol - the symbol of the token.
          * @param fee_ratio - fee ratio, boost 10000.
-         * @param gas_ratio - gas ratio, boost 10000.
          */
-        [[eosio::action]] void ratio(const symbol &symbol, const uint16_t& fee_ratio, const uint16_t& gas_ratio);
-        /**
-         * Set token fee receiver
-         *
-         * @param symbol - the symbol of the token.
-         * @param fee_receivers - fee receivers.
-         */
-        [[eosio::action]] void feereceiver(const symbol &symbol, 
-                                            const name& fee_receiver);
+        [[eosio::action]] void ratio(const symbol &symbol, const uint16_t& fee_ratio);
 
         /**
          * Set token min fee quantity
@@ -221,7 +216,7 @@ namespace mdaotoken
         using open_action = eosio::action_wrapper<"open"_n, &token::open>;
         using close_action = eosio::action_wrapper<"close"_n, &token::close>;
         using ratio_action = eosio::action_wrapper<"feeratio"_n, &token::ratio>;
-        using feereceiver_action = eosio::action_wrapper<"feereceiver"_n, &token::feereceiver>;
+        // using feereceiver_action = eosio::action_wrapper<"feereceiver"_n, &token::feereceiver>;
         using minfee_action = eosio::action_wrapper<"minfee"_n, &token::minfee>;
         using feewhitelist_action = eosio::action_wrapper<"feeexempt"_n, &token::feeexempt>;
         using pause_action = eosio::action_wrapper<"pause"_n, &token::pause>;
@@ -229,6 +224,10 @@ namespace mdaotoken
         using burnfee_action = eosio::action_wrapper<"burnfee"_n, &token::burnfee>;
 
     private:
+        std::unique_ptr<conf_table_t> _conf_tbl_ptr;
+        std::unique_ptr<conf_t> _conf_ptr;
+        const conf_t& _conf();
+
         struct [[eosio::table]] account
         {
             asset balance;
@@ -245,11 +244,11 @@ namespace mdaotoken
             asset max_supply;
             name issuer;
             bool is_paused = false;
-            name fee_receiver;
-            uint16_t gas_ratio = 0;
+            name dao_code;
             uint16_t fee_ratio = 0;         // fee ratio, boost 10000
             asset min_fee_quantity;         // min fee quantity
             std::string fullname;
+            std::string meta_data;
 
             uint64_t primary_key() const { return supply.symbol.code().raw(); }
         };
