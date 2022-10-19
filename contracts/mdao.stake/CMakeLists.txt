@@ -1,5 +1,5 @@
 add_contract(mdao.stake mdao.stake
-${CMAKE_CURRENT_SOURCE_DIR}/src/stake.cpp
+${CMAKE_CURRENT_SOURCE_DIR}/src/mdao.stake.cpp
 )
 
 target_include_directories(mdao.stake
