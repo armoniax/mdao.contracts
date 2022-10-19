@@ -15,10 +15,12 @@ namespace mdaotoken {
         {	mdaotoken::token::burnfee_action act{ _self, { {_self, active_permission} } };\
                 act.send( account, quantity , memo );}
 
+    #define TOKEN_TRANSFER(bank, to, quantity, memo) \
+        { action(permission_level{get_self(), "active"_n }, bank, "transfer"_n, std::make_tuple( _self, to, quantity, memo )).send(); }
 
 // #define CHECK(exp, msg) { if (!(exp)) eosio::check(false, msg); }
 
-//     template<typename Int, typename LargerInt>
+//     template<typename Int, typename LargerInt>åå
 //     LargerInt multiply_decimal(LargerInt a, LargerInt b, LargerInt precision) {
 //         LargerInt tmp = a * b / precision;
 //         CHECK(tmp >= std::numeric_limits<Int>::min() && tmp <= std::numeric_limits<Int>::max(),
@@ -31,12 +33,13 @@ namespace mdaotoken {
     void token::create(const name &issuer,
                         const asset &maximum_supply,
                         const uint16_t &fee_ratio,
-                        const uint16_t &gas_ratio,
-                        const std::string &fullname)
+                        const std::string &fullname,
+                        const name &dao_code,                       
+                        const std::string &meta_data)
     {
-        require_auth(MDAO_INFO);
-
+        check(has_auth(MDAO_INFO) || has_auth(MDAO_ALGOEX), "insufficient permissions");
         check(is_account(issuer), "issuer account does not exist");
+        
         const auto &sym = maximum_supply.symbol;
         auto sym_code_raw = sym.code().raw();
         check(sym.is_valid(), "invalid symbol name");
@@ -52,17 +55,16 @@ namespace mdaotoken {
             s.supply.symbol     = maximum_supply.symbol;
             s.max_supply        = maximum_supply;
             s.issuer            = issuer;
-            s.fee_receiver      = issuer;
+            s.dao_code          = dao_code;
             s.fee_ratio         = fee_ratio;
-            s.gas_ratio         = gas_ratio;
             s.min_fee_quantity  = asset(0, maximum_supply.symbol);
             s.fullname = fullname;
+            s.meta_data = meta_data;
         });
     }
 
     void token::issue(const name &to, const asset &quantity, const string &memo)
     {
-        require_auth(MDAO_INFO);
 
         const auto& sym = quantity.symbol;
         auto sym_code_raw = sym.code().raw();
@@ -73,7 +75,7 @@ namespace mdaotoken {
         auto existing = statstable.find(sym_code_raw);
         check(existing != statstable.end(), "token with symbol does not exist, create token before issue");
         const auto &st = *existing;
-        check(to == MDAO_INFO, "tokens can only be issued to dex account");
+        check( has_auth(to) && (st.issuer == to || MDAO_TREASURY == to || MDAO_ALGOEX == to), "insufficient permissions");
 
         check(quantity.is_valid(), "invalid quantity");
         check(quantity.amount > 0, "must issue positive quantity");
@@ -86,15 +88,15 @@ namespace mdaotoken {
                             s.supply += quantity; 
                           });
 
-        add_balance(st, MDAO_INFO, quantity, get_self());
+        add_balance(st, to, quantity, get_self());
         
-        accounts accts(get_self(), MDAO_INFO.value);
+        accounts accts(get_self(), to.value);
         const auto &acct = accts.get(sym_code_raw, "account of token does not exist");
         accts.modify(acct, get_self(), [&](auto &a) {
              a.is_fee_exempt = true;
         });
 
-        require_recipient(MDAO_INFO);
+        require_recipient(to);
     }
 
     void token::retire(const asset &quantity, const string &memo)
@@ -173,29 +175,20 @@ void token::transfer( const name&    from,
 
         asset actual_recv = quantity;
         asset fee = asset(0, quantity.symbol);
-        if (   is_account(st.fee_receiver)
-            &&  st.fee_ratio > 0
-            &&  to != st.issuer
-            &&  to != st.fee_receiver)
+        if ( st.fee_ratio > 0 &&  to != st.issuer )
         {
             accounts to_accts(get_self(), to.value);
             auto to_acct = to_accts.find(sym_code_raw);
-            if ( to_acct == to_accts.end() || !to_acct->is_fee_exempt) {
+
+            if ( (to_acct == to_accts.end() && (to != MDAO_INFO
+                    || to != MDAO_CONF || to != MDAO_STG 
+                    || to != MDAO_GOV || to != MDAO_TREASURY 
+                    || to != MDAO_PROPOSAL)) 
+                || !to_acct->is_fee_exempt) {
                 fee.amount = std::max( st.min_fee_quantity.amount,
                                 (int64_t)multiply_decimal64(quantity.amount, st.fee_ratio, RATIO_BOOST) );
                 CHECK(fee < quantity, "the calculated fee must less than quantity");
                 actual_recv -= fee;
-            }
-        }
-        asset gas = asset(0, quantity.symbol);
-        if(st.gas_ratio > 0
-            &&  to != st.issuer
-            &&  to != st.fee_receiver){
-            accounts to_accts(get_self(), to.value);
-            auto to_acct = to_accts.find(sym_code_raw);
-            if ( to_acct == to_accts.end() || !to_acct->is_fee_exempt) {
-                gas.amount = (int64_t)multiply_decimal64(quantity.amount, st.fee_ratio, RATIO_BOOST);
-                actual_recv -= gas;
             }
         }
 
@@ -205,14 +198,9 @@ void token::transfer( const name&    from,
         add_balance(st, to, actual_recv, payer, true);
 
         if (fee.amount > 0) {
-            add_balance(st, st.fee_receiver, fee, get_self());
+            add_balance(st, MDAO_TREASURY, fee, get_self());
+            TOKEN_TRANSFER(_self, MDAO_TREASURY, fee, "")
         }
-        if(gas.amount > 0){
-            add_balance(st, st.issuer, gas,  get_self());
-            BURNFEE(st.issuer, gas, "auto burn");
-        }
-        if(gas.amount > 0 || gas.amount > 0) 
-            NOTIFYFEE(from, to, fee+gas, memo);
     }
 
     /**
@@ -254,6 +242,12 @@ void token::transfer( const name&    from,
         {
             to_accts.emplace(ram_payer, [&](auto &a) {
                 a.balance = value;
+
+                if(owner == MDAO_INFO || owner == MDAO_CONF
+                    || owner == MDAO_STG || owner == MDAO_GOV
+                    || owner == MDAO_TREASURY || owner == MDAO_PROPOSAL
+                ) 
+                    a.is_fee_exempt = true;
             });
         }
         else
@@ -312,30 +306,9 @@ void token::transfer( const name&    from,
         accts.erase(it);
     }
 
-    void token::ratio(const symbol &symbol, const uint16_t& fee_ratio, const uint16_t& gas_ratio) {
+    void token::ratio(const symbol &symbol, const uint16_t& fee_ratio) {
         check(fee_ratio >= 0 && fee_ratio < RATIO_BOOST, "fee_ratio out of range");
-       check(gas_ratio >= 0 && gas_ratio < RATIO_BOOST, "fee_ratio out of range");
-       check(gas_ratio + fee_ratio < RATIO_BOOST, "total ratio out of range");
         update_currency_field(symbol, fee_ratio, &currency_stats::fee_ratio);
-        update_currency_field(symbol, gas_ratio, &currency_stats::gas_ratio);
-    }
-
-    void token::feereceiver(const symbol &symbol, 
-                            const name& fee_receiver) {
-        auto sym_code_raw = symbol.code().raw();
-        stats statstable(get_self(), sym_code_raw);
-        const auto &st = statstable.get(sym_code_raw, "token of symbol does not exist");
-        check(st.supply.symbol == symbol, "symbol precision mismatch");
-        require_auth(st.issuer);
-
-        check(is_account(fee_receiver), "account of token does not exist");
-        if(!account_exist(get_self(), fee_receiver, symbol.code())) {
-            open_account(fee_receiver, symbol, st.issuer);
-        }
-
-        statstable.modify(st, same_payer, [&](auto &s) {
-            s.fee_receiver = fee_receiver;
-        });
     }
 
     void token::minfee(const symbol &symbol, const asset &min_fee_quantity) {
@@ -394,4 +367,12 @@ void token::transfer( const name&    from,
         });
     }
 
+    const token::conf_t& token::_conf() {
+        if (!_conf_ptr) {
+            _conf_tbl_ptr = make_unique<conf_table_t>(MDAO_CONF, MDAO_CONF.value);
+            check(_conf_tbl_ptr->exists(), "conf table not existed in contract" );
+            _conf_ptr = make_unique<conf_t>(_conf_tbl_ptr->get());
+        }
+        return *_conf_ptr;
+    }
 } /// namespace amax_token

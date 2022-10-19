@@ -1,142 +1,171 @@
 #include <mdao.stg/mdao.stg.hpp>
 #include <thirdparty/utils.hpp>
-#include <mdao.gov/mdao.gov.hpp>
+#include "mdao.gov/mdao.gov.hpp"
 #include <mdao.info/mdao.info.db.hpp>
 #include <set>
-#define VOTE_CREATE(creator, name, desc, vote_strategies, votes) \
-{ action(permission_level{get_self(), "active"_n }, "mdao.vote"_n, "create"_n, std::make_tuple( creator, name, desc, vote_strategies, votes )).send(); }
+
+#define VOTE_CREATE(dao_code, creator, name, desc, title, vote_strategy_id, type) \
+{ action(permission_level{get_self(), "active"_n }, "mdao.propose"_n, "create"_n, std::make_tuple( dao_code, creator, name, desc, title, vote_strategy_id, type)).send(); }
 
 #define VOTE_EXCUTE(owner, proposeid) \
-{ action(permission_level{get_self(), "active"_n }, "mdao.vote"_n, "create"_n, std::make_tuple( owner, proposeid)).send(); }
+{ action(permission_level{get_self(), "active"_n }, "mdao.propose"_n, "create"_n, std::make_tuple( owner, proposeid)).send(); }
 
-ACTION mdaogov::creategov(const name& creator,const name& daocode, const string& title,
-                            const string& desc, const set<uint64_t>& votestg, const uint32_t minvotes)
-{
-    require_auth( creator );
-    CHECKC( is_account(creator) ,gov_err::ACCOUNT_NOT_EXITS, "account not exits" );
-    CHECKC( minvotes > 0 ,gov_err::MIN_VOTES_LESS_THAN_ZERO, "min votes less than zero" );
-
-    gov_t gov(daocode);
-    CHECKC( !_db.get(gov), gov_err::CODE_REPEAT, "gov already existing!" );
-
-    auto conf = _conf();
-    CHECKC( conf.status != conf_status::MAINTAIN, gov_err::NOT_AVAILABLE, "under maintenance" );
-
-    if(!votestg.empty()){
-        strategy_t::idx_t stg(MDAO_STG, MDAO_STG.value);
-        for( set<uint64_t>::iterator votestg_iter = votestg.begin(); votestg_iter != votestg.end(); votestg_iter++ ){
-            CHECKC(stg.find(*votestg_iter) != stg.end(), gov_err::STRATEGY_NOT_FOUND, "strategy not found");
-        }
-    }
-
-    gov.creator   =   creator;
-    gov.dao_name  =   daocode;
-    gov.status    =   gov_status::RUNNING;
-    gov.title     =   title;
-    gov.desc	  =   desc;
-    gov.vote_strategies	 =   votestg;
-    gov.created_at	     =   time_point_sec(current_time_point());
-    gov.min_votes	     =   minvotes;
-
-    _db.set(gov, _self);
-
-}
-
-ACTION mdaogov::cancel(const name& owner, const name& daocode)
-{
-    require_auth( owner );
-
-    gov_t gov(daocode);
-    CHECKC( _db.get(gov) ,gov_err::RECORD_NOT_FOUND, "record not found" );
-    CHECKC( owner == gov.creator, gov_err::PERMISSION_DENIED, "only the creator can operate" );
-
-    auto conf = _conf();
-    CHECKC( conf.status != conf_status::MAINTAIN, gov_err::NOT_AVAILABLE, "under maintenance" );
-
-    gov.status  =  gov_status::CANCEL;
-    _db.set(gov, _self);
-}
-
-ACTION mdaogov::setpropstg( const name& owner, const name& daocode,
-                            set<name> proposers, set<uint64_t> proposestg )
+ACTION mdaogov::create(const name& dao_code, const name& propose_strategy_code, 
+                            const name& vote_strategy_code, const uint64_t& propose_strategy_id, 
+                            const uint64_t& vote_strategy_id, const uint32_t& require_participation, 
+                            const uint32_t& require_pass )
 {
     auto conf = _conf();
+    CHECKC( conf.status != conf_status::PENDING, gov_err::NOT_AVAILABLE, "under maintenance" );
+    require_auth( conf.managers[manager_type::GOV] );
 
-    gov_t gov(daocode);
-    CHECKC( _db.get(gov) ,gov_err::RECORD_NOT_FOUND, "record not found" );
-    CHECKC( owner == gov.creator, gov_err::PERMISSION_DENIED, "only the creator can operate" );
-
-    CHECKC( conf.status != conf_status::CANCEL, gov_err::NOT_AVAILABLE, "under maintenance" );
-    CHECKC( gov.status == gov_status::RUNNING, gov_err::NOT_AVAILABLE, "under maintenance" );
-
-    bool is_expired = (gov.created_at + PROPOSE_STG_PERMISSION_AGING) < time_point_sec(current_time_point());
-    CHECKC( ( has_auth(owner) &&! is_expired ) || ( has_auth(conf.managers[manager_type::GOV]) && is_expired ) ,gov_err::PERMISSION_DENIED, "insufficient permissions" );
-
-    if(!proposers.empty()){
-        for( set<name>::iterator proposers_iter = proposers.begin(); proposers_iter != proposers.end(); proposers_iter++ ){
-            CHECKC( is_account(*proposers_iter) ,gov_err::ACCOUNT_NOT_EXITS, "account not exits:"+(*proposers_iter).to_string() );
-        }
-        gov.proposers.insert(proposers.begin(), proposers.end());
-    }
-
-    if(!proposestg.empty()){
-        strategy_t::idx_t stg(MDAO_STG, MDAO_STG.value);
-        for( set<uint64_t>::iterator proposestg_iter = proposestg.begin(); proposestg_iter != proposestg.end(); proposestg_iter++ ){
-            CHECKC(stg.find(*proposestg_iter) != stg.end(), gov_err::STRATEGY_NOT_FOUND, "strategy not found:"+to_string(*proposestg_iter) );
-        }
-        gov.propose_strategies.insert(proposestg.begin(), proposestg.end());
-    }
-
-    _db.set(gov, _self);
-}
-
-ACTION mdaogov::createprop(const name& owner, const name& creator, const name& daocode,
-                                const uint64_t& stgid, const string& name,
-                                const string& desc, const uint32_t& votes)
-{
-    require_auth( owner );
-    auto conf = _conf();
-
-    CHECKC( is_account(creator) ,gov_err::ACCOUNT_NOT_EXITS, "ceator not found" );
-
-    gov_t gov(daocode);
-    CHECKC( _db.get(gov) ,gov_err::RECORD_NOT_FOUND, "record not found" );
-    CHECKC( owner == gov.creator, gov_err::PERMISSION_DENIED, "only the creator can operate" );
-    CHECKC( conf.status != conf_status::MAINTAIN, gov_err::NOT_AVAILABLE, "under maintenance" );
-    CHECKC( gov.status == gov_status::RUNNING, gov_err::NOT_AVAILABLE, "under maintenance" );
-    CHECKC( gov.min_votes <= votes, gov_err::TOO_FEW_VOTES, "too few votes" );
-    CHECKC( gov.proposers.find(creator) != gov.proposers.end(), gov_err::PROPOSER_NOT_FOUND, "creator not found");
+    governance_t governance(dao_code);
+    CHECKC( !_db.get(governance), gov_err::CODE_REPEAT, "governance already existing!" );
 
     strategy_t::idx_t stg(MDAO_STG, MDAO_STG.value);
-    CHECKC( stg.find(stgid) != stg.end(), gov_err::STRATEGY_NOT_FOUND, "strategy not found");
-    CHECKC( gov.vote_strategies.count(stgid), gov_err::VOTE_STRATEGY_NOT_FOUND, "vote strategy not found");
+    auto vote_strategy = stg.find(vote_strategy_id);
+    auto propose_strategy = stg.find(propose_strategy_id);
+    CHECKC( vote_strategy!= stg.end(), gov_err::STRATEGY_NOT_FOUND, "strategy not found");
+    CHECKC( propose_strategy != stg.end(), gov_err::STRATEGY_NOT_FOUND, "strategy not found");
+    CHECKC( (vote_strategy->type != strategy_type::nftstaking && vote_strategy->type != strategy_type::tokenstaking) || 
+            ((vote_strategy->type == strategy_type::nftstaking || vote_strategy->type == strategy_type::tokenstaking) && require_participation <= 10000 && require_pass <= 10000), 
+            gov_err::STRATEGY_NOT_FOUND, "strategy not found");
 
-    int32_t stg_weight = 0;
-    if(!gov.propose_strategies.empty()){
-        for( set<uint64_t>::iterator proposestg_iter = gov.propose_strategies.begin(); proposestg_iter != gov.propose_strategies.end(); proposestg_iter++ ){
-            stg_weight += mdao::strategy::cal_weight(MDAO_STG, 0, creator, *proposestg_iter);
-            if(stg_weight > 0) break;
-        }
+    governance.dao_code                                     = dao_code;
+    governance.propose_strategy[propose_strategy_code]      = propose_strategy_id;
+    governance.vote_strategy[vote_strategy_code]            = vote_strategy_id;
+    governance.require_pass[vote_strategy_id]               = require_pass;
+    governance.require_participation[vote_strategy_id]      = require_participation;
+
+    _db.set(governance, _self);
+}
+
+ACTION mdaogov::setvotestg(const name& dao_code, const name& vote_strategy_code, 
+                            const uint64_t& vote_strategy_id, const uint32_t& require_participation, 
+                            const uint32_t& require_pass )
+{
+    auto conf = _conf();
+    CHECKC( conf.status != conf_status::PENDING, gov_err::NOT_AVAILABLE, "under maintenance" );
+    require_auth( conf.managers[manager_type::PROPOSAL] );
+
+    governance_t governance(dao_code);
+    CHECKC( !_db.get(governance), gov_err::CODE_REPEAT, "governance already existing!" );
+    CHECKC( (governance.last_updated_at + (governance.limit_update_hours * 3600)) <= current_time_point(), gov_err::NOT_MODIFY, "cannot be modified for now" );
+
+    strategy_t::idx_t stg(MDAO_STG, MDAO_STG.value);
+    auto vote_strategy = stg.find(vote_strategy_id);
+    CHECKC( vote_strategy != stg.end(), gov_err::STRATEGY_NOT_FOUND, "strategy not found" );
+    CHECKC( (vote_strategy->type != strategy_type::nftstaking && vote_strategy->type != strategy_type::tokenstaking) || 
+            ((vote_strategy->type == strategy_type::nftstaking || vote_strategy->type == strategy_type::tokenstaking) && require_participation <= 100000 && require_pass <= 100000), 
+            gov_err::PARAM_ERROR, "param error");
+
+    governance.last_updated_at                           = current_time_point();
+    governance.vote_strategy[vote_strategy_code]         = vote_strategy_id;
+    governance.require_pass[vote_strategy_id]            = require_pass;
+    governance.require_participation[vote_strategy_id]   = require_participation;
+
+    _db.set(governance, _self);
+}
+
+ACTION mdaogov::setproposestg(const name& dao_code, const name& propose_strategy_code, const uint64_t& propose_strategy_id)
+{
+    auto conf = _conf();
+    CHECKC( conf.status != conf_status::PENDING, gov_err::NOT_AVAILABLE, "under maintenance" );
+    require_auth( conf.managers[manager_type::PROPOSAL] );
+
+    governance_t governance(dao_code);
+    CHECKC( _db.get(governance), gov_err::RECORD_NOT_FOUND, "governance not exist" );
+    CHECKC( (governance.last_updated_at + (governance.limit_update_hours * 3600)) <= current_time_point(), gov_err::NOT_MODIFY, "cannot be modified for now" );
+
+    strategy_t::idx_t stg(MDAO_STG, MDAO_STG.value);
+    CHECKC(stg.find(propose_strategy_id) != stg.end(), gov_err::STRATEGY_NOT_FOUND, "strategy not found");
+
+    governance.propose_strategy[propose_strategy_code]     = propose_strategy_id;
+    governance.last_updated_at                             = current_time_point();
+    _db.set(governance, _self);
+}
+
+// ACTION mdaogov::setleastvote(const name& dao_code, const uint32_t& require_least_votes)
+// {
+//     auto conf = _conf();
+
+//     CHECKC( conf.status != conf_status::PENDING, gov_err::NOT_AVAILABLE, "under maintenance" );
+//     require_auth( conf.managers[manager_type::PROPOSAL] );
+
+//     governance_t governance(dao_code);
+//     CHECKC( !_db.get(governance), gov_err::CODE_REPEAT, "governance already existing!" );
+//     CHECKC( (governance.last_updated_at + (governance.limit_update_hours * 3600)) <= current_time_point(), gov_err::NOT_MODIFY, "cannot be modified for now" );
+
+//     governance.require_least_votes = require_least_votes;
+//     governance.last_updated_at = current_time_point();
+//     _db.set(governance, _self);
+// }
+
+ACTION mdaogov::setlocktime(const name& dao_code, const uint16_t& limit_update_hours)
+{
+    auto conf = _conf();
+    CHECKC( conf.status != conf_status::PENDING, gov_err::NOT_AVAILABLE, "under maintenance" );
+    require_auth( conf.managers[manager_type::PROPOSAL] );
+
+    governance_t governance(dao_code);
+    CHECKC( !_db.get(governance), gov_err::CODE_REPEAT, "governance already existing!" );
+    CHECKC( limit_update_hours >= governance.voting_limit_hours , gov_err::TIME_LESS_THAN_ZERO, "lock time less than vote time" );
+    CHECKC( (governance.last_updated_at + (governance.limit_update_hours * 3600)) <= current_time_point(), gov_err::NOT_MODIFY, "cannot be modified for now" );
+
+    governance.limit_update_hours = limit_update_hours;
+    governance.last_updated_at = current_time_point();
+    _db.set(governance, _self);
+}
+
+ACTION mdaogov::setvotetime(const name& dao_code, const uint16_t& voting_limit_hours)
+{
+    auto conf = _conf();
+    CHECKC( conf.status != conf_status::PENDING, gov_err::NOT_AVAILABLE, "under maintenance" );
+    require_auth( conf.managers[manager_type::PROPOSAL] );
+
+    governance_t governance(dao_code);
+    CHECKC( !_db.get(governance), gov_err::CODE_REPEAT, "governance already existing!" );
+    CHECKC( voting_limit_hours <= governance.limit_update_hours , gov_err::TIME_LESS_THAN_ZERO, "lock time less than vote time" );
+    CHECKC( (governance.last_updated_at + (governance.limit_update_hours * 3600)) <= current_time_point(), gov_err::NOT_MODIFY, "cannot be modified for now" );
+
+    governance.voting_limit_hours = voting_limit_hours;
+    governance.last_updated_at = current_time_point();
+    _db.set(governance, _self);
+}
+
+ACTION mdaogov::startpropose(const name& creator, const name& dao_code, const string& title,
+                                 const string& proposal_name, const string& desc, 
+                                 const name& plan_type, const name& propose_strategy_code, 
+                                 const name& vote_strategy_code)
+{
+    require_auth( creator );
+    auto conf = _conf();
+    CHECKC( conf.status != conf_status::PENDING, gov_err::NOT_AVAILABLE, "under maintenance" );
+
+    CHECKC( plan_type == plan_type::SINGLE || plan_type == plan_type::MULTIPLE, gov_err::TYPE_ERROR, "type error" );
+
+    dao_info_t::idx_t info_tbl(MDAO_INFO, MDAO_INFO.value);
+    const auto info = info_tbl.find(dao_code.value);
+    CHECKC( info->creator == creator, gov_err::PERMISSION_DENIED, "only the creator can operate");
+
+    governance_t governance(dao_code);
+    CHECKC( _db.get(governance) ,gov_err::RECORD_NOT_FOUND, "record not found" );
+    
+    strategy_t::idx_t stg(MDAO_STG, MDAO_STG.value);
+    auto propose_strategy = stg.find(governance.propose_strategy.at(propose_strategy_code));
+    CHECKC( propose_strategy != stg.end(), gov_err::STRATEGY_NOT_FOUND, "strategy not found" );
+
+    int64_t value;
+    if((propose_strategy->type != strategy_type::nftstaking && propose_strategy->type != strategy_type::tokenstaking)){
+        accounts accountstable(propose_strategy->ref_contract, creator.value);
+        const auto ac = accountstable.find(propose_strategy->require_symbol_code.raw()); 
+        value = ac->balance.amount;
     }
+    int32_t stg_weight = mdao::strategy::cal_weight(MDAO_STG, value, creator, governance.propose_strategy.at(propose_strategy_code) );
     CHECKC( stg_weight > 0, gov_err::INSUFFICIENT_WEIGHT, "insufficient strategy weight")
 
-    VOTE_CREATE(creator, name, desc, stgid, votes)
+    VOTE_CREATE(dao_code, creator, proposal_name, desc, title, governance.vote_strategy.at(vote_strategy_code), plan_type)
 
-}
-//TODO:
-ACTION mdaogov::excuteprop(const name& owner, const name& daocode, const uint64_t& proposeid)
-{
-    require_auth( owner );
-    auto conf = _conf();
-
-    gov_t gov(daocode);
-    CHECKC( _db.get(gov) ,gov_err::RECORD_NOT_FOUND, "record not found" );
-    CHECKC( conf.status != conf_status::MAINTAIN, gov_err::NOT_AVAILABLE, "under maintenance" );
-    CHECKC( gov.status == gov_status::RUNNING, gov_err::NOT_AVAILABLE, "under maintenance" );
-
-    strategy_t::idx_t propose(MDAO_STG, MDAO_STG.value);
-    CHECKC( propose.find(proposeid) != propose.end(), gov_err::PROPOSER_NOT_FOUND, "PROPOSE not found");
-    VOTE_EXCUTE(owner, proposeid);
 }
 
 const mdaogov::conf_t& mdaogov::_conf() {

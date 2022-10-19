@@ -13,20 +13,27 @@ using namespace wasm::db;
 using namespace mdao;
 using namespace std;
 
-namespace propose_status {
-    static constexpr name CREATED    = "create"_n;
-    static constexpr name RUNNING    = "running"_n;
-    static constexpr name EXCUTING   = "excuting"_n;
-    static constexpr name CANCELLED  = "cancelled"_n;
+namespace proposal_status {
+    static constexpr name CREATED       = "created"_n;
+    static constexpr name VOTING        = "voting"_n;
+    static constexpr name EXECUTED      = "executed"_n;
+    static constexpr name CANCELLED     = "cancelled"_n;
+    static constexpr name EXPIRED       = "expired"_n;
+
 
 };
 
-namespace vote_type {
-    static constexpr name PLEDGE     = "pledge"_n;
-    static constexpr name TOKEN      = "token"_n;
+namespace vote_direction {
+    static constexpr name AGREE     = "agree"_n;
+    static constexpr name REJECT    = "reject"_n;
 
 };
 
+namespace plan_type {
+    static constexpr name SINGLE        = "single"_n;
+    static constexpr name MULTIPLE      = "multiple"_n;
+
+};
 // namespace conf_status {
 //     static constexpr name INITIAL    = "initial"_n;
 //     static constexpr name RUNNING    = "running"_n;
@@ -44,25 +51,52 @@ namespace vote_type {
 
 // };
 
-enum class propose_err: uint8_t {
+enum class proposal_err: uint8_t {
     RECORD_NOT_FOUND        = 1,
     PERMISSION_DENIED       = 2,
     PARAM_ERROR             = 3,
     SYMBOL_ERROR            = 4,
     NOT_AVAILABLE           = 5,
     STATUS_ERROR            = 6,
-    OPTS_EMPTY              = 7,
+    PLANS_EMPTY             = 7,
     INSUFFICIENT_VOTES      = 8,
     VOTED                   = 9,
     SYSTEM_ERROR            = 10,
     ACCOUNT_NOT_EXITS       = 11,
-    STRATEGY_NOT_FOUND      = 12
-
+    STRATEGY_NOT_FOUND      = 12,
+    VOTES_NOT_ENOUGH        = 13,
+    ALREADY_EXISTS          = 14,
+    ALREADY_EXPIRED         = 15,
+    CANNOT_ZERO             = 16,
+    SIZE_TOO_MUCH           = 17,
+    NOT_POSITIVE            = 18,
+    NO_AUTH                 = 19,
+    NOT_ALLOW               = 20,
+    CODE_REPEAT             = 21,
+    TOKEN_NOT_EXIST         = 22,
+    NOT_MODIFY              = 23,
+    TIME_LESS_THAN_ZERO     = 24,
+    INSUFFICIENT_BALANCE    = 25
 };
 
 namespace proposal_action_type {
+    //info
     static constexpr eosio::name updatedao          = "updatedao"_n;
-    static constexpr eosio::name setpropstg         = "setpropstg"_n;
+    static constexpr eosio::name bindtoken          = "bindtoken"_n;
+    static constexpr eosio::name binddapp           = "binddapp"_n;
+    static constexpr eosio::name createtoken        = "createtoken"_n;
+    static constexpr eosio::name issuetoken         = "issuetoken"_n;
+    //gov
+    static constexpr eosio::name setvotestg         = "setvotestg"_n;
+    static constexpr eosio::name setproposestg      = "setproposestg"_n;
+    static constexpr eosio::name setleastvote_data  = "setleastvote"_n;
+    static constexpr eosio::name setreqratio        = "setreqratio"_n;
+    static constexpr eosio::name setlocktime        = "setlocktime"_n;
+    //im  
+    static constexpr eosio::name setjoinstg         = "setjoinstg"_n;
+    //treasury
+    static constexpr eosio::name tokentranout       = "tokentranout"_n;
+
 };
 
 struct updatedao_data {
@@ -76,16 +110,75 @@ struct updatedao_data {
     string groupid;
 };
 
-struct setpropstg_data {
-    name owner;  
-    name daocode;                    
-    set<name> proposers; 
-    set<uint64_t> proposestg ;
+struct bindtoken_data {
+    name owner;                    
+    name code; 
+    extended_symbol token; 
 };
 
-typedef std::variant<updatedao_data, setpropstg_data> action_data_variant;
+struct binddapp_data {
+    name owner;                    
+    name code;                    
+    set<app_info> dapps;                    
+};
 
-class [[eosio::contract("mdao.propose")]] mdaopropose : public contract {
+struct createtoken_data {
+    name code;                    
+    name owner; 
+    uint16_t transfer_ratio; 
+    string fullname; 
+    asset maximum_supply; 
+    string metadata; 
+};
+
+struct issuetoken_data {
+    name code;                    
+    name to; 
+    asset quantity; 
+    string memo; 
+};
+
+struct setvotestg_data {
+    name dao_code;    
+    name vote_strategy_code;                
+    uint64_t vote_strategy_id; 
+    uint32_t require_participation;
+    uint32_t require_pass;
+};
+
+struct setproposestg_data {
+    name dao_code;   
+    name propose_strategy_code;                 
+    uint64_t propose_strategy_id; 
+};
+
+struct setleastvote_data {
+    name dao_code;                    
+    uint32_t require_votes; 
+};
+
+struct setreqratio_data {
+    name dao_code;                    
+    uint32_t require_ratio; 
+};
+
+struct setlocktime_data {
+    name dao_code;                    
+    uint16_t limit_update_hours; 
+};
+
+struct tokentranout_data {
+    name dao_code;                    
+    name to;     
+    extended_asset quantity;                    
+    string memo; 
+};
+
+typedef std::variant<updatedao_data, bindtoken_data, binddapp_data, createtoken_data, issuetoken_data, 
+                     setvotestg_data, setproposestg_data, setleastvote_data, setreqratio_data, setlocktime_data, tokentranout_data
+                    > action_data_variant;
+
+class [[eosio::contract("mdao.propose")]] mdaoproposal : public contract {
 
 using conf_t = mdao::conf_global_t;
 using conf_table_t = mdao::conf_global_singleton;
@@ -99,27 +192,29 @@ private:
 
 public:
     using contract::contract;
-    mdaopropose(name receiver, name code, datastream<const char*> ds):_db(_self),  contract(receiver, code, ds){}
+    mdaoproposal(name receiver, name code, datastream<const char*> ds):_db(_self),  contract(receiver, code, ds){}
 
-    ACTION create(const name& creator,const string& name, const string& desc,
-                            const uint64_t& stgid, const uint32_t& votes);
+    ACTION create(const name& dao_code, const name& creator, 
+                    const string& proposal_name, const string& desc, 
+                    const string& title, const uint64_t& vote_strategy_id, 
+                    const name& type);
 
-    ACTION cancel(const name& owner, const uint64_t& proposeid);
+    ACTION cancel(const name& owner, const uint64_t& proposalid);
 
-    ACTION addplan( const name& owner, const uint64_t& proposeid, const string& title );
+    ACTION addplan( const name& owner, const uint64_t& proposal_id, const string& title, const string& desc );
 
-    ACTION start(const name& owner, const uint64_t& proposeid);
+    ACTION startvote(const name& owner, const uint64_t& proposal_id);
 
-    ACTION excute(const name& owner, const uint64_t& proposeid);
+    ACTION execute(const name& owner, const uint64_t& proposal_id);
 
-    ACTION votefor(const name& voter, const uint64_t& proposeid, const uint32_t optid);
+    ACTION votefor(const name& voter, const uint64_t& proposal_id, const uint32_t plan_id, const bool direction);
 
-    ACTION setaction(const name& owner, const uint64_t& proposeid, 
-                                const uint32_t& optid,  const name& action_name, 
-                                const name& action_account, const std::vector<char>& packed_action_data);
+    ACTION setaction(const name& owner, const uint64_t& proposalid, 
+                        const uint32_t& optid,  const name& action_name, 
+                        const name& action_account, const std::vector<char>& packed_action_data);
     
     ACTION recycledb(uint32_t max_rows);
     
 private:
-    void _check_proposal_params(const action_data_variant& data_var,  const name& action_name, const name& action_account);
+    void _check_proposal_params(const action_data_variant& data_var,  const name& action_name, const name& action_account, const conf_t& conf);
 };
