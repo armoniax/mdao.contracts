@@ -25,6 +25,7 @@ enum class stake_err : uint8_t
     UNINITIALIZED = 8,
     UNSUPPORT_CONTRACT = 9,
     NOT_POSITIVE = 10,
+    NO_PERMISSION = 11,
 };
 
 class [[eosio::contract]] mdaostake : public contract
@@ -41,7 +42,7 @@ public:
         else _gstate = stake_global_t{};
     }
     
-    ACTION init( const name& manager, set<name>supported_contracts );
+    ACTION init( const set<name>& managers, const set<name>&supported_contracts );
 
     /**
      * stake token method
@@ -50,10 +51,10 @@ public:
      * @quantity
      * @memo "daocode"
     */
-    [[eosio::on_notify("amax.token::transfer")]]
+    [[eosio::on_notify("*::transfer")]]
     ACTION staketoken(const name &from, const name &to, const asset &quantity, const string &memo);
 
-    ACTION unlocktoken(const name &account, const name &daocode, const vector<extended_asset> &tokens);
+    ACTION unlocktoken(const uint64_t &id, const vector<extended_asset> &tokens);
 
     /**
      * stake token method
@@ -65,7 +66,7 @@ public:
     [[eosio::on_notify("amax.ntoken::transfer")]]
     ACTION stakenft(name from, name to, vector<nasset> &assets, string memo);
 
-    ACTION unlocknft(const name &account, const name &daocode, const vector<extended_nasset> &nfts);
+    ACTION unlocknft(const uint64_t &id, const vector<extended_nasset> &nfts);
 
-    ACTION extendlock(const name &account, const name &daocode, const uint32_t &locktime);
+    ACTION extendlock(const name &manager,const name &account, const name &daocode, const uint32_t &locktime);
 };
