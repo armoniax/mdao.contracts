@@ -47,7 +47,7 @@ namespace mdao
 
     };
     
-    uint128_t get_unionid(name account, name daocode) { return (uint128_t(account.value)<<64 | (uint128_t(daocode.value)<<64));}
+    uint128_t get_unionid(name account, name daocode) { return (uint128_t(account.value)<<64 | daocode.value);}
 
     struct [[eosio::table]] user_stake_t
     {
