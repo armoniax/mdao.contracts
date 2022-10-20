@@ -41,11 +41,12 @@ namespace strategy_status {
 };
 
 namespace strategy_type {
-    static constexpr eosio::name publicvote         = "publicvote"_n;
-    static constexpr eosio::name tokenbalance       = "tokenbalance"_n;
-    static constexpr eosio::name tokenstaking       = "tokenstaking"_n;
-    static constexpr eosio::name nftbalance         = "nftbalance"_n;
-    static constexpr eosio::name nftstaking         = "nftstaking"_n;
+    static constexpr eosio::name tokenbalance         = "tokenbalance"_n;
+    static constexpr eosio::name tokenstake           = "tokenstake"_n;
+    static constexpr eosio::name nftbalance           = "nftbalance"_n;
+    static constexpr eosio::name nftstake             = "nftstake"_n;
+    static constexpr eosio::name nparentstake         = "nparentstake"_n;
+    static constexpr eosio::name nparentbalanc        = "nparentbalanc"_n;
 };
 
 struct STG_TABLE strategy_t {
@@ -58,6 +59,7 @@ struct STG_TABLE strategy_t {
     name            ref_contract;
     uint64_t        ref_sym;
     time_point_sec  created_at;
+
 
     strategy_t() {}
     strategy_t(const uint64_t& pid): id(pid) {}
