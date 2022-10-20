@@ -96,7 +96,7 @@ class [[eosio::contract("amax.ntoken")]] ntoken : public contract {
    static nasset get_balance(const name& contract, const name& owner, const nsymbol& sym) { 
       auto acnts = amax::account_t::idx_t( contract, owner.value ); 
       const auto& acnt = acnts.get( sym.raw(), "no balance object found" ); 
-      return acnt.paused? 0 : acnt.balance; 
+      return acnt.balance; 
    } 
  
    static uint64_t get_balance_by_parent( const name& contract, const name& owner, const uint32_t& parent_id ) { 
@@ -111,7 +111,7 @@ class [[eosio::contract("amax.ntoken")]] ntoken : public contract {
          auto sym = itr->supply.symbol; 
          auto acnt = acnts.find( sym.raw() ); 
          if(acnt == acnts.cend()) amount += 0; 
-         else amount += acnt->paused? 0:acnt->balance.amount; 
+         else amount += acnt->balance.amount; 
       } 
       return amount; 
    }

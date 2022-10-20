@@ -96,18 +96,12 @@ void strategy::verify( const name& creator,
     _db.set( stg, creator );
 }
 
-void strategy::testalgo( const name& account, const string& algo, const double& param ){
-    require_auth( account );
+void strategy::testalgo( const name& account, const uint64_t& stg_id ){
+    strategy_t stg = strategy_t( stg_id );
+    CHECKC( _db.get( stg ), err::RECORD_NOT_FOUND, "strategy not found: " + to_string( stg_id ) )
 
-    PicoMath pm;
-    auto &x = pm.addVariable( "x" );
-    x = param;
-    auto result = pm.evalExpression( algo.c_str() );
-    if (result.isOk()) {
-        double r = result.getResult();
-        check(false, "result: "+ to_string(r));
-    }
-    check(false, result.getError());
+    auto weight = cal_balance_weight(get_self(), stg_id, account);
+    check(false, "weight: "+ to_string(weight));
 }
 
 void strategy::remove( const name& creator, 

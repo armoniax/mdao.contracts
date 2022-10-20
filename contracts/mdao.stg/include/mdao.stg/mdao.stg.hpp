@@ -80,8 +80,7 @@ public:
 
     [[eosio::action]]
     void testalgo(const name& account,
-                 const string& alog,
-                 const double& param);
+                 const uint64_t& stg_id);
 
    static int32_t cal_weight(const name& stg_contract_account, const uint64_t& value, const name& account, const uint64_t& stg_id )
    {
@@ -110,8 +109,8 @@ public:
          switch (stg.type.value)
          {
          case strategy_type::tokenbalance.value: {
-            symbol sym(stg.ref_sym);
-            value = eosio::token::get_balance(stg.ref_contract, account, sym.code()).amount;
+            symbol_code sym_code(stg.ref_sym);
+            value = eosio::token::get_balance(stg.ref_contract, account, sym_code).amount;
             break;
          }
          case strategy_type::nftbalance.value:{
@@ -135,6 +134,8 @@ public:
          auto result = pm.evalExpression(stg.stg_algo.c_str());
          CHECKC(result.isOk(), err::PARAM_ERROR, result.getError());
          int32_t weight = int32_t(floor(result.getResult()));
+
+         // check(false, " balance: " + to_string(value) + " | weight: "+ to_string(weight));
          return weight;
    }
 };

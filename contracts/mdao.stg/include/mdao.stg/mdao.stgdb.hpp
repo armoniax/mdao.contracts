@@ -60,7 +60,6 @@ struct STG_TABLE strategy_t {
     uint64_t        ref_sym;
     time_point_sec  created_at;
 
-
     strategy_t() {}
     strategy_t(const uint64_t& pid): id(pid) {}
 
@@ -68,11 +67,11 @@ struct STG_TABLE strategy_t {
 
      uint128_t by_creator() const { return (uint128_t)creator.value << 64 | (uint128_t)id; }
 
-    typedef eosio::multi_index<"strategies1"_n, strategy_t,
+    typedef eosio::multi_index<"strategies"_n, strategy_t,
         indexed_by<"creatoridx"_n,  const_mem_fun<strategy_t, uint128_t, &strategy_t::by_creator> >
     > idx_t;
 
-    EOSLIB_SERIALIZE( strategy_t, (id)(creator)(status)(stg_name)(type)
+    EOSLIB_SERIALIZE( strategy_t, (id)(creator)(status)(type)(stg_name)
         (stg_algo)(ref_contract)(ref_sym)(created_at) )
 };
 };
