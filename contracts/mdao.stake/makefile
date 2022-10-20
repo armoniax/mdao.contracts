@@ -4,7 +4,7 @@
 compile:
 	rm -rf ./build/*
 	clear
-	eosio-cpp -abigen ./src/stake.cpp -o ./build/mdaostake.wasm -I ./include/
+	eosio-cpp -abigen ./src/mdao.stake.cpp -o ./build/mdaostake.wasm -I ./include/
 
 # do:
 # 	echo "compile"
