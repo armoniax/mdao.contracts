@@ -3,10 +3,10 @@
 #include <string>
 
 #include "picomath.hpp"
+#include "amax.token/amax.token.hpp"
+#include "amax.ntoken/amax.ntoken.hpp"
 #include "thirdparty/utils.hpp"
 #include "mdao.stgdb.hpp"
-#include "eosio.token/eosio.token.hpp"
-#include "aplink.token/aplink.token.hpp"
 
 using std::string;
 using namespace eosio;
@@ -36,17 +36,24 @@ public:
                 const string& stg_name, 
                 const string& stg_algo,
                 const name& type,
-                const asset& require_apl,
                 const name& ref_contract,
                 const uint64_t& ref_sym);
 
-
+   /**
+    * @brief create a strategy for token/nft balance, 1 weight for account grater than balance_value
+    *
+    * @param creator - the account to create strategy
+    * @param stg_name - name of strategy,
+    * @param balance_value - the require token amount of strategy
+    * @param type - the type of strategy
+    * @param ref_contract - the asset contract account
+    * @param ref_sym - the symbol of token/nft, should format as nsymbol or symbol
+    */
     [[eosio::action]]
     void balancestg(const name& creator, 
                 const string& stg_name, 
                 const uint64_t& balance_value,
                 const name& type,
-                const asset& require_apl,
                 const name& ref_contract,
                 const uint64_t& ref_sym);
 
@@ -73,19 +80,52 @@ public:
 
     [[eosio::action]]
     void testalgo(const name& account,
-                 const string& alog,
-                 const double& param);
+                 const uint64_t& stg_id);
 
    static int32_t cal_weight(const name& stg_contract_account, const uint64_t& value, const name& account, const uint64_t& stg_id )
    {
         auto db = dbc(stg_contract_account);
         auto stg = strategy_t(stg_id);
         check(db.get(stg), "cannot find strategy");
-        auto apl_balance = asset(0, APL_SYMBOL);
 
-         if(stg.require_apl.amount > 0) {
-            apl_balance = aplink::token::get_sum_balance(APL_BANK, account, APL_SYMBOL.code());
-            CHECKC(apl_balance.amount >= stg.require_apl.amount, err::UNRESPECT_RESULT, "required APL not enough: "+apl_balance.to_string())
+         PicoMath pm;
+         auto &x = pm.addVariable("x");
+         x = value;
+         auto result = pm.evalExpression(stg.stg_algo.c_str());
+         CHECKC(result.isOk(), err::PARAM_ERROR, result.getError());
+         int32_t weight = int32_t(floor(result.getResult()));
+         return weight;
+   }
+
+   static int32_t cal_balance_weight(const name& stg_contract_account,  
+                             const uint64_t& stg_id,
+                             const name& account )
+   {
+         auto db = dbc(stg_contract_account);
+         auto stg = strategy_t(stg_id);
+         check(db.get(stg), "cannot find strategy");
+
+         uint64_t value = 0;
+         switch (stg.type.value)
+         {
+         case strategy_type::tokenbalance.value: {
+            symbol_code sym_code(stg.ref_sym);
+            value = eosio::token::get_balance(stg.ref_contract, account, sym_code).amount;
+            break;
+         }
+         case strategy_type::nftbalance.value:{
+            amax::nsymbol sym(stg.ref_sym);
+            value = amax::ntoken::get_balance(stg.ref_contract, account, sym).amount;
+            break;
+         }
+         case strategy_type::nparentbalanc.value:{
+            amax::nsymbol sym(stg.ref_sym);
+            value = amax::ntoken::get_balance_by_parent(stg.ref_contract, account, (uint32_t)sym.raw());
+            break;
+         }
+         default:
+            check(false, "unsupport calculating type");
+            break;
          }
 
          PicoMath pm;
@@ -94,6 +134,8 @@ public:
          auto result = pm.evalExpression(stg.stg_algo.c_str());
          CHECKC(result.isOk(), err::PARAM_ERROR, result.getError());
          int32_t weight = int32_t(floor(result.getResult()));
+
+         // check(false, " balance: " + to_string(value) + " | weight: "+ to_string(weight));
          return weight;
    }
 };

@@ -6,7 +6,6 @@
 #include <eosio/system.hpp>
 #include <eosio/time.hpp>
 
-// #include <deque>
 #include <optional>
 #include <string>
 #include <map>
@@ -22,6 +21,12 @@ using namespace eosio;
 #define TBL struct [[eosio::table, eosio::contract("amax.ntoken")]]
 #define NTBL(name) struct [[eosio::table(name), eosio::contract("amax.ntoken")]]
 
+NTBL("global") global_t {
+    set<name> notaries;
+
+    EOSLIB_SERIALIZE( global_t, (notaries) )
+};
+typedef eosio::singleton< "global"_n, global_t > global_singleton;
 
 struct nsymbol {
     uint32_t id;
@@ -30,7 +35,7 @@ struct nsymbol {
     nsymbol() {}
     nsymbol(const uint32_t& i): id(i),parent_id(0) {}
     nsymbol(const uint32_t& i, const uint32_t& pid): id(i),parent_id(pid) {}
-    nsymbol(const uint64_t& raw): id((uint32_t) raw ),parent_id((uint32_t) raw >> 32) {}
+    nsymbol(const uint64_t& raw): parent_id(raw >> 32), id(raw) {}
 
     friend bool operator==(const nsymbol&, const nsymbol&);
     bool is_valid()const { return( id > parent_id ); }
@@ -44,59 +49,6 @@ bool operator==(const nsymbol& symb1, const nsymbol& symb2) {
 }
 
 
-/**
-*  Extended nasset which stores the information of the owner of the symbol
-*
-*  @ingroup symbol
-*/
-class extended_nsymbol
-{
-public:
-
-    /**
-     * Default constructor, construct a new extended_symbol
-     */
-    constexpr extended_nsymbol() {}
-
-    /**
-     * Construct a new symbol_code object initialising symbol and contract with the passed in symbol and name
-     *
-     * @param sym - The symbol
-     * @param con - The name of the contract
-     */
-    constexpr extended_nsymbol( nsymbol s, name con ) : sym(s), contract(con) {}
-
-    /**
-     * Returns the symbol in the extended_contract
-     *
-     * @return symbol
-     */
-    constexpr symbol get_nsymbol() const { return sym; }
-
-    /**
-     * Returns the name of the contract in the extended_symbol
-     *
-     * @return name
-     */
-    constexpr name  get_contract() const { return contract; }
-
-    /**
-     * Equivalency operator. Returns true if a == b (are the same)
-     *
-     * @return boolean - true if both provided extended_symbols are the same
-     */
-    friend constexpr bool operator == ( const extended_nsymbol& a, const extended_nsymbol& b ) {
-        return a.contract == b.contract && a.sym == b.sym; 
-    }
-
-private:
-    nsymbol sym; ///< the symbol
-    name   contract; ///< the token contract hosting the symbol
-
-    EOSLIB_SERIALIZE( extended_nsymbol, (sym)(contract) )
-};
-
-   
 struct nasset {
     int64_t         amount;
     nsymbol         symbol;
@@ -153,8 +105,7 @@ TBL nstats_t {
         indexed_by<"tokenuriidx"_n,     const_mem_fun<nstats_t, checksum256, &nstats_t::by_token_uri> >
     > idx_t;
 
-    EOSLIB_SERIALIZE(nstats_t,  (supply)(max_supply)(token_uri)
-                                (ipowner)(notary)(issuer)(issued_at)(notarized_at)(paused) )
+    EOSLIB_SERIALIZE(nstats_t,  (supply)(max_supply)(token_uri)(ipowner)(notary)(issuer)(issued_at)(notarized_at)(paused) )
 };
 
 ///Scope: owner's account
@@ -170,6 +121,20 @@ TBL account_t {
     EOSLIB_SERIALIZE(account_t, (balance)(paused) )
 
     typedef eosio::multi_index< "accounts"_n, account_t > idx_t;
+};
+
+
+///Scope: owner's account
+TBL allowance_t{
+    name                        spender;                     // PK
+    map<uint32_t, uint64_t>     allowances;                 // KV : NFT PID -> amount
+
+    allowance_t() {}
+    uint64_t primary_key()const { return spender.value; }
+
+    EOSLIB_SERIALIZE(allowance_t, (spender)(allowances) )
+
+    typedef eosio::multi_index< "allowances"_n, allowance_t > idx_t;
 };
 
 } //namespace amax
