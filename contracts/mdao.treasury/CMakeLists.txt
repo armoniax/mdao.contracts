@@ -1,4 +1,4 @@
-add_contract(treasury mdao.treasury ${CMAKE_CURRENT_SOURCE_DIR}/src/mdao.treasury.cpp)
+add_contract(mdaotreasury mdao.treasury ${CMAKE_CURRENT_SOURCE_DIR}/src/mdao.treasury.cpp)
 
 target_include_directories(mdao.treasury
    PUBLIC

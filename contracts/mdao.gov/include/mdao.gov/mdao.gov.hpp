@@ -33,12 +33,12 @@ namespace plan_type {
     static constexpr name MULTIPLE      = "multiple"_n;
 
 };
-// namespace conf_status {
-//     static constexpr name INITIAL    = "initial"_n;
-//     static constexpr name RUNNING    = "running"_n;
-//     static constexpr name CANCEL     = "cancel"_n;
 
-// };
+namespace strategy_action_type {
+     static constexpr name VOTE         = "vote"_n;
+     static constexpr name PROPOSE      = "propose"_n;
+
+};
 
 // namespace manager {
 //     static constexpr name INFO       = "info"_n;
@@ -71,7 +71,7 @@ enum class gov_err: uint8_t {
 
 };
 
-class [[eosio::contract("mdao.gov")]] mdaogov : public contract {
+class [[eosio::contract("mdaogovtest1")]] mdaogov : public contract {
 
 using conf_t = mdao::conf_global_t;
 using conf_table_t = mdao::conf_global_singleton;
@@ -88,18 +88,17 @@ public:
     mdaogov(name receiver, name code, datastream<const char*> ds):_db(_self),  contract(receiver, code, ds){}
 
     [[eosio::action]]
-    ACTION create(const name& dao_code, const name& propose_strategy_code, 
-                    const name& vote_strategy_code, const uint64_t& propose_strategy_id, 
+    ACTION create(const name& dao_code, const uint64_t& propose_strategy_id, 
                     const uint64_t& vote_strategy_id, const uint32_t& require_participation, 
                     const uint32_t& require_pass );
 
     [[eosio::action]]
-    ACTION setvotestg(const name& dao_code, const name& vote_strategy_code, 
-                        const uint64_t& vote_strategy_id, const uint32_t& require_participation, 
-                        const uint32_t& require_pass );
+    ACTION setvotestg(const name& dao_code, const uint64_t& vote_strategy_id, 
+                        const uint32_t& require_participation, const uint32_t& require_pass );
+                        
 
     [[eosio::action]]
-    ACTION setproposestg(const name& dao_code, const name& propose_strategy_code,  const uint64_t& propose_strategy_id);
+    ACTION setproposestg(const name& dao_code, const uint64_t& propose_strategy_id);
 
     [[eosio::action]]
     ACTION setlocktime(const name& dao_code, const uint16_t& lock_time);
@@ -110,6 +109,9 @@ public:
     [[eosio::action]]
     ACTION startpropose(const name& creator, const name& dao_code, const string& title,
                                  const string& proposal_name, const string& desc, 
-                                 const name& plan_type, const name& propose_strategy_code, 
-                                 const name& vote_strategy_code);
+                                 const name& plan_type);
+
+private:
+    void _cal_votes(const name dao_code, const strategy_t& vote_strategy, const name voter, int64_t& value);
+
 };

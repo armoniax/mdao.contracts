@@ -7,6 +7,7 @@ target_include_directories(mdao.info
    ${CMAKE_CURRENT_SOURCE_DIR}/../mdao.conf/include
    ${CMAKE_CURRENT_SOURCE_DIR}/../mdao.gov/include
    ${CMAKE_CURRENT_SOURCE_DIR}/../mdao.token/include
+   ${CMAKE_CURRENT_SOURCE_DIR}/../mdao.thirdparty
 
 )
 set_target_properties(mdao.info

@@ -37,7 +37,8 @@ namespace mdaotoken {
                         const name &dao_code,                       
                         const std::string &meta_data)
     {
-        check(has_auth(MDAO_INFO) || has_auth(MDAO_ALGOEX), "insufficient permissions");
+        auto conf = _conf();
+        check(has_auth(conf.managers[manager_type::INFO]) || has_auth(conf.managers[manager_type::ALGOEX]), "insufficient permissions");
         check(is_account(issuer), "issuer account does not exist");
         
         const auto &sym = maximum_supply.symbol;
@@ -154,6 +155,7 @@ void token::transfer( const name&    from,
                       const asset&   quantity,
                       const string&  memo )
     {
+        auto conf = _conf();
         check(from != to, "cannot transfer to self");
         require_auth(from);
         check(is_account(to), "to account does not exist");
@@ -179,11 +181,15 @@ void token::transfer( const name&    from,
         {
             accounts to_accts(get_self(), to.value);
             auto to_acct = to_accts.find(sym_code_raw);
-
-            if ( (to_acct == to_accts.end() && (to != MDAO_INFO
-                    || to != MDAO_CONF || to != MDAO_STG 
-                    || to != MDAO_GOV || to != MDAO_TREASURY 
-                    || to != MDAO_PROPOSAL)) 
+ 
+            if ( (to_acct == to_accts.end() && 
+                 (to != conf.managers[manager_type::INFO]
+                    || to != conf.managers[manager_type::CONF] 
+                    || to != conf.managers[manager_type::STRATEGY] 
+                    || to != conf.managers[manager_type::GOV] 
+                    || to != conf.managers[manager_type::TREASURY] 
+                    || to != conf.managers[manager_type::PROPOSAL])
+                 ) 
                 || !to_acct->is_fee_exempt) {
                 fee.amount = std::max( st.min_fee_quantity.amount,
                                 (int64_t)multiply_decimal64(quantity.amount, st.fee_ratio, RATIO_BOOST) );
@@ -195,7 +201,7 @@ void token::transfer( const name&    from,
         auto payer = has_auth(to) ? to : from;
 
         sub_balance(st, from, quantity, true);
-        add_balance(st, to, actual_recv, payer, true);
+        transfer_add_balance(st, to, actual_recv, payer, conf);
 
         if (fee.amount > 0) {
             add_balance(st, MDAO_TREASURY, fee, get_self());
@@ -242,12 +248,6 @@ void token::transfer( const name&    from,
         {
             to_accts.emplace(ram_payer, [&](auto &a) {
                 a.balance = value;
-
-                if(owner == MDAO_INFO || owner == MDAO_CONF
-                    || owner == MDAO_STG || owner == MDAO_GOV
-                    || owner == MDAO_TREASURY || owner == MDAO_PROPOSAL
-                ) 
-                    a.is_fee_exempt = true;
             });
         }
         else
@@ -255,6 +255,36 @@ void token::transfer( const name&    from,
             if (is_check_frozen) {
                 check(!is_account_frozen(st, owner, *to), "to account is frozen");
             }
+            to_accts.modify(to, same_payer, [&](auto &a) {
+                a.balance += value;
+            });
+        }
+    }
+
+    void token::transfer_add_balance(const currency_stats &st, const name &owner, const asset &value,
+                             const name &ram_payer, const conf_t& conf )
+    {
+        accounts to_accts(get_self(), owner.value);
+        auto to = to_accts.find(value.symbol.code().raw());
+        if (to == to_accts.end())
+        {
+            to_accts.emplace(ram_payer, [&](auto &a) {
+                a.balance = value;
+
+                if(owner == conf.managers.at(manager_type::INFO) 
+                    || owner == conf.managers.at(manager_type::CONF) 
+                    || owner == conf.managers.at(manager_type::STRATEGY) 
+                    || owner == conf.managers.at(manager_type::GOV)
+                    || owner == conf.managers.at(manager_type::TREASURY) 
+                    || owner == conf.managers.at(manager_type::PROPOSAL)
+                ) 
+                    a.is_fee_exempt = true;
+            });
+        }
+        else
+        {
+            check(!is_account_frozen(st, owner, *to), "to account is frozen");
+            
             to_accts.modify(to, same_payer, [&](auto &a) {
                 a.balance += value;
             });

@@ -1,4 +1,4 @@
-add_contract(mdao.gov mdao.gov ${CMAKE_CURRENT_SOURCE_DIR}/src/mdao.gov.cpp)
+add_contract(mdaogovtest1 mdao.gov ${CMAKE_CURRENT_SOURCE_DIR}/src/mdao.gov.cpp)
 
 target_include_directories(mdao.gov
    PUBLIC
@@ -7,6 +7,8 @@ target_include_directories(mdao.gov
    ${CMAKE_CURRENT_SOURCE_DIR}/../mdao.stg/include
    ${CMAKE_CURRENT_SOURCE_DIR}/../mdao.info/include
    ${CMAKE_CURRENT_SOURCE_DIR}/../mdao.token/include
+   ${CMAKE_CURRENT_SOURCE_DIR}/../mdao.stake/include
+   ${CMAKE_CURRENT_SOURCE_DIR}/../mdao.thirdparty
 
 )
 

@@ -1,4 +1,4 @@
-add_contract(mdao.propose mdao.propose ${CMAKE_CURRENT_SOURCE_DIR}/src/mdao.propose.cpp)
+add_contract(mdaopropose1 mdao.propose ${CMAKE_CURRENT_SOURCE_DIR}/src/mdao.propose.cpp)
 
 target_include_directories(mdao.propose
    PUBLIC
@@ -8,6 +8,8 @@ target_include_directories(mdao.propose
    ${CMAKE_CURRENT_SOURCE_DIR}/../mdao.info/include
    ${CMAKE_CURRENT_SOURCE_DIR}/../mdao.gov/include
    ${CMAKE_CURRENT_SOURCE_DIR}/../mdao.treasury/include
+   ${CMAKE_CURRENT_SOURCE_DIR}/../mdao.stake/include
+   ${CMAKE_CURRENT_SOURCE_DIR}/../mdao.thirdparty
 
 
 )

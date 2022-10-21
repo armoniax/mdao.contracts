@@ -7,7 +7,7 @@
 #include <eosio/system.hpp>
 #include <eosio/time.hpp>
 #include <thirdparty/wasm_db.hpp>
-#include <amax.ntoken/amax.ntoken_db.hpp>
+#include <amax.ntoken/amax.ntoken.db.hpp>
 
 using namespace eosio;
 using namespace std;

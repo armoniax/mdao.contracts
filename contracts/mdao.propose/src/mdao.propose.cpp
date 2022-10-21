@@ -1,15 +1,15 @@
 #include <mdao.propose/mdao.propose.hpp>
 #include <mdao.info/mdao.info.db.hpp>
 #include <mdao.gov/mdao.gov.db.hpp>
-#include <mdao.stg/mdao.stg.hpp>
 #include <mdao.treasury/mdao.treasury.hpp>
+#include <mdao.stake/mdao.stake.db.hpp>
 #include <thirdparty/utils.hpp>
 #include <set>
 
 ACTION mdaoproposal::create(const name& dao_code, const name& creator, 
                             const string& proposal_name, const string& desc, 
                             const string& title, const uint64_t& vote_strategy_id, 
-                            const name& type)
+                            const uint64_t& propose_strategy_id, const name& type)
 {
     auto conf = _conf();
     require_auth( conf.managers[manager_type::GOV] );
@@ -26,9 +26,9 @@ ACTION mdaoproposal::create(const name& dao_code, const name& creator,
         row.desc	            =   desc;
         row.title	            =   title;
         row.type	            =   type;
+        row.propose_strategy_id	=   propose_strategy_id;
 
    });
-
 }
 
 ACTION mdaoproposal::cancel(const name& owner, const uint64_t& proposal_id)
@@ -78,9 +78,9 @@ ACTION mdaoproposal::addplan( const name& owner, const uint64_t& proposal_id,
     _db.set(proposal, _self);
 }
 
-ACTION mdaoproposal::startvote(const name& owner, const uint64_t& proposal_id)
+ACTION mdaoproposal::startvote(const name& executor, const uint64_t& proposal_id)
 {
-    require_auth( owner );
+    require_auth( executor );
 
     auto conf = _conf();
     CHECKC( conf.status != conf_status::PENDING, proposal_err::NOT_AVAILABLE, "under maintenance" );
@@ -88,7 +88,15 @@ ACTION mdaoproposal::startvote(const name& owner, const uint64_t& proposal_id)
     proposal_t proposal(proposal_id);
     CHECKC( _db.get(proposal) ,proposal_err::RECORD_NOT_FOUND, "record not found" );
     CHECKC( proposal.status == proposal_status::CREATED, proposal_err::STATUS_ERROR, "proposal status must be created" );
-    CHECKC( owner == proposal.creator, proposal_err::PERMISSION_DENIED, "only the creator can operate" );
+    CHECKC( executor == proposal.creator, proposal_err::PERMISSION_DENIED, "only the creator can operate" );
+
+    strategy_t::idx_t stg(MDAO_STG, MDAO_STG.value);
+    auto propose_strategy = stg.find(proposal.propose_strategy_id);
+
+    int64_t value = 0;
+    _cal_votes(proposal.dao_code, *propose_strategy, executor, value);
+    int32_t stg_weight = mdao::strategy::cal_weight(MDAO_STG, value, executor, proposal.propose_strategy_id );
+    CHECKC( stg_weight > 0, proposal_err::VOTES_NOT_ENOUGH, "insufficient strategy weight")
 
     multiple_plan* multi_plan = std::get_if<multiple_plan>(&proposal.proposal_plan);
     single_plan* s_plan = std::get_if<single_plan>(&proposal.proposal_plan);
@@ -96,39 +104,40 @@ ACTION mdaoproposal::startvote(const name& owner, const uint64_t& proposal_id)
 
     proposal.status  =  proposal_status::VOTING;
     proposal.started_at = current_time_point();
-    _db.set(proposal, _self);
 
+    _db.set(proposal, _self);
 }
 
-ACTION mdaoproposal::execute(const name& owner, const uint64_t& proposal_id)
+ACTION mdaoproposal::execute( const uint64_t& proposal_id )
 {
     auto conf = _conf();
-    require_auth( owner );
     CHECKC( conf.status != conf_status::PENDING, proposal_err::NOT_AVAILABLE, "under maintenance" );
 
     proposal_t proposal(proposal_id);
     CHECKC( _db.get(proposal) ,proposal_err::RECORD_NOT_FOUND, "record not found" );
-    CHECKC( owner == proposal.creator, proposal_err::PERMISSION_DENIED, "only the creator can operate" );
     CHECKC( proposal.status == proposal_status::VOTING, proposal_err::STATUS_ERROR, "proposal status must be running" );
 
     governance_t::idx_t governance_tbl(MDAO_GOV, MDAO_GOV.value);
     const auto governance = governance_tbl.find(proposal.dao_code.value);
     CHECKC( (proposal.started_at + (governance->voting_limit_hours * 3600)) <= current_time_point(), proposal_err::ALREADY_EXPIRED, "proposal is already expired" );
-    // CHECKC( (proposal.recv_votes - proposal.reject_votes) >= governance->require_pass, proposal_err::VOTES_NOT_ENOUGH, "votes must meet the minimum number of votes" );
 
     strategy_t::idx_t stg(MDAO_STG, MDAO_STG.value);
     auto vote_strategy = stg.find(proposal.vote_strategy_id);
-    if((vote_strategy->type != strategy_type::nftstaking && vote_strategy->type != strategy_type::tokenstaking)){
+    if((vote_strategy->type != strategy_type::nftstake && vote_strategy->type != strategy_type::tokenstake)){
         CHECKC( proposal.recv_votes >= governance->require_pass.at(proposal.vote_strategy_id), proposal_err::VOTES_NOT_ENOUGH, "votes must meet the minimum number of votes" );
         CHECKC( proposal.recv_votes >= governance->require_participation.at(proposal.vote_strategy_id), proposal_err::VOTES_NOT_ENOUGH, "votes must meet the minimum number of votes" );
+    }else{
+        mdao::dao_stake_t::idx_t stake(MDAO_STAKE, MDAO_STAKE.value);
+        auto stake_itr = stake.find(proposal.dao_code.value);
+        CHECKC( proposal.recv_votes >= governance->require_pass.at(proposal.vote_strategy_id), proposal_err::VOTES_NOT_ENOUGH, "votes must meet the minimum number of votes" );
+        CHECKC( proposal.users_count >= (governance->require_participation.at(proposal.vote_strategy_id) * stake_itr -> user_count / TEN_THOUSAND), proposal_err::VOTES_NOT_ENOUGH, "votes must meet the minimum number of votes" );
     }
-    // else{
-
-    // }
 
     if(proposal.type == plan_type::SINGLE){
         single_plan s_plan = std::get<single_plan>(proposal.proposal_plan);
-        s_plan.execute_action.send();
+        for(action& act : s_plan.execute_actions.actions ) {  
+            act.send();
+        }
     }
 
     proposal.status  =  proposal_status::EXECUTED;
@@ -159,15 +168,8 @@ ACTION mdaoproposal::votefor(const name& voter, const uint64_t& proposal_id,
 
     strategy_t::idx_t stg(MDAO_STG, MDAO_STG.value);
     auto vote_strategy = stg.find(proposal.vote_strategy_id);
-    int64_t value;
-    if((vote_strategy->type != strategy_type::nftstaking && vote_strategy->type != strategy_type::tokenstaking)){
-        accounts accountstable(vote_strategy->ref_contract, voter.value);
-        const auto ac = accountstable.find(vote_strategy->require_symbol_code.raw()); 
-        value = ac->balance.amount;
-    }
-    // else{
-
-    // }
+    int64_t value = 0;
+    _cal_votes(proposal.dao_code, *vote_strategy, voter, value);
 
     int stg_weight = mdao::strategy::cal_weight(MDAO_STG, value, voter, proposal.vote_strategy_id);
     CHECKC( stg_weight > 0, proposal_err::INSUFFICIENT_VOTES, "insufficient votes" );
@@ -205,8 +207,8 @@ ACTION mdaoproposal::votefor(const name& voter, const uint64_t& proposal_id,
 }
 
 ACTION mdaoproposal::setaction(const name& owner, const uint64_t& proposal_id,
-                                const uint32_t& plan_id,  const name& action_name,
-                                const name& action_account, const std::vector<char>& packed_action_data)
+                                const name& action_name, const name& action_account, 
+                                const std::vector<char>& packed_action_data)
 {
     require_auth(owner);
 
@@ -235,56 +237,56 @@ ACTION mdaoproposal::setaction(const name& owner, const uint64_t& proposal_id,
             updatedao_data action_data = unpack<updatedao_data>(packed_action_data);
             action_data_variant data_var = action_data;
             _check_proposal_params(data_var, action_name, action_account, conf);
-            plan.execute_action = action(pem, action_account, action_name, action_data);
+            plan.execute_actions.actions.push_back(action(pem, action_account, action_name, action_data));
             break;
         }
         case proposal_action_type::bindtoken.value: {
             bindtoken_data action_data = unpack<bindtoken_data>(packed_action_data);
             action_data_variant data_var = action_data;
             _check_proposal_params(data_var, action_name, action_account, conf);
-            plan.execute_action = action(pem, action_account, action_name, action_data);
+            plan.execute_actions.actions.push_back(action(pem, action_account, action_name, action_data));
             break;
         }
         case proposal_action_type::binddapp.value: {
             binddapp_data action_data = unpack<binddapp_data>(packed_action_data);
             action_data_variant data_var = action_data;
             _check_proposal_params(data_var, action_name, action_account, conf);
-            plan.execute_action = action(pem, action_account, action_name, action_data);
+            plan.execute_actions.actions.push_back(action(pem, action_account, action_name, action_data));
             break;
         }
         case proposal_action_type::createtoken.value: {
             createtoken_data action_data = unpack<createtoken_data>(packed_action_data);
             action_data_variant data_var = action_data;
             _check_proposal_params(data_var, action_name, action_account, conf);
-            plan.execute_action = action(pem, action_account, action_name, action_data);
+            plan.execute_actions.actions.push_back(action(pem, action_account, action_name, action_data));
             break;
         }
         case proposal_action_type::issuetoken.value: {
             issuetoken_data action_data = unpack<issuetoken_data>(packed_action_data);
             action_data_variant data_var = action_data;
             _check_proposal_params(data_var, action_name, action_account, conf);
-            plan.execute_action = action(pem, action_account, action_name, action_data);
+            plan.execute_actions.actions.push_back(action(pem, action_account, action_name, action_data));
             break;
         }
         case proposal_action_type::setvotestg.value: {
             setvotestg_data action_data = unpack<setvotestg_data>(packed_action_data);
             action_data_variant data_var = action_data;
             _check_proposal_params(data_var, action_name, action_account, conf);
-            plan.execute_action = action(pem, action_account, action_name, action_data);
+            plan.execute_actions.actions.push_back(action(pem, action_account, action_name, action_data));
             break;
         }
         case proposal_action_type::setproposestg.value: {
             setproposestg_data action_data = unpack<setproposestg_data>(packed_action_data);
             action_data_variant data_var = action_data;
             _check_proposal_params(data_var, action_name, action_account, conf);
-            plan.execute_action = action(pem, action_account, action_name, action_data);
+            plan.execute_actions.actions.push_back(action(pem, action_account, action_name, action_data));
             break;
         }
         case proposal_action_type::setlocktime.value: {
             setlocktime_data action_data = unpack<setlocktime_data>(packed_action_data);
             action_data_variant data_var = action_data;
             _check_proposal_params(data_var, action_name, action_account, conf);
-            plan.execute_action = action(pem, action_account, action_name, action_data);
+            plan.execute_actions.actions.push_back(action(pem, action_account, action_name, action_data));
 
             break;
         }
@@ -292,7 +294,7 @@ ACTION mdaoproposal::setaction(const name& owner, const uint64_t& proposal_id,
             tokentranout_data action_data = unpack<tokentranout_data>(packed_action_data);
             action_data_variant data_var = action_data;
             _check_proposal_params(data_var, action_name, action_account, conf);
-            plan.execute_action = action(pem, action_account, action_name, action_data);
+            plan.execute_actions.actions.push_back(action(pem, action_account, action_name, action_data));
 
             break;
         }
@@ -301,7 +303,6 @@ ACTION mdaoproposal::setaction(const name& owner, const uint64_t& proposal_id,
             break;
         }
     }
-
 
     _db.set(proposal, _self);
 }
@@ -393,8 +394,8 @@ void mdaoproposal::_check_proposal_params(const action_data_variant& data_var,  
             auto vote_strategy = stg.find(data.vote_strategy_id);
             CHECKC( vote_strategy != stg.end(), proposal_err::STRATEGY_NOT_FOUND, "strategy not found" );
 
-            CHECKC( (vote_strategy->type != strategy_type::nftstaking && vote_strategy->type != strategy_type::tokenstaking) || 
-                    ((vote_strategy->type == strategy_type::nftstaking || vote_strategy->type == strategy_type::tokenstaking) && data.require_participation <= 100000 && data.require_pass <= 100000), 
+            CHECKC( (vote_strategy->type != strategy_type::nftstake && vote_strategy->type != strategy_type::tokenstake) || 
+                    ((vote_strategy->type == strategy_type::nftstake || vote_strategy->type == strategy_type::tokenstake) && data.require_participation <= TEN_THOUSAND && data.require_pass <= TEN_THOUSAND), 
             proposal_err::PARAM_ERROR, "param error");
 
             break;
@@ -442,6 +443,30 @@ void mdaoproposal::recycledb(uint32_t max_rows) {
     auto proposal_itr = proposal_tbl.begin();
     for (size_t count = 0; count < max_rows && proposal_itr != proposal_tbl.end(); count++) {
         proposal_itr = proposal_tbl.erase(proposal_itr);
+    }
+}
+
+void mdaoproposal::_cal_votes(const name dao_code, const strategy_t& vote_strategy, const name voter, int64_t& value) {
+    switch(vote_strategy.type.value){
+        case strategy_type::tokenstake.value : {
+            user_stake_t::idx_t user_token_stake(MDAO_STAKE, MDAO_STAKE.value);
+            auto user_token_stake_index = user_token_stake.get_index<"unionid"_n>();
+            auto user_token_stake_iter = user_token_stake_index.find(mdao::get_unionid(voter, dao_code));
+            value = user_token_stake_iter->tokens_stake.at(extended_symbol{symbol(vote_strategy.ref_sym), vote_strategy.ref_contract});
+            break;
+        }
+        case strategy_type::nftstake.value : {
+            user_stake_t::idx_t user_nft_stake(MDAO_STAKE, MDAO_STAKE.value);
+            auto user_nft_stake_index = user_nft_stake.get_index<"unionid"_n>();
+            auto user_nft_stake_iter = user_nft_stake_index.find(mdao::get_unionid(voter, dao_code));
+            value = user_nft_stake_iter->nfts_stake.at(extended_nsymbol{nsymbol(vote_strategy.ref_sym), vote_strategy.ref_contract});
+            break;
+        }
+        default : {
+            accounts accountstable(vote_strategy.ref_contract, voter.value);
+            const auto ac = accountstable.find(symbol(vote_strategy.ref_sym).code().raw()); 
+            value = ac->balance.amount;
+        }
     }
 }
 

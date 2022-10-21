@@ -1,10 +1,13 @@
-add_contract(mdao.stg mdao.stg
+add_contract(mdaostrateg1 mdao.stg
 ${CMAKE_CURRENT_SOURCE_DIR}/src/mdao.stg.cpp
 )
 
 target_include_directories(mdao.stg
    PUBLIC
-   ${CMAKE_CURRENT_SOURCE_DIR}/include)
+   ${CMAKE_CURRENT_SOURCE_DIR}/include
+   ${CMAKE_CURRENT_SOURCE_DIR}../mdao.thirdparty
+   
+   )
 
 set_target_properties(mdao.stg
    PROPERTIES

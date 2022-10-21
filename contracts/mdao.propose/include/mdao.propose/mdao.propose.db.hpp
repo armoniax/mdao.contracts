@@ -4,7 +4,7 @@
 #include <eosio/singleton.hpp>
 #include <eosio/privileged.hpp>
 #include <eosio/name.hpp>
-#include <eosio/action.hpp>
+#include <eosio/transaction.hpp>
 #include <map>
 
 namespace mdao {
@@ -12,7 +12,7 @@ namespace mdao {
 using namespace std;
 using namespace eosio;
 
-#define TG_TBL [[eosio::table, eosio::contract("mdao.propose")]]
+#define TG_TBL [[eosio::table, eosio::contract("mdaopropose1")]]
 
 static uint128_t get_union_id(const name& account, const uint64_t& proposal_id){
     return ( (uint128_t)account.value ) << 64 | proposal_id;
@@ -29,7 +29,7 @@ struct single_plan{
     string      title;
     string      desc;
     uint32_t    recv_votes = 0;
-    action      execute_action;
+    transaction execute_actions;
 };
 
 struct multiple_plan {
@@ -42,6 +42,7 @@ struct TG_TBL proposal_t {
     uint64_t        id;
     name            dao_code;
     uint64_t        vote_strategy_id;
+    uint64_t        propose_strategy_id;
     name            status;
     name            creator;
     string          proposal_name;
@@ -63,7 +64,7 @@ struct TG_TBL proposal_t {
     proposal_t() {}
     proposal_t(const uint64_t& i): id(i) {}
 
-    EOSLIB_SERIALIZE( proposal_t, (id)(dao_code)(vote_strategy_id)(status)(creator)(proposal_name)(title)(desc)(type)
+    EOSLIB_SERIALIZE( proposal_t, (id)(dao_code)(vote_strategy_id)(propose_strategy_id)(status)(creator)(proposal_name)(title)(desc)(type)
                 (recv_votes)(reject_votes)(users_count)(reject_users_count)(proposal_plan)(created_at)(started_at)(executed_at) )
 
     typedef eosio::multi_index <"proposals"_n, proposal_t> idx_t;

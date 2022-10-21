@@ -1,7 +1,6 @@
 #include <mdao.treasury/mdao.treasury.hpp>
 #include <mdao.info/mdao.info.db.hpp>
 #include <mdao.gov/mdao.gov.db.hpp>
-#include <mdao.info/mdao.info.db.hpp>
 #include <mdao.stg/mdao.stg.hpp>
 #include <thirdparty/utils.hpp>
 #include <set>

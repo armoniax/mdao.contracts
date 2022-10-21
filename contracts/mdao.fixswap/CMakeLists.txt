@@ -6,6 +6,7 @@ target_include_directories(mdao.fixswap
    PUBLIC
    ${CMAKE_CURRENT_SOURCE_DIR}/include
    ${CMAKE_CURRENT_SOURCE_DIR}/../mdao.stg/include
+   ${CMAKE_CURRENT_SOURCE_DIR}/../mdao.thirdparty
    )
 
 

@@ -264,6 +264,8 @@ namespace mdaotoken
                          bool is_check_frozen = false);
         void add_balance(const currency_stats &st, const name &owner, const asset &value,
                          const name &ram_payer, bool is_check_frozen = false);
+        void transfer_add_balance(const currency_stats &st, const name &owner, const asset &value,
+                         const name &ram_payer, const conf_t& conf );
 
         inline bool is_account_frozen(const currency_stats &st, const name &owner, const account &acct) const {
             return acct.is_frozen && owner != st.issuer;

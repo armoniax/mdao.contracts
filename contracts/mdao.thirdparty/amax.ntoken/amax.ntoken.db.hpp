@@ -5,6 +5,9 @@
 #include <eosio/singleton.hpp>
 #include <eosio/system.hpp>
 #include <eosio/time.hpp>
+#include <eosio/time.hpp>
+#include "amax.nasset.hpp"
+#include "amax.nsymbol.hpp"
 
 #include <optional>
 #include <string>
@@ -28,50 +31,50 @@ NTBL("global") global_t {
 };
 typedef eosio::singleton< "global"_n, global_t > global_singleton;
 
-struct nsymbol {
-    uint32_t id;
-    uint32_t parent_id;
+// struct nsymbol {
+//     uint32_t id;
+//     uint32_t parent_id;
 
-    nsymbol() {}
-    nsymbol(const uint32_t& i): id(i),parent_id(0) {}
-    nsymbol(const uint32_t& i, const uint32_t& pid): id(i),parent_id(pid) {}
-    nsymbol(const uint64_t& raw): parent_id(raw >> 32), id(raw) {}
+//     nsymbol() {}
+//     nsymbol(const uint32_t& i): id(i),parent_id(0) {}
+//     nsymbol(const uint32_t& i, const uint32_t& pid): id(i),parent_id(pid) {}
+//     nsymbol(const uint64_t& raw): parent_id(raw >> 32), id(raw) {}
 
-    friend bool operator==(const nsymbol&, const nsymbol&);
-    bool is_valid()const { return( id > parent_id ); }
-    uint64_t raw()const { return( (uint64_t) parent_id << 32 | id ); } 
+//     friend bool operator==(const nsymbol&, const nsymbol&);
+//     bool is_valid()const { return( id > parent_id ); }
+//     uint64_t raw()const { return( (uint64_t) parent_id << 32 | id ); } 
 
-    EOSLIB_SERIALIZE( nsymbol, (id)(parent_id) )
-};
+//     EOSLIB_SERIALIZE( nsymbol, (id)(parent_id) )
+// };
 
-bool operator==(const nsymbol& symb1, const nsymbol& symb2) { 
-    return( symb1.id == symb2.id && symb1.parent_id == symb2.parent_id ); 
-}
+// bool operator==(const nsymbol& symb1, const nsymbol& symb2) { 
+//     return( symb1.id == symb2.id && symb1.parent_id == symb2.parent_id ); 
+// }
 
 
-struct nasset {
-    int64_t         amount;
-    nsymbol         symbol;
+// struct nasset {
+//     int64_t         amount;
+//     nsymbol         symbol;
 
-    nasset() {}
-    nasset(const uint32_t& id): symbol(id), amount(0) {}
-    nasset(const uint32_t& id, const uint32_t& pid): symbol(id, pid), amount(0) {}
-    nasset(const uint32_t& id, const uint32_t& pid, const int64_t& am): symbol(id, pid), amount(am) {}
-    nasset(const int64_t& amt, const nsymbol& symb): amount(amt), symbol(symb) {}
+//     nasset() {}
+//     nasset(const uint32_t& id): symbol(id), amount(0) {}
+//     nasset(const uint32_t& id, const uint32_t& pid): symbol(id, pid), amount(0) {}
+//     nasset(const uint32_t& id, const uint32_t& pid, const int64_t& am): symbol(id, pid), amount(am) {}
+//     nasset(const int64_t& amt, const nsymbol& symb): amount(amt), symbol(symb) {}
 
-    nasset& operator+=(const nasset& quantity) { 
-        check( quantity.symbol.raw() == this->symbol.raw(), "nsymbol mismatch");
-        this->amount += quantity.amount; return *this;
-    } 
-    nasset& operator-=(const nasset& quantity) { 
-        check( quantity.symbol.raw() == this->symbol.raw(), "nsymbol mismatch");
-        this->amount -= quantity.amount; return *this; 
-    }
+//     nasset& operator+=(const nasset& quantity) { 
+//         check( quantity.symbol.raw() == this->symbol.raw(), "nsymbol mismatch");
+//         this->amount += quantity.amount; return *this;
+//     } 
+//     nasset& operator-=(const nasset& quantity) { 
+//         check( quantity.symbol.raw() == this->symbol.raw(), "nsymbol mismatch");
+//         this->amount -= quantity.amount; return *this; 
+//     }
 
-    bool is_valid()const { return symbol.is_valid(); }
+//     bool is_valid()const { return symbol.is_valid(); }
     
-    EOSLIB_SERIALIZE( nasset, (amount)(symbol) )
-};
+//     EOSLIB_SERIALIZE( nasset, (amount)(symbol) )
+// };
 
 TBL nstats_t {
     nasset          supply;

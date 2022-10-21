@@ -16,6 +16,7 @@ ACTION mdaoconf::init( const name& fee_taker, const app_info& app_info, const as
 
 ACTION mdaoconf::setseat( uint16_t& dappmax )
 {
+    
     require_auth( _self );
     _gstate.dapp_seats_max = dappmax;
 }

@@ -4,7 +4,7 @@
 #include <eosio/asset.hpp>
 #include <eosio/singleton.hpp>
 #include <eosio/privileged.hpp>
-#include <amax.ntoken/amax.ntoken_db.hpp>
+#include <amax.ntoken/amax.ntoken.db.hpp>
 #include <eosio/name.hpp>
 #include <map>
 #include <set>
@@ -22,13 +22,6 @@ static constexpr string_view     meta_limit            = "meta";
 namespace mdao {
 
 #define INFO_TG_TBL [[eosio::table, eosio::contract("mdao.info")]]
-
-struct extended_nsymbol {
-    name    contract;
-    nsymbol symbol;
-
-    EOSLIB_SERIALIZE(extended_nsymbol, (contract)(symbol) )
-};
 
 struct INFO_TG_TBL dao_info_t {
     name                    dao_code;

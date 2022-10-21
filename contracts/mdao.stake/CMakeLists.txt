@@ -4,7 +4,14 @@ ${CMAKE_CURRENT_SOURCE_DIR}/src/mdao.stake.cpp
 
 target_include_directories(mdao.stake
    PUBLIC
-   ${CMAKE_CURRENT_SOURCE_DIR}/include)
+   ${CMAKE_CURRENT_SOURCE_DIR}/include
+   ${CMAKE_CURRENT_SOURCE_DIR}/../mdao.thirdparty
+   ${CMAKE_CURRENT_SOURCE_DIR}/../mdao.info/include
+   ${CMAKE_CURRENT_SOURCE_DIR}/../mdao.conf/include
+   ${CMAKE_CURRENT_SOURCE_DIR}/../mdao.gov/include
+   ${CMAKE_CURRENT_SOURCE_DIR}/../mdao.thirdparty
+
+   )
 
 set_target_properties(mdao.stake
    PROPERTIES

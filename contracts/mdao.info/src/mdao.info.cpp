@@ -65,9 +65,6 @@ ACTION mdaoinfo::updatedao(const name& owner, const name& code, const string& lo
 
     CHECKC( sym_code.empty() == sym_contract.empty(), info_err::PARAM_ERROR, "symcode and symcontract must be null or not null" );
 
-    // bool is_expired = (detail.created_at + INFO_PERMISSION_AGING) < time_point_sec(current_time_point());
-    // CHECKC( ( has_auth(owner) &&! is_expired )|| ( has_auth(conf.managers[manager::INFO]) && is_expired ) ,info_err::PERMISSION_DENIED, "insufficient permissions" );
-
     if(!logo.empty())                   info.logo   = logo;
     if(!desc.empty())                   info.desc   = desc;
     if(!links.empty())                  info.resource_links  = links;
@@ -240,6 +237,18 @@ ACTION mdaoinfo::issuetoken(const name& owner, const name& code, const name& to,
         
     XTOKEN_ISSUE(MDAO_TOKEN, to, quantity, memo)
 
+}
+
+ACTION mdaoinfo::bindntoken(const name& owner, const name& code, const extended_nsymbol& ntoken)
+{
+    require_auth( owner );
+    auto conf = _conf();
+    CHECKC( conf.status != conf_status::PENDING, info_err::NOT_AVAILABLE, "under maintenance" );
+
+    dao_info_t info(code);
+    _check_permission(info, code, owner, conf);
+    
+    info.ntoken = ntoken; 
 }
 
 void mdaoinfo::_check_permission( dao_info_t& info, const name& code, const name& owner,  const conf_t& conf ) {

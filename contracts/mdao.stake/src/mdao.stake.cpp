@@ -3,7 +3,6 @@
 #include <thirdparty/utils.hpp>
 #include <thirdparty/safe.hpp>
 #include <mdao.info/mdao.info.hpp>
-#include <mdao.info/mdao.info.db.hpp>
 
 // transfer out from contract self
 #define TRANSFERFROM(bank, from, to, quantity, memo) \

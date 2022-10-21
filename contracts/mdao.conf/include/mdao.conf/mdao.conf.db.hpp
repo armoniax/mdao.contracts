@@ -16,17 +16,21 @@ namespace mdao {
 using namespace std;
 using namespace eosio;
 #define SYMBOL(sym_code, precision) symbol(symbol_code(sym_code), precision)
-#define CONF_TG_TBL [[eosio::table, eosio::contract("mdao.conf")]]
+#define CONF_TG_TBL [[eosio::table, eosio::contract("xconf")]]
 static constexpr symbol AMAX_SYMBOL            = SYMBOL("AMAX", 8);
+static constexpr uint16_t TEN_THOUSAND         = 10000;
 
 static constexpr name AMAX_TOKEN{"amax.token"_n};
-static constexpr name MDAO_INFO{"mdao.info"_n};
-static constexpr name MDAO_CONF{"mdao.conf"_n};
-// static constexpr name MDAO_STG{"mdao.stg"_n};
-// static constexpr name MDAO_GOV{"mdao.gov"_n};
-// static constexpr name MDAO_WALLET{"mdao.wallet"_n};
-// static constexpr name MDAO_TOKEN{"mdaotoken111"_n};
-// static constexpr name MDAO_PROPOSE{"mdaopropose"_n};
+
+static constexpr name MDAO_INFO{"xinfo"_n};
+static constexpr name MDAO_CONF{"xconf"_n};
+static constexpr name MDAO_STG{"mdaostrategy"_n};
+static constexpr name MDAO_GOV{"mdaogovtest1"_n};
+static constexpr name MDAO_PROPOSAL{"mdaopropose1"_n};
+static constexpr name MDAO_TOKEN{"mdaotoken111"_n};
+static constexpr name MDAO_TREASURY{"mdaotreasury"_n};
+static constexpr name MDAO_ALGOEX{"mdao.algoex"_n};
+static constexpr name MDAO_STAKE{"mdao.stake"_n};
 
 namespace conf_status {
     static constexpr name INITIAL    = "initial"_n;
@@ -38,13 +42,17 @@ namespace conf_status {
 
 namespace manager_type {
     static constexpr name INFO       = "info"_n;
-    // static constexpr name STRATEGY   = "strategy"_n;
-    // static constexpr name WALLET     = "wallet"_n;
-    // static constexpr name TOKEN      = "token"_n;
-    // static constexpr name GOV        = "gov"_n;
-    // static constexpr name PROPOSE    = "propose"_n;
+    static constexpr name STRATEGY   = "strategy"_n;
+    static constexpr name TREASURY   = "treasury"_n;
+    static constexpr name TOKEN      = "token"_n;
+    static constexpr name GOV        = "gov"_n;
+    static constexpr name PROPOSAL    = "proposal"_n;
+    static constexpr name CONF       = "conf"_n;
+    static constexpr name ALGOEX     = "algoex"_n;
+    static constexpr name STAKE      = "stake"_n;
 
 };
+
 
 struct app_info {
     name app_name;
@@ -61,7 +69,7 @@ bool operator < (const app_info& appinfo1, const app_info& appinfo2) {
     return appinfo1.app_name < appinfo2.app_name;
 }
 
-struct [[eosio::table("global"), eosio::contract("mdao.conf")]] conf_global_t {
+struct [[eosio::table("global"), eosio::contract("xconf")]] conf_global_t {
     app_info          appinfo;
     name              status = conf_status::INITIAL;
     name              fee_taker;
@@ -100,11 +108,11 @@ struct [[eosio::table("global"), eosio::contract("mdao.conf")]] conf_global_t {
     asset token_create_fee = asset(1'0000'0000, AMAX_SYMBOL);
     map<name, name>   managers {
         { manager_type::INFO, MDAO_INFO },
-        // { manager_type::STRATEGY, MDAO_STG },
-        // { manager_type::WALLET, MDAO_WALLET },
-        // { manager_type::TOKEN, MDAO_TOKEN },
-        // { manager_type::PROPOSE, MDAO_PROPOSE },
-        // { manager_type::GOV, MDAO_GOV },
+        { manager_type::STRATEGY, MDAO_STG },
+        { manager_type::TOKEN, MDAO_TOKEN },
+        { manager_type::PROPOSAL, MDAO_PROPOSAL },
+        { manager_type::GOV, MDAO_GOV },
+        // { manager_type::STAKE, MDAO_STAKE },
     };
     set<name> token_contracts;
     set<name> ntoken_contracts;

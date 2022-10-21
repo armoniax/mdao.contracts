@@ -7,6 +7,8 @@
 #include <mdao.conf/mdao.conf.hpp>
 #include "mdao.propose.db.hpp"
 #include <thirdparty/wasm_db.hpp>
+#include <mdao.stg/mdao.stg.hpp>
+// #include <amax.ntoken/amax.ntoken.hpp>
 
 using namespace eosio;
 using namespace wasm::db;
@@ -178,7 +180,7 @@ typedef std::variant<updatedao_data, bindtoken_data, binddapp_data, createtoken_
                      setvotestg_data, setproposestg_data, setleastvote_data, setreqratio_data, setlocktime_data, tokentranout_data
                     > action_data_variant;
 
-class [[eosio::contract("mdao.propose")]] mdaoproposal : public contract {
+class [[eosio::contract("mdaopropose1")]] mdaoproposal : public contract {
 
 using conf_t = mdao::conf_global_t;
 using conf_table_t = mdao::conf_global_singleton;
@@ -197,24 +199,25 @@ public:
     ACTION create(const name& dao_code, const name& creator, 
                     const string& proposal_name, const string& desc, 
                     const string& title, const uint64_t& vote_strategy_id, 
-                    const name& type);
+                    const uint64_t& propose_strategy_id, const name& type);
 
     ACTION cancel(const name& owner, const uint64_t& proposalid);
 
     ACTION addplan( const name& owner, const uint64_t& proposal_id, const string& title, const string& desc );
 
-    ACTION startvote(const name& owner, const uint64_t& proposal_id);
+    ACTION startvote(const name& executor, const uint64_t& proposal_id);
 
-    ACTION execute(const name& owner, const uint64_t& proposal_id);
+    ACTION execute(const uint64_t& proposal_id);
 
     ACTION votefor(const name& voter, const uint64_t& proposal_id, const uint32_t plan_id, const bool direction);
 
     ACTION setaction(const name& owner, const uint64_t& proposalid, 
-                        const uint32_t& optid,  const name& action_name, 
-                        const name& action_account, const std::vector<char>& packed_action_data);
+                        const name& action_name, const name& action_account, 
+                        const std::vector<char>& packed_action_data);
     
     ACTION recycledb(uint32_t max_rows);
     
 private:
     void _check_proposal_params(const action_data_variant& data_var,  const name& action_name, const name& action_account, const conf_t& conf);
+    void _cal_votes(const name dao_code, const strategy_t& vote_strategy, const name voter, int64_t& value);
 };

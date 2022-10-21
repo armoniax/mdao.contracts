@@ -1,11 +1,10 @@
 #include <eosio/asset.hpp>
 #include <eosio/eosio.hpp>
 #include <string>
-
-#include "picomath.hpp"
-#include "amax.token/amax.token.hpp"
-#include "amax.ntoken/amax.ntoken.hpp"
-#include "thirdparty/utils.hpp"
+#include <thirdparty/picomath.hpp>
+#include <amax.token/amax.token.hpp>
+#include <amax.ntoken/amax.ntoken.hpp>
+#include <thirdparty/utils.hpp>
 #include "mdao.stgdb.hpp"
 
 using std::string;
@@ -14,7 +13,7 @@ using namespace wasm::db;
 using namespace picomath;
 
 namespace mdao {
-class [[eosio::contract("mdao.stg")]] strategy : public contract {
+class [[eosio::contract("mdaostrateg1")]] strategy : public contract {
 private:
     dbc                 _db;
     global_singleton    _global;

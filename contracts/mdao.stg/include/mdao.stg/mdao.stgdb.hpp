@@ -1,7 +1,6 @@
 #pragma once
 
-#include "thirdparty/wasm_db.hpp"
-
+#include <thirdparty/wasm_db.hpp>
 #include <eosio/eosio.hpp>
 #include <eosio/asset.hpp>
 #include <eosio/privileged.hpp>
@@ -23,8 +22,8 @@ static constexpr uint32_t MAX_ALGO_SIZE = 256;
 
 namespace wasm { namespace db {
 
-#define STG_TABLE [[eosio::table, eosio::contract("mdao.stg")]]
-#define STG_TABLE_NAME(name) [[eosio::table(name), eosio::contract("mdao.stg")]]
+#define STG_TABLE [[eosio::table, eosio::contract("mdaostrateg1")]]
+#define STG_TABLE_NAME(name) [[eosio::table(name), eosio::contract("mdaostrateg1")]]
 
 struct STG_TABLE_NAME("global") global_t {
     name conf_contract;

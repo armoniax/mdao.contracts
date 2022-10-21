@@ -5,6 +5,7 @@
 #include <eosio/singleton.hpp>
 #include <eosio/time.hpp>
 #include <mdao.conf/mdao.conf.hpp>
+#include <amax.ntoken/amax.ntoken.hpp>
 #include "mdao.treasury.db.hpp"
 #include <thirdparty/wasm_db.hpp>
 
@@ -34,7 +35,7 @@ enum class treasury_err: uint8_t {
     INSUFFICIENT_BALANCE    = 17
 };
 
-class [[eosio::contract("treasury")]] mdaotreasury : public contract {
+class [[eosio::contract("mdaotreasury")]] mdaotreasury : public contract {
 
 using conf_t = mdao::conf_global_t;
 using conf_table_t = mdao::conf_global_singleton;

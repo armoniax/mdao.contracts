@@ -5,7 +5,6 @@
 #include <eosio/singleton.hpp>
 #include <eosio/privileged.hpp>
 #include <eosio/name.hpp>
-// #include <eosio.token/eosio.token.hpp>
 #include <amax.ntoken/amax.ntoken.hpp>
 
 #include <map>

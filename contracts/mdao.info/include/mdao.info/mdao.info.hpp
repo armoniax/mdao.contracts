@@ -5,6 +5,7 @@
 #include <eosio/singleton.hpp>
 #include <eosio/time.hpp>
 #include <mdao.conf/mdao.conf.hpp>
+#include <mdao.gov/mdao.gov.db.hpp>
 #include <thirdparty/wasm_db.hpp>
 #include "mdao.info.db.hpp"
 
@@ -100,6 +101,9 @@ public:
     [[eosio::action]]
     void issuetoken(const name& owner, const name& code, const name& to, 
                             const asset& quantity, const string& memo);
+   
+    [[eosio::action]]
+    void bindntoken(const name& owner, const name& code, const extended_nsymbol& ntoken);
 
     void _check_permission( dao_info_t& info, const name& dao_code, const name& owner, const conf_t& conf );
 };
