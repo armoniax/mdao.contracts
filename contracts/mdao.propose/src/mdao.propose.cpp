@@ -27,6 +27,13 @@ ACTION mdaoproposal::create(const name& dao_code, const name& creator,
         row.title	            =   title;
         row.type	            =   type;
         row.propose_strategy_id	=   propose_strategy_id;
+        if(type == plan_type::SINGLE){
+            single_plan s_plan;
+            row.proposal_plan = s_plan;
+        }else{
+            multiple_plan multi_plan;
+            row.proposal_plan = multi_plan;
+        }
 
    });
 }
@@ -62,14 +69,15 @@ ACTION mdaoproposal::addplan( const name& owner, const uint64_t& proposal_id,
     
     if(proposal.type == plan_type::MULTIPLE){
         multiple_plan multi_plan = std::get<multiple_plan>(proposal.proposal_plan);
-        auto prev_plan = multi_plan.plans.back();
+        uint32_t id = multi_plan.plans.size() == 0 ? 0 : multi_plan.plans.back().id++ ;
         plan p;
-        p.id           =   prev_plan.id++;
+        p.id           =   id;
         p.title        =   title;
         p.desc         =   desc;
         multi_plan.plans.push_back(p);
+        proposal.proposal_plan = multi_plan;
     }else{
-        single_plan s_plan;
+        single_plan s_plan = std::get<single_plan>(proposal.proposal_plan);
         s_plan.title        =   title;
         s_plan.desc         =   desc;
         proposal.proposal_plan = s_plan;
@@ -100,7 +108,7 @@ ACTION mdaoproposal::startvote(const name& executor, const uint64_t& proposal_id
 
     multiple_plan* multi_plan = std::get_if<multiple_plan>(&proposal.proposal_plan);
     single_plan* s_plan = std::get_if<single_plan>(&proposal.proposal_plan);
-    CHECKC( (multi_plan != nullptr) || (s_plan != nullptr), proposal_err::PLANS_EMPTY, "please add plan" );
+    CHECKC( (multi_plan != nullptr && multi_plan->plans.size() > 0) || (s_plan != nullptr && s_plan->title.size() > 0), proposal_err::PLANS_EMPTY, "please add plan" );
 
     proposal.status  =  proposal_status::VOTING;
     proposal.started_at = current_time_point();
@@ -119,7 +127,7 @@ ACTION mdaoproposal::execute( const uint64_t& proposal_id )
 
     governance_t::idx_t governance_tbl(MDAO_GOV, MDAO_GOV.value);
     const auto governance = governance_tbl.find(proposal.dao_code.value);
-    CHECKC( (proposal.started_at + (governance->voting_limit_hours * 3600)) <= current_time_point(), proposal_err::ALREADY_EXPIRED, "proposal is already expired" );
+    CHECKC( (proposal.started_at + (governance->voting_limit_hours * 3600)) >= current_time_point(), proposal_err::ALREADY_EXPIRED, "proposal is already expired" );
 
     strategy_t::idx_t stg(MDAO_STG, MDAO_STG.value);
     auto vote_strategy = stg.find(proposal.vote_strategy_id);
@@ -159,7 +167,7 @@ ACTION mdaoproposal::votefor(const name& voter, const uint64_t& proposal_id,
 
     governance_t::idx_t governance_tbl(MDAO_GOV, MDAO_GOV.value);
     const auto governance = governance_tbl.find(proposal.dao_code.value);
-    CHECKC( (proposal.started_at + (governance->voting_limit_hours * 3600)) <= current_time_point(), proposal_err::ALREADY_EXPIRED, "proposal is already expired" );
+    CHECKC( (proposal.started_at + (governance->voting_limit_hours * 3600)) >= current_time_point(), proposal_err::ALREADY_EXPIRED, "proposal is already expired" );
 
     votelist_t::idx_t vote_tbl(_self, _self.value);
     auto vote_index = vote_tbl.get_index<"unionid"_n>();
@@ -187,15 +195,18 @@ ACTION mdaoproposal::votefor(const name& voter, const uint64_t& proposal_id,
     if(proposal.type == plan_type::SINGLE){
         single_plan s_plan = std::get<single_plan>(proposal.proposal_plan);
         s_plan.recv_votes = direction ? s_plan.recv_votes + stg_weight : s_plan.recv_votes;
+        proposal.proposal_plan = s_plan;
     }else{
-        multiple_plan s_plan = std::get<multiple_plan>(proposal.proposal_plan);
-        for( vector<plan>::iterator plan_iter = s_plan.plans.begin(); plan_iter != s_plan.plans.end(); plan_iter++ ){
+        multiple_plan m_plan = std::get<multiple_plan>(proposal.proposal_plan);
+        for( vector<plan>::iterator plan_iter = m_plan.plans.begin(); plan_iter != m_plan.plans.end(); plan_iter++ ){
             if( plan_id == plan_iter->id ){
 
                 plan_iter->recv_votes = direction ? plan_iter->recv_votes + stg_weight : plan_iter->recv_votes;
                 break;
             }
         }
+        proposal.proposal_plan = m_plan;
+
     }
     if(!direction) {
         proposal.reject_votes += stg_weight;
@@ -204,6 +215,11 @@ ACTION mdaoproposal::votefor(const name& voter, const uint64_t& proposal_id,
     proposal.recv_votes += stg_weight;
     proposal.users_count++;
     _db.set(proposal, _self);
+}
+
+void mdaoproposal::deletegov(uint64_t id) {
+    proposal_t proposal(id);
+    _db.del(proposal);
 }
 
 ACTION mdaoproposal::setaction(const name& owner, const uint64_t& proposal_id,
@@ -222,7 +238,7 @@ ACTION mdaoproposal::setaction(const name& owner, const uint64_t& proposal_id,
 
     governance_t::idx_t governance_tbl(MDAO_GOV, MDAO_GOV.value);
     const auto governance = governance_tbl.find(proposal.dao_code.value);
-    CHECKC( (proposal.started_at + (governance->voting_limit_hours * 3600)) <= current_time_point(), proposal_err::ALREADY_EXPIRED, "proposal is already expired" );
+    CHECKC( (proposal.started_at + (governance->voting_limit_hours * 3600)) >= current_time_point(), proposal_err::ALREADY_EXPIRED, "proposal is already expired" );
 
     single_plan* s_plan = std::get_if<single_plan>(&proposal.proposal_plan);
     CHECKC( s_plan != nullptr, proposal_err::PLANS_EMPTY, "please add plan" );

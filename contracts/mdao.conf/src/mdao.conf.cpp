@@ -26,7 +26,7 @@ ACTION mdaoconf::setmanager( const name& manage_type, const name& manager )
     require_auth( _self );
     // check( manager_type::INFO == managetype || manager_type::STRATEGY == managetype 
     //         || manager_type::WALLET == managetype || manager_type::TOKEN == managetype, "manager illegal" );
-    check( manager_type::INFO == manage_type, "manager illegal" );
+    // check( manager_type::INFO == manage_type, "manager illegal" );
     _gstate.managers[manage_type] = manager;
 }
 

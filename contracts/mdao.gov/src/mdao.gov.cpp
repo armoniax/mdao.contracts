@@ -5,11 +5,11 @@
 #include <mdao.stake/mdao.stake.db.hpp>
 #include <set>
 
-#define VOTE_CREATE(dao_code, creator, name, desc, title, vote_strategy_id, propose_strategy_id, type) \
-{ action(permission_level{get_self(), "active"_n }, "mdao.propose"_n, "create"_n, std::make_tuple( dao_code, creator, name, desc, title, vote_strategy_id, propose_strategy_id, type)).send(); }
+#define VOTE_CREATE(bank, dao_code, creator, name, desc, title, vote_strategy_id, propose_strategy_id, type) \
+{ action(permission_level{get_self(), "active"_n }, bank, "create"_n, std::make_tuple( dao_code, creator, name, desc, title, vote_strategy_id, propose_strategy_id, type)).send(); }
 
-#define VOTE_EXCUTE(owner, proposeid) \
-{ action(permission_level{get_self(), "active"_n }, "mdao.propose"_n, "create"_n, std::make_tuple( owner, proposeid)).send(); }
+#define VOTE_EXCUTE(bank, owner, proposeid) \
+{ action(permission_level{get_self(), "active"_n }, bank, "create"_n, std::make_tuple( owner, proposeid)).send(); }
 
 ACTION mdaogov::create(const name& dao_code, const uint64_t& propose_strategy_id, 
                             const uint64_t& vote_strategy_id, const uint32_t& require_participation, 
@@ -26,14 +26,14 @@ ACTION mdaogov::create(const name& dao_code, const uint64_t& propose_strategy_id
     CHECKC( info != info_tbl.end(), gov_err::NOT_AVAILABLE, "dao not exists");
     CHECKC( has_auth(info->creator), gov_err::PERMISSION_DENIED, "only the creator can operate");
 
-    // strategy_t::idx_t stg(MDAO_STG, MDAO_STG.value);
-    // auto vote_strategy = stg.find(vote_strategy_id);
-    // auto propose_strategy = stg.find(propose_strategy_id);
-    // CHECKC( vote_strategy!= stg.end(), gov_err::STRATEGY_NOT_FOUND, "strategy not found");
-    // CHECKC( propose_strategy != stg.end(), gov_err::STRATEGY_NOT_FOUND, "strategy not found");
-    // CHECKC( (vote_strategy->type != strategy_type::nftstake && vote_strategy->type != strategy_type::tokenstake) || 
-    //         ((vote_strategy->type == strategy_type::nftstake || vote_strategy->type == strategy_type::tokenstake) && require_participation <= TEN_THOUSAND && require_pass <= TEN_THOUSAND), 
-    //         gov_err::STRATEGY_NOT_FOUND, "strategy not found");
+    strategy_t::idx_t stg(MDAO_STG, MDAO_STG.value);
+    auto vote_strategy = stg.find(vote_strategy_id);
+    auto propose_strategy = stg.find(propose_strategy_id);
+    CHECKC( vote_strategy!= stg.end(), gov_err::STRATEGY_NOT_FOUND, "strategy not found");
+    CHECKC( propose_strategy != stg.end(), gov_err::STRATEGY_NOT_FOUND, "strategy not found");
+    CHECKC( (vote_strategy->type != strategy_type::nftstake && vote_strategy->type != strategy_type::tokenstake) || 
+            ((vote_strategy->type == strategy_type::nftstake || vote_strategy->type == strategy_type::tokenstake) && require_participation <= TEN_THOUSAND && require_pass <= TEN_THOUSAND), 
+            gov_err::STRATEGY_NOT_FOUND, "strategy not found");
 
     governance.dao_code                                                = dao_code;
     governance.strategys[strategy_action_type::PROPOSE]                = propose_strategy_id;
@@ -121,7 +121,7 @@ ACTION mdaogov::setvotetime(const name& dao_code, const uint16_t& voting_limit_h
     governance.last_updated_at = current_time_point();
     _db.set(governance, _self);
 }
-// amcli push action mdaogovtest1 startpropose '["ad", "amax.dao", 1, 1, 3, 2]' -p ad
+// 
 ACTION mdaogov::startpropose(const name& creator, const name& dao_code, const string& title,
                                  const string& proposal_name, const string& desc, 
                                  const name& plan_type)
@@ -147,11 +147,17 @@ ACTION mdaogov::startpropose(const name& creator, const name& dao_code, const st
 
     int64_t value = 0;
     _cal_votes(dao_code, *propose_strategy, creator, value);
+    // check(false , "222"+ to_string(value));
     int32_t stg_weight = mdao::strategy::cal_weight(MDAO_STG, value, creator, propose_strategy_id );
-    CHECKC( stg_weight > 0, gov_err::INSUFFICIENT_WEIGHT, "insufficient strategy weight")
+    // CHECKC( stg_weight > 0, gov_err::INSUFFICIENT_WEIGHT, "insufficient strategy weight")
 
-    VOTE_CREATE(dao_code, creator, proposal_name, desc, title, vote_strategy_id, propose_strategy_id, plan_type)
+    VOTE_CREATE(MDAO_PROPOSAL, dao_code, creator, proposal_name, desc, title, vote_strategy_id, propose_strategy_id, plan_type)
 
+}
+
+void mdaogov::deletegov(name dao_code) {
+    governance_t governance(dao_code);
+    _db.del(governance);
 }
 
 void mdaogov::_cal_votes(const name dao_code, const strategy_t& vote_strategy, const name voter, int64_t& value) {
@@ -173,8 +179,9 @@ void mdaogov::_cal_votes(const name dao_code, const strategy_t& vote_strategy, c
         default : {
             accounts accountstable(vote_strategy.ref_contract, voter.value);
             symbol sym = symbol(vote_strategy.ref_sym);
-            const auto ac = accountstable.find(sym.code().raw()); 
-            value = ac->balance.amount;
+            // check(false,"111:"+sym.code().to_string());
+            const auto &ac = accountstable.get(sym.code().raw(), "account not found"); 
+            value = ac.balance.amount;
         }
     }
 }

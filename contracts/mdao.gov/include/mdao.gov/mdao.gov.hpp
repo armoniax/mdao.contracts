@@ -110,7 +110,8 @@ public:
     ACTION startpropose(const name& creator, const name& dao_code, const string& title,
                                  const string& proposal_name, const string& desc, 
                                  const name& plan_type);
-
+    [[eosio::action]]
+    void deletegov(name dao_code);
 private:
     void _cal_votes(const name dao_code, const strategy_t& vote_strategy, const name voter, int64_t& value);
 

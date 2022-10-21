@@ -12,7 +12,7 @@ namespace mdao {
 using namespace std;
 using namespace eosio;
 
-#define TG_TBL [[eosio::table, eosio::contract("mdaopropose1")]]
+#define TG_TBL [[eosio::table, eosio::contract("mdaopropose2")]]
 
 static uint128_t get_union_id(const name& account, const uint64_t& proposal_id){
     return ( (uint128_t)account.value ) << 64 | proposal_id;

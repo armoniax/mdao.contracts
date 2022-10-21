@@ -26,7 +26,7 @@ static constexpr name MDAO_INFO{"xinfo"_n};
 static constexpr name MDAO_CONF{"xconf"_n};
 static constexpr name MDAO_STG{"mdaostrategy"_n};
 static constexpr name MDAO_GOV{"mdaogovtest1"_n};
-static constexpr name MDAO_PROPOSAL{"mdaopropose1"_n};
+static constexpr name MDAO_PROPOSAL{"mdaopropose2"_n};
 static constexpr name MDAO_TOKEN{"mdaotoken111"_n};
 static constexpr name MDAO_TREASURY{"mdaotreasury"_n};
 static constexpr name MDAO_ALGOEX{"mdao.algoex"_n};
@@ -46,7 +46,7 @@ namespace manager_type {
     static constexpr name TREASURY   = "treasury"_n;
     static constexpr name TOKEN      = "token"_n;
     static constexpr name GOV        = "gov"_n;
-    static constexpr name PROPOSAL    = "proposal"_n;
+    static constexpr name PROPOSAL   = "proposal"_n;
     static constexpr name CONF       = "conf"_n;
     static constexpr name ALGOEX     = "algoex"_n;
     static constexpr name STAKE      = "stake"_n;

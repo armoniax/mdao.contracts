@@ -180,7 +180,7 @@ typedef std::variant<updatedao_data, bindtoken_data, binddapp_data, createtoken_
                      setvotestg_data, setproposestg_data, setleastvote_data, setreqratio_data, setlocktime_data, tokentranout_data
                     > action_data_variant;
 
-class [[eosio::contract("mdaopropose1")]] mdaoproposal : public contract {
+class [[eosio::contract("mdaopropose2")]] mdaoproposal : public contract {
 
 using conf_t = mdao::conf_global_t;
 using conf_table_t = mdao::conf_global_singleton;
@@ -216,7 +216,8 @@ public:
                         const std::vector<char>& packed_action_data);
     
     ACTION recycledb(uint32_t max_rows);
-    
+
+    ACTION deletegov(uint64_t id);
 private:
     void _check_proposal_params(const action_data_variant& data_var,  const name& action_name, const name& action_account, const conf_t& conf);
     void _cal_votes(const name dao_code, const strategy_t& vote_strategy, const name voter, int64_t& value);
