@@ -28,7 +28,7 @@ enum class stake_err : uint8_t
     NO_PERMISSION = 11,
 };
 
-class [[eosio::contract]] mdaostake : public contract
+class [[eosio::contract("mdao.stake")]] mdaostake : public contract
 {
 private:
     dbc _db;

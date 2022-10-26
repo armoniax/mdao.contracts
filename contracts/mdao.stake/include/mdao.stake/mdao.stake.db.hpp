@@ -10,6 +10,7 @@
 #include <map>
 
 using namespace eosio;
+#define TG_TBL [[eosio::table, eosio::contract("mdao.stake")]]
 
 namespace mdao
 {
@@ -17,7 +18,7 @@ namespace mdao
     using namespace eosio;
     using namespace amax;
 
-    struct [[eosio::table]] stake_global_t
+    struct TG_TBL stake_global_t
     {
         set<name> managers;
         set<name> supported_contracts;
@@ -27,7 +28,7 @@ namespace mdao
         typedef eosio::singleton<"global"_n, stake_global_t> stake_global_singleton;
     };
 
-    struct [[eosio::table]] dao_stake_t
+    struct TG_TBL dao_stake_t
     {
         name daocode;
 
@@ -48,7 +49,7 @@ namespace mdao
     
     uint128_t get_unionid(name account, name daocode) { return (uint128_t(account.value)<<64 | daocode.value);}
 
-    struct [[eosio::table]] user_stake_t
+    struct TG_TBL user_stake_t
     {
         uint64_t id;
         name account;
