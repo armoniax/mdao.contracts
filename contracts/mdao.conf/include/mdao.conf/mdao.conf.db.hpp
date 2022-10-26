@@ -117,9 +117,11 @@ struct [[eosio::table("global"), eosio::contract("xconf")]] conf_global_t {
     set<name> token_contracts;
     set<name> ntoken_contracts;
     uint16_t  stake_period_days = 2;
+    bool      enable_metaverse  = false;
 
     EOSLIB_SERIALIZE( conf_global_t, (appinfo)(status)(fee_taker)(upgrade_fee)(dapp_seats_max)
-                    (admin)(black_symbols)(token_create_fee)(managers)(token_contracts)(ntoken_contracts)(stake_period_days) )
+                                     (admin)(black_symbols)(token_create_fee)(managers)(token_contracts)
+                                        (ntoken_contracts)(stake_period_days)(enable_metaverse) )//
 };
 
 

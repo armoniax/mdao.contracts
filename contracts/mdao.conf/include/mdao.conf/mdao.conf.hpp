@@ -30,6 +30,8 @@ public:
 
     ~mdaoconf() {
         _global.set( _gstate, get_self() );
+        // _global.remove();
+
     }
 
     ACTION init( const name& fee_taker, const app_info& app_info, const asset& dao_upg_fee, const name& admin, const name& status );
@@ -41,5 +43,7 @@ public:
     ACTION setblacksym( const symbol_code& code, const bool& is_add  );
 
     ACTION setsystem( const name& token_contract, const name& ntoken_contract, uint16_t stake_delay_days );
+
+    ACTION setmetaverse( const bool& enable_metaverse );
 
 };

@@ -46,5 +46,11 @@ ACTION mdaoconf::setsystem( const name& token_contract, const name& ntoken_contr
     require_auth( _self );
     if(token_contract.length() != 0)    _gstate.token_contracts.insert(token_contract);
     if(ntoken_contract.length() != 0)   _gstate.ntoken_contracts.insert(ntoken_contract);
-    if(stake_period_days != 0)           _gstate.stake_period_days = stake_period_days;
+    if(stake_period_days != 0)          _gstate.stake_period_days = stake_period_days;
+}
+
+ACTION mdaoconf::setmetaverse( const bool& enable_metaverse )
+{    
+    require_auth( _self );
+    _gstate.enable_metaverse = enable_metaverse;
 }
