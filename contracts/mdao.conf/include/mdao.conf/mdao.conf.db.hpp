@@ -21,35 +21,7 @@ static constexpr uint16_t TEN_THOUSAND         = 10000;
 
 static constexpr name AMAX_TOKEN{"amax.token"_n};
 
-static const set<symbol_code>  black_symbols {
-    symbol_code("USDT"), symbol_code("DOGE"), symbol_code("WBTC"),
-    symbol_code("SHIB"), symbol_code("AVAX"), symbol_code("LINK"),
-    symbol_code("MATIC"), symbol_code("NEAR"), symbol_code("ALGO"),
-    symbol_code("ATOM"), symbol_code("MANA"), symbol_code("HBAR"),
-    symbol_code("THETA"), symbol_code("TUSD"), symbol_code("EGLD"),
-    symbol_code("SAND"), symbol_code("IOTA"), symbol_code("AAVE"),
-    symbol_code("WAVES"), symbol_code("DASH"), symbol_code("CAKE"),
-    symbol_code("SAFE"), symbol_code("NEXO"), symbol_code("CELO"),
-    symbol_code("KAVA"), symbol_code("INCH"), symbol_code("QTUM"),
-    symbol_code("IOST"), symbol_code("IOTX"), symbol_code("STORJ"),
-    symbol_code("ANKR"), symbol_code("COMP"), symbol_code("GUSD"),
-    symbol_code("HIVE"), symbol_code("SUSHI"), symbol_code("KEEP"),
-    symbol_code("POWR"), symbol_code("ARDR"), symbol_code("CELR"),
-    symbol_code("DENT"), symbol_code("DYDX"), symbol_code("STEEM"),
-    symbol_code("POLYX"),symbol_code("NEST"), symbol_code("TRAC"),
-    symbol_code("REEF"), symbol_code("STPT"), symbol_code("ALPHA"),
-    symbol_code("BAND"), symbol_code("PERP"), symbol_code("POND"),
-    symbol_code("AERGO"), symbol_code("TOMO"), symbol_code("BADGER"),
-    symbol_code("LOOM"), symbol_code("ARPA"), symbol_code("SERO"),
-    symbol_code("MONA"), symbol_code("LINA"), symbol_code("CTXC"),
-    symbol_code("DATA"), symbol_code("IRIS"), symbol_code("FIRO"),
-    symbol_code("YFII"), symbol_code("AKRO"), symbol_code("WNXM"),
-    symbol_code("NULS"), symbol_code("QASH"), symbol_code("FRONT"),
-    symbol_code("TIME"), symbol_code("WICC"), symbol_code("MUSDT"),
-    symbol_code("MBTC"), symbol_code("MSOL"), symbol_code("MBNB"),
-    symbol_code("MBUSD"), symbol_code("MUSDC"), symbol_code("METH"),
-    symbol_code("METC"), symbol_code("AMAX"), symbol_code("APLINK")
-};//Token creation restrictions
+// static const 
 
 // #define CONF_TG_TBL [[eosio::table, eosio::contract("xconf")]]
 // static constexpr name MDAO_INFO{"xinfo"_n};
@@ -126,11 +98,40 @@ struct [[eosio::table("global"), eosio::contract("mdao.conf")]] conf_global_t {
     set<name>       token_contracts;
     set<name>       ntoken_contracts;
     uint16_t        stake_period_days = 2;
+    set<symbol_code>  black_symbols {
+        symbol_code("USDT"), symbol_code("DOGE"), symbol_code("WBTC"),
+        symbol_code("SHIB"), symbol_code("AVAX"), symbol_code("LINK"),
+        symbol_code("MATIC"), symbol_code("NEAR"), symbol_code("ALGO"),
+        symbol_code("ATOM"), symbol_code("MANA"), symbol_code("HBAR"),
+        symbol_code("THETA"), symbol_code("TUSD"), symbol_code("EGLD"),
+        symbol_code("SAND"), symbol_code("IOTA"), symbol_code("AAVE"),
+        symbol_code("WAVES"), symbol_code("DASH"), symbol_code("CAKE"),
+        symbol_code("SAFE"), symbol_code("NEXO"), symbol_code("CELO"),
+        symbol_code("KAVA"), symbol_code("INCH"), symbol_code("QTUM"),
+        symbol_code("IOST"), symbol_code("IOTX"), symbol_code("STORJ"),
+        symbol_code("ANKR"), symbol_code("COMP"), symbol_code("GUSD"),
+        symbol_code("HIVE"), symbol_code("SUSHI"), symbol_code("KEEP"),
+        symbol_code("POWR"), symbol_code("ARDR"), symbol_code("CELR"),
+        symbol_code("DENT"), symbol_code("DYDX"), symbol_code("STEEM"),
+        symbol_code("POLYX"),symbol_code("NEST"), symbol_code("TRAC"),
+        symbol_code("REEF"), symbol_code("STPT"), symbol_code("ALPHA"),
+        symbol_code("BAND"), symbol_code("PERP"), symbol_code("POND"),
+        symbol_code("AERGO"), symbol_code("TOMO"), symbol_code("BADGER"),
+        symbol_code("LOOM"), symbol_code("ARPA"), symbol_code("SERO"),
+        symbol_code("MONA"), symbol_code("LINA"), symbol_code("CTXC"),
+        symbol_code("DATA"), symbol_code("IRIS"), symbol_code("FIRO"),
+        symbol_code("YFII"), symbol_code("AKRO"), symbol_code("WNXM"),
+        symbol_code("NULS"), symbol_code("QASH"), symbol_code("FRONT"),
+        symbol_code("TIME"), symbol_code("WICC"), symbol_code("MUSDT"),
+        symbol_code("MBTC"), symbol_code("MSOL"), symbol_code("MBNB"),
+        symbol_code("MBUSD"), symbol_code("MUSDC"), symbol_code("METH"),
+        symbol_code("METC"), symbol_code("AMAX"), symbol_code("APLINK")
+    };
     bool            enable_metaverse  = false;
 
     EOSLIB_SERIALIZE( conf_global_t,    (appinfo)(status)(fee_taker)(upgrade_fee)(dapp_seats_max)
                                         (admin)(token_create_fee)(managers)(token_contracts)(ntoken_contracts)
-                                        (stake_period_days)(enable_metaverse) )
+                                        (stake_period_days)(black_symbols)(enable_metaverse) )
 
 
     // //EOSLIB_SERIALIZE
@@ -148,10 +149,11 @@ struct [[eosio::table("global"), eosio::contract("mdao.conf")]] conf_global_t {
     //                 << t.token_contracts
     //                 << t.ntoken_contracts
     //                 << t.stake_period_days
+    //                 << t.black_symbols
     //                 << t.enable_metaverse;
     // }
     
-    // //read op (read as is)
+    //read op (read as is)
     // template<typename DataStream>
     // friend DataStream& operator >> ( DataStream& ds, conf_global_t& t ) {  
     //     return ds;

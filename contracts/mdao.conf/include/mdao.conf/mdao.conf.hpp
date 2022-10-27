@@ -34,9 +34,9 @@ public:
 
     }
 
-    // ACTION migrate() {
-    //     _gstate.status          = conf_status::RUNNING;
-    // }
+    ACTION migrate() {
+        _gstate.status          = conf_status::RUNNING;
+    }
 
     ACTION init( const name& fee_taker, const app_info& app_info, const asset& dao_upg_fee, const name& admin, const name& status );
     ACTION setseat( uint16_t& dappmax );
