@@ -3,20 +3,21 @@
 ACTION mdaoconf::init( const name& fee_taker, const app_info& app_info, const asset& dao_upg_fee, const name& admin, const name& status )
 {
     require_auth( _self );
+
     check( is_account(fee_taker), "feetaker not exits" );
     check( dao_upg_fee.symbol == AMAX_SYMBOL, "quantity symbol mismatch with daoupgfee symbol" );
     check( conf_status::INITIAL == status || conf_status::RUNNING == status || conf_status::PENDING == status, "status illegal" );
-    _gstate.appinfo = app_info;
-    _gstate.fee_taker = fee_taker;
-    _gstate.upgrade_fee = dao_upg_fee;
-    _gstate.admin = admin;
-    _gstate.status = status;
+   
+    _gstate.appinfo         = app_info;
+    _gstate.fee_taker       = fee_taker;
+    _gstate.upgrade_fee     = dao_upg_fee;
+    _gstate.admin           = admin;
+    _gstate.status          = status;
 
 }
 
 ACTION mdaoconf::setseat( uint16_t& dappmax )
 {
-    
     require_auth( _self );
     _gstate.dapp_seats_max = dappmax;
 }
@@ -28,17 +29,6 @@ ACTION mdaoconf::setmanager( const name& manage_type, const name& manager )
     //         || manager_type::WALLET == managetype || manager_type::TOKEN == managetype, "manager illegal" );
     // check( manager_type::INFO == manage_type, "manager illegal" );
     _gstate.managers[manage_type] = manager;
-}
-
-ACTION mdaoconf::setblacksym( const symbol_code& code, const bool& is_add )
-{
-    require_auth( _self );
-    if(is_add){
-        _gstate.black_symbols.insert(code);
-    }else{
-        _gstate.black_symbols.erase(code);
-    }
-    
 }
 
 ACTION mdaoconf::setsystem( const name& token_contract, const name& ntoken_contract, uint16_t stake_period_days )
