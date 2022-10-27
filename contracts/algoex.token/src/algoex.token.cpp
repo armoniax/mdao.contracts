@@ -1,4 +1,4 @@
-#include "mdao.token/mdao.token.hpp"
+#include "algoex.token/algoex.token.hpp"
 #include <thirdparty/utils.hpp>
 
 using namespace std;
@@ -29,7 +29,6 @@ namespace mdaotoken {
 //     }
 
 //     #define multiply_decimal64(a, b, precision) multiply_decimal<int64_t, int128_t>(a, b, precision)
-
     void token::create(const name &issuer,
                         const asset &maximum_supply,
                         const uint16_t &fee_ratio,

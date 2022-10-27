@@ -2,7 +2,7 @@
 #include <cmath>
 #include <eosio/permission.hpp>
 #include "thirdparty/utils.hpp"
-#include <mdao.token/mdao.token.hpp>
+#include <algoex.token/algoex.token.hpp>
 
 using namespace mdao;
 using namespace std;

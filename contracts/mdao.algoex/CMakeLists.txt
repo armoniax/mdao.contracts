@@ -6,7 +6,7 @@ add_contract(mdao.algoex mdao.algoex
 target_include_directories(mdao.algoex
    PUBLIC
    ${CMAKE_CURRENT_SOURCE_DIR}/include
-   ${CMAKE_CURRENT_SOURCE_DIR}/../mdao.token/include
+   ${CMAKE_CURRENT_SOURCE_DIR}/../algoex.token/include
    ${CMAKE_CURRENT_SOURCE_DIR}/../mdao.conf/include   
 
  )

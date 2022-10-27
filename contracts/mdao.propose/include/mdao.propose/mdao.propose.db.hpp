@@ -60,15 +60,24 @@ struct TG_TBL proposal_t {
 
     uint64_t    primary_key()const { return id; }
     uint64_t    scope() const { return 0; }
-
+    uint64_t    by_creator()const {
+        return creator.value;
+    }
+    uint128_t by_union_id()const {
+        return get_union_id( creator, id);
+    }
     proposal_t() {}
     proposal_t(const uint64_t& i): id(i) {}
 
     EOSLIB_SERIALIZE( proposal_t, (id)(dao_code)(vote_strategy_id)(propose_strategy_id)(status)(creator)(proposal_name)(title)(desc)(type)
                 (recv_votes)(reject_votes)(users_count)(reject_users_count)(proposal_plan)(created_at)(started_at)(executed_at) )
 
-    typedef eosio::multi_index <"proposals"_n, proposal_t> idx_t;
+    typedef eosio::multi_index <"proposals"_n, proposal_t,        
+        indexed_by<"accountid"_n,  const_mem_fun<proposal_t, uint64_t, &proposal_t::by_creator> >,
+        indexed_by<"unionid"_n,  const_mem_fun<proposal_t, uint128_t, &proposal_t::by_union_id> >
+    > idx_t;
 };
+
 
 struct TG_TBL votelist_t {
     uint64_t        id;

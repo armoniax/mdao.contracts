@@ -52,7 +52,7 @@ ACTION mdaogov::setvotestg(const name& dao_code, const uint64_t& vote_strategy_i
     require_auth( conf.managers[manager_type::PROPOSAL] );
 
     governance_t governance(dao_code);
-    CHECKC( !_db.get(governance), gov_err::CODE_REPEAT, "governance already existing!" );
+    CHECKC( _db.get(governance), gov_err::RECORD_NOT_FOUND, "governance not exist!" );
     CHECKC( (governance.last_updated_at + (governance.limit_update_hours * 3600)) <= current_time_point(), gov_err::NOT_MODIFY, "cannot be modified for now" );
 
     strategy_t::idx_t stg(MDAO_STG, MDAO_STG.value);
@@ -84,11 +84,9 @@ ACTION mdaogov::setproposestg(const name& dao_code, const uint64_t& propose_stra
     CHECKC(stg.find(propose_strategy_id) != stg.end(), gov_err::STRATEGY_NOT_FOUND, "strategy not found");
 
     governance.strategys[strategy_action_type::PROPOSE]    = propose_strategy_id;
-    governance.last_updated_at                             = current_time_point();
+    governance.last_updated_at                             = current_time_point();//92142
     _db.set(governance, _self);
 }
-
-
 
 ACTION mdaogov::setlocktime(const name& dao_code, const uint16_t& limit_update_hours)
 {
@@ -97,7 +95,7 @@ ACTION mdaogov::setlocktime(const name& dao_code, const uint16_t& limit_update_h
     require_auth( conf.managers[manager_type::PROPOSAL] );
 
     governance_t governance(dao_code);
-    CHECKC( !_db.get(governance), gov_err::CODE_REPEAT, "governance already existing!" );
+    CHECKC( _db.get(governance), gov_err::RECORD_NOT_FOUND, "governance not exist" );
     CHECKC( limit_update_hours >= governance.voting_limit_hours , gov_err::TIME_LESS_THAN_ZERO, "lock time less than vote time" );
     CHECKC( (governance.last_updated_at + (governance.limit_update_hours * 3600)) <= current_time_point(), gov_err::NOT_MODIFY, "cannot be modified for now" );
 
@@ -113,7 +111,7 @@ ACTION mdaogov::setvotetime(const name& dao_code, const uint16_t& voting_limit_h
     require_auth( conf.managers[manager_type::PROPOSAL] );
 
     governance_t governance(dao_code);
-    CHECKC( !_db.get(governance), gov_err::CODE_REPEAT, "governance already existing!" );
+    CHECKC( _db.get(governance), gov_err::RECORD_NOT_FOUND, "governance not exist" );
     CHECKC( voting_limit_hours <= governance.limit_update_hours , gov_err::TIME_LESS_THAN_ZERO, "lock time less than vote time" );
     CHECKC( (governance.last_updated_at + (governance.limit_update_hours * 3600)) <= current_time_point(), gov_err::NOT_MODIFY, "cannot be modified for now" );
 
@@ -121,7 +119,7 @@ ACTION mdaogov::setvotetime(const name& dao_code, const uint16_t& voting_limit_h
     governance.last_updated_at = current_time_point();
     _db.set(governance, _self);
 }
-// 
+ 
 ACTION mdaogov::startpropose(const name& creator, const name& dao_code, const string& title,
                                  const string& proposal_name, const string& desc, 
                                  const name& plan_type)
@@ -137,7 +135,7 @@ ACTION mdaogov::startpropose(const name& creator, const name& dao_code, const st
     CHECKC( info->creator == creator, gov_err::PERMISSION_DENIED, "only the creator can operate");
 
     governance_t governance(dao_code);
-    CHECKC( _db.get(governance) ,gov_err::RECORD_NOT_FOUND, "record not found" );
+    CHECKC( _db.get(governance) ,gov_err::RECORD_NOT_FOUND, "governance not exist" );
     uint64_t vote_strategy_id = governance.strategys.at(strategy_action_type::VOTE);
     uint64_t propose_strategy_id = governance.strategys.at(strategy_action_type::PROPOSE);
 
@@ -147,9 +145,8 @@ ACTION mdaogov::startpropose(const name& creator, const name& dao_code, const st
 
     int64_t value = 0;
     _cal_votes(dao_code, *propose_strategy, creator, value);
-    // check(false , "222"+ to_string(value));
     int32_t stg_weight = mdao::strategy::cal_weight(MDAO_STG, value, creator, propose_strategy_id );
-    // CHECKC( stg_weight > 0, gov_err::INSUFFICIENT_WEIGHT, "insufficient strategy weight")
+    CHECKC( stg_weight > 0, gov_err::INSUFFICIENT_WEIGHT, "insufficient strategy weight")
 
     VOTE_CREATE(MDAO_PROPOSAL, dao_code, creator, proposal_name, desc, title, vote_strategy_id, propose_strategy_id, plan_type)
 
@@ -179,7 +176,6 @@ void mdaogov::_cal_votes(const name dao_code, const strategy_t& vote_strategy, c
         default : {
             accounts accountstable(vote_strategy.ref_contract, voter.value);
             symbol sym = symbol(vote_strategy.ref_sym);
-            // check(false,"111:"+sym.code().to_string());
             const auto &ac = accountstable.get(sym.code().raw(), "account not found"); 
             value = ac.balance.amount;
         }

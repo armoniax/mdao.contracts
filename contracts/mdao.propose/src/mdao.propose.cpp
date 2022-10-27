@@ -1,6 +1,6 @@
 #include <mdao.propose/mdao.propose.hpp>
 #include <mdao.info/mdao.info.db.hpp>
-#include <mdao.gov/mdao.gov.db.hpp>
+#include <mdao.gov/mdao.gov.hpp>
 #include <mdao.treasury/mdao.treasury.hpp>
 #include <mdao.stake/mdao.stake.db.hpp>
 #include <thirdparty/utils.hpp>
@@ -125,6 +125,7 @@ ACTION mdaoproposal::execute( const uint64_t& proposal_id )
     CHECKC( _db.get(proposal) ,proposal_err::RECORD_NOT_FOUND, "record not found" );
     CHECKC( proposal.status == proposal_status::VOTING, proposal_err::STATUS_ERROR, "proposal status must be running" );
 
+
     governance_t::idx_t governance_tbl(MDAO_GOV, MDAO_GOV.value);
     const auto governance = governance_tbl.find(proposal.dao_code.value);
     CHECKC( (proposal.started_at + (governance->voting_limit_hours * 3600)) >= current_time_point(), proposal_err::ALREADY_EXPIRED, "proposal is already expired" );
@@ -132,13 +133,13 @@ ACTION mdaoproposal::execute( const uint64_t& proposal_id )
     strategy_t::idx_t stg(MDAO_STG, MDAO_STG.value);
     auto vote_strategy = stg.find(proposal.vote_strategy_id);
     if((vote_strategy->type != strategy_type::nftstake && vote_strategy->type != strategy_type::tokenstake)){
-        CHECKC( proposal.recv_votes >= governance->require_pass.at(proposal.vote_strategy_id), proposal_err::VOTES_NOT_ENOUGH, "votes must meet the minimum number of votes" );
-        CHECKC( proposal.recv_votes >= governance->require_participation.at(proposal.vote_strategy_id), proposal_err::VOTES_NOT_ENOUGH, "votes must meet the minimum number of votes" );
+        CHECKC( proposal.recv_votes >= governance->require_pass.at(strategy_action_type::VOTE.value), proposal_err::VOTES_NOT_ENOUGH, "votes must meet the minimum number of votes" );
+        CHECKC( proposal.recv_votes >= governance->require_participation.at(strategy_action_type::VOTE.value), proposal_err::VOTES_NOT_ENOUGH, "votes must meet the minimum number of votes" );
     }else{
         mdao::dao_stake_t::idx_t stake(MDAO_STAKE, MDAO_STAKE.value);
         auto stake_itr = stake.find(proposal.dao_code.value);
-        CHECKC( proposal.recv_votes >= governance->require_pass.at(proposal.vote_strategy_id), proposal_err::VOTES_NOT_ENOUGH, "votes must meet the minimum number of votes" );
-        CHECKC( proposal.users_count >= (governance->require_participation.at(proposal.vote_strategy_id) * stake_itr -> user_count / TEN_THOUSAND), proposal_err::VOTES_NOT_ENOUGH, "votes must meet the minimum number of votes" );
+        CHECKC( proposal.recv_votes >= governance->require_pass.at(strategy_action_type::VOTE.value), proposal_err::VOTES_NOT_ENOUGH, "votes must meet the minimum number of votes" );
+        CHECKC( proposal.users_count >= (governance->require_participation.at(strategy_action_type::VOTE.value) * stake_itr -> user_count / TEN_THOUSAND), proposal_err::VOTES_NOT_ENOUGH, "votes must meet the minimum number of votes" );
     }
 
     if(proposal.type == plan_type::SINGLE){
@@ -206,8 +207,8 @@ ACTION mdaoproposal::votefor(const name& voter, const uint64_t& proposal_id,
             }
         }
         proposal.proposal_plan = m_plan;
-
     }
+
     if(!direction) {
         proposal.reject_votes += stg_weight;
         proposal.reject_users_count++;
@@ -217,14 +218,14 @@ ACTION mdaoproposal::votefor(const name& voter, const uint64_t& proposal_id,
     _db.set(proposal, _self);
 }
 
-void mdaoproposal::deletegov(uint64_t id) {
+void mdaoproposal::deletepropose(uint64_t id) {
     proposal_t proposal(id);
     _db.del(proposal);
 }
 
 ACTION mdaoproposal::setaction(const name& owner, const uint64_t& proposal_id,
                                 const name& action_name, const name& action_account, 
-                                const std::vector<char>& packed_action_data)
+                                const string& packed_action_data_string)
 {
     require_auth(owner);
 
@@ -241,76 +242,84 @@ ACTION mdaoproposal::setaction(const name& owner, const uint64_t& proposal_id,
     CHECKC( (proposal.started_at + (governance->voting_limit_hours * 3600)) >= current_time_point(), proposal_err::ALREADY_EXPIRED, "proposal is already expired" );
 
     single_plan* s_plan = std::get_if<single_plan>(&proposal.proposal_plan);
-    CHECKC( s_plan != nullptr, proposal_err::PLANS_EMPTY, "please add plan" );
+    CHECKC( s_plan != nullptr && s_plan->title.size() > 0, proposal_err::PLANS_EMPTY, "please add plan" );
 
     permission_level pem({_self, "active"_n});
 
-    single_plan plan = std::get<single_plan>(proposal.proposal_plan);
-
+    vector<char> packed_action_data_blob(packed_action_data_string.size()/2);
+    from_hex(packed_action_data_string, packed_action_data_blob.data(), packed_action_data_blob.size());
     switch (action_name.value)
     {
         case proposal_action_type::updatedao.value: {
-            updatedao_data action_data = unpack<updatedao_data>(packed_action_data);
+            updatedao_data action_data = unpack<updatedao_data>(packed_action_data_blob);
             action_data_variant data_var = action_data;
             _check_proposal_params(data_var, action_name, action_account, conf);
-            plan.execute_actions.actions.push_back(action(pem, action_account, action_name, action_data));
+            s_plan->execute_actions.actions.push_back(action(pem, action_account, action_name, action_data));
             break;
         }
         case proposal_action_type::bindtoken.value: {
-            bindtoken_data action_data = unpack<bindtoken_data>(packed_action_data);
+            bindtoken_data action_data = unpack<bindtoken_data>(packed_action_data_blob);
             action_data_variant data_var = action_data;
             _check_proposal_params(data_var, action_name, action_account, conf);
-            plan.execute_actions.actions.push_back(action(pem, action_account, action_name, action_data));
+            s_plan->execute_actions.actions.push_back(action(pem, action_account, action_name, action_data));
             break;
         }
         case proposal_action_type::binddapp.value: {
-            binddapp_data action_data = unpack<binddapp_data>(packed_action_data);
+            binddapp_data action_data = unpack<binddapp_data>(packed_action_data_blob);
             action_data_variant data_var = action_data;
             _check_proposal_params(data_var, action_name, action_account, conf);
-            plan.execute_actions.actions.push_back(action(pem, action_account, action_name, action_data));
+            s_plan->execute_actions.actions.push_back(action(pem, action_account, action_name, action_data));
             break;
         }
         case proposal_action_type::createtoken.value: {
-            createtoken_data action_data = unpack<createtoken_data>(packed_action_data);
+            createtoken_data action_data = unpack<createtoken_data>(packed_action_data_blob);
             action_data_variant data_var = action_data;
             _check_proposal_params(data_var, action_name, action_account, conf);
-            plan.execute_actions.actions.push_back(action(pem, action_account, action_name, action_data));
+            s_plan->execute_actions.actions.push_back(action(pem, action_account, action_name, action_data));
             break;
         }
         case proposal_action_type::issuetoken.value: {
-            issuetoken_data action_data = unpack<issuetoken_data>(packed_action_data);
+            issuetoken_data action_data = unpack<issuetoken_data>(packed_action_data_blob);
             action_data_variant data_var = action_data;
             _check_proposal_params(data_var, action_name, action_account, conf);
-            plan.execute_actions.actions.push_back(action(pem, action_account, action_name, action_data));
+            s_plan->execute_actions.actions.push_back(action(pem, action_account, action_name, action_data));
             break;
         }
         case proposal_action_type::setvotestg.value: {
-            setvotestg_data action_data = unpack<setvotestg_data>(packed_action_data);
+            setvotestg_data action_data = unpack<setvotestg_data>(packed_action_data_blob);
             action_data_variant data_var = action_data;
             _check_proposal_params(data_var, action_name, action_account, conf);
-            plan.execute_actions.actions.push_back(action(pem, action_account, action_name, action_data));
+            s_plan->execute_actions.actions.push_back(action(pem, action_account, action_name, action_data));
             break;
         }
         case proposal_action_type::setproposestg.value: {
-            setproposestg_data action_data = unpack<setproposestg_data>(packed_action_data);
+            setproposestg_data action_data = eosio::unpack<setproposestg_data>(packed_action_data_blob);
             action_data_variant data_var = action_data;
             _check_proposal_params(data_var, action_name, action_account, conf);
-            plan.execute_actions.actions.push_back(action(pem, action_account, action_name, action_data));
+            s_plan->execute_actions.actions.push_back(action(pem, action_account, action_name, action_data));
             break;
         }
         case proposal_action_type::setlocktime.value: {
-            setlocktime_data action_data = unpack<setlocktime_data>(packed_action_data);
+            setlocktime_data action_data = unpack<setlocktime_data>(packed_action_data_blob);
             action_data_variant data_var = action_data;
             _check_proposal_params(data_var, action_name, action_account, conf);
-            plan.execute_actions.actions.push_back(action(pem, action_account, action_name, action_data));
+            s_plan->execute_actions.actions.push_back(action(pem, action_account, action_name, action_data));
+
+            break;
+        }
+         case proposal_action_type::setvotetime.value: {
+            setvotetime_data action_data = unpack<setvotetime_data>(packed_action_data_blob);
+            action_data_variant data_var = action_data;
+            _check_proposal_params(data_var, action_name, action_account, conf);
+            s_plan->execute_actions.actions.push_back(action(pem, action_account, action_name, action_data));
 
             break;
         }
         case proposal_action_type::tokentranout.value: {
-            tokentranout_data action_data = unpack<tokentranout_data>(packed_action_data);
+            tokentranout_data action_data = unpack<tokentranout_data>(packed_action_data_blob);
             action_data_variant data_var = action_data;
             _check_proposal_params(data_var, action_name, action_account, conf);
-            plan.execute_actions.actions.push_back(action(pem, action_account, action_name, action_data));
+            s_plan->execute_actions.actions.push_back(action(pem, action_account, action_name, action_data));
 
             break;
         }
@@ -403,8 +412,7 @@ void mdaoproposal::_check_proposal_params(const action_data_variant& data_var,  
             setvotestg_data data = std::get<setvotestg_data>(data_var);
             
             governance_t governance(data.dao_code);
-            CHECKC( !_db.get(governance), proposal_err::CODE_REPEAT, "governance already existing!" );
-            CHECKC( (governance.last_updated_at + (governance.limit_update_hours * 3600)) <= current_time_point(), proposal_err::NOT_MODIFY, "cannot be modified for now" );
+            CHECKC( _db.get(governance), proposal_err::RECORD_NOT_FOUND, "governance not exist!" );
 
             strategy_t::idx_t stg(MDAO_STG, MDAO_STG.value);
             auto vote_strategy = stg.find(data.vote_strategy_id);
@@ -428,10 +436,16 @@ void mdaoproposal::_check_proposal_params(const action_data_variant& data_var,  
             setlocktime_data data = std::get<setlocktime_data>(data_var);
 
             governance_t governance(data.dao_code);
-            CHECKC( !_db.get(governance), proposal_err::CODE_REPEAT, "governance already existing!" );
+            CHECKC( _db.get(governance), proposal_err::RECORD_NOT_FOUND, "governance not exist" );
             CHECKC( data.limit_update_hours >= governance.voting_limit_hours , proposal_err::TIME_LESS_THAN_ZERO, "lock time less than vote time" );
-            CHECKC( (governance.last_updated_at + (governance.limit_update_hours * 3600)) <= current_time_point(), proposal_err::NOT_MODIFY, "cannot be modified for now" );
             
+            break;
+        }
+         case proposal_action_type::setvotetime.value: {
+            setvotetime_data data = std::get<setvotetime_data>(data_var);
+
+            governance_t governance(data.dao_code);
+            CHECKC( _db.get(governance), proposal_err::RECORD_NOT_FOUND, "governance not exist" );
             break;
         }
         case proposal_action_type::tokentranout.value: {
