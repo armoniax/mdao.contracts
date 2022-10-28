@@ -21,14 +21,15 @@ ACTION mdaostake::init( const set<name>& managers, const set<name>& supported_co
     _global.set(_gstate, get_self());
 }
 
-ACTION mdaostake::staketoken(const name& from, const name& to, const asset& quantity, const string& memo )
+void mdaostake::staketoken(const name& from, const name& to, const asset& quantity, const string& memo )
 {
     if(to != get_self()) return;
     CHECKC( _gstate.initialized, stake_err::UNINITIALIZED, "contract uninitialized" );
     CHECKC( quantity.amount>0, stake_err::NOT_POSITIVE, "swap quanity must be positive" )
     name daocode = name(memo);
-    dao_info_t dao(daocode);
-    CHECKC(_db.get(dao), stake_err::DAO_NOT_FOUND, "dao not found");
+    dao_info_t::idx_t info_tbl(MDAO_INFO, MDAO_INFO.value);
+    const auto info = info_tbl.find(daocode.value);
+    CHECKC( info != info_tbl.end(), stake_err::DAO_NOT_FOUND, "dao not exists");
     name contract = get_first_receiver();
     CHECKC( _gstate.supported_contracts.count(contract), stake_err::UNSUPPORT_CONTRACT, "unsupport token contract");
     // @todo dao, user check
@@ -109,14 +110,15 @@ ACTION mdaostake::unlocktoken(const uint64_t &id, const vector<extended_asset> &
     _db.set(dao_stake, get_self());
 }
 
-ACTION mdaostake::stakenft( name from, name to, vector< nasset >& assets, string memo )
+void mdaostake::stakenft( name from, name to, vector< nasset >& assets, string memo )
 {
     if(to != get_self()) return;
     CHECKC( _gstate.initialized, stake_err::UNINITIALIZED, "contract uninitialized" );
     // CHECKC( quantity.amount>0, stake_err::NOT_POSITIVE, "swap quanity must be positive" )
     name daocode = name(memo);
-    dao_info_t dao(daocode);
-    CHECKC(_db.get(dao), stake_err::DAO_NOT_FOUND, "dao not found");
+    dao_info_t::idx_t info_tbl(MDAO_INFO, MDAO_INFO.value);
+    const auto info = info_tbl.find(daocode.value);
+    CHECKC( info != info_tbl.end(), stake_err::DAO_NOT_FOUND, "dao not exists");
     name contract = get_first_receiver();
     CHECKC( _gstate.supported_contracts.count(contract), stake_err::UNSUPPORT_CONTRACT, "unsupport token contract");
     // @todo dao, user check
@@ -203,16 +205,12 @@ ACTION mdaostake::unlocknft(const uint64_t &id, const vector<extended_nasset> &n
     _db.set(dao_stake,  get_self());
 }
 
-ACTION mdaostake::extendlock(const name &manager,const name &account, const name &daocode, const uint32_t &locktime){
+ACTION mdaostake::extendlock(const name &manager, uint64_t &id, const uint32_t &locktime){
     require_auth( manager );
     CHECKC(_gstate.managers.count(manager)>0, stake_err::NO_PERMISSION, "no permission");
     // find record at userstake table
-    user_stake_t::idx_t user_stake_table( get_self(),  get_self().value);
-    auto user_stake_index = user_stake_table.get_index<"unionid"_n>();
-    auto user_stake_iter = user_stake_index.find(get_unionid(account,daocode));
-    CHECKC(user_stake_iter != user_stake_index.end(), stake_err::STAKE_NOT_FOUND, "no stake record");
-    user_stake_t user_stake(user_stake_iter->id, daocode, account);
-    CHECKC(_db.get(user_stake), stake_err::STAKE_NOT_FOUND, "no stake record");
+    user_stake_t user_stake(id);
+    CHECKC(_db.get(user_stake), stake_err::STAKE_NOT_FOUND,"no stake record");
     time_point_sec new_unlockline = time_point_sec(current_time_point()) + locktime;
     user_stake.freeze_until = max(user_stake.freeze_until, new_unlockline);
     // update database

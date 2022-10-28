@@ -11,6 +11,7 @@
 
 using namespace eosio;
 #define STAKE_TBL [[eosio::table, eosio::contract("mdao.stake")]]
+#define TG_TBL_NAME(name) [[eosio::table(name), eosio::contract("mdao.stake")]]
 
 namespace mdao
 {
@@ -18,7 +19,7 @@ namespace mdao
     using namespace eosio;
     using namespace amax;
 
-    struct STAKE_TBL stake_global_t
+    struct TG_TBL_NAME("global") stake_global_t
     {
         set<name> managers;
         set<name> supported_contracts;

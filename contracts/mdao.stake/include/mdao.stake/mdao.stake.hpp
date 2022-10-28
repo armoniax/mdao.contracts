@@ -52,7 +52,7 @@ public:
      * @memo "daocode"
     */
     [[eosio::on_notify("*::transfer")]]
-    ACTION staketoken(const name &from, const name &to, const asset &quantity, const string &memo);
+    void staketoken(const name &from, const name &to, const asset &quantity, const string &memo);
 
     ACTION unlocktoken(const uint64_t &id, const vector<extended_asset> &tokens);
 
@@ -64,9 +64,9 @@ public:
      * @memo "daocode"
      */
     [[eosio::on_notify("amax.ntoken::transfer")]]
-    ACTION stakenft(name from, name to, vector<nasset> &assets, string memo);
+    void stakenft(name from, name to, vector<nasset> &assets, string memo);
 
     ACTION unlocknft(const uint64_t &id, const vector<extended_nasset> &nfts);
 
-    ACTION extendlock(const name &manager,const name &account, const name &daocode, const uint32_t &locktime);
+    ACTION extendlock(const name &manager, uint64_t &id, const uint32_t &locktime);
 };
