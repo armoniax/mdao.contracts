@@ -116,6 +116,19 @@ class [[eosio::contract("amax.ntoken")]] ntoken : public contract {
       return amount; 
    }
 
+   static set<amax::extended_nsymbol> get_syms_by_parent( const name& contract, const name& owner, const uint32_t& parent_id ) { 
+      auto ntable = amax::nstats_t::idx_t( contract, contract.value ); 
+      auto idx = ntable.get_index<"parentidx"_n>(); 
+      auto itr = idx.find( parent_id ); 
+      
+      set<amax::extended_nsymbol> syms;
+      for (uint8_t i = 0; itr != idx.end() && itr->supply.symbol.parent_id == parent_id; itr++, i++) { 
+         if(i == MAX_BALANCE_COUNT) break; 
+         syms.insert(amax::extended_nsymbol(itr->supply.symbol, contract));
+      } 
+      return syms; 
+   }
+
    private:
       void add_balance( const name& owner, const nasset& value, const name& ram_payer );
       void sub_balance( const name& owner, const nasset& value );

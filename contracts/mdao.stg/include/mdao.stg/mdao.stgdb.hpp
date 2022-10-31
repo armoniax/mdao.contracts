@@ -32,7 +32,6 @@ struct STG_TABLE_NAME("global") global_t {
 };
 typedef eosio::singleton< "global"_n, global_t > global_singleton;
 
-
 namespace strategy_status {
     static constexpr eosio::name testing            = "testing"_n;
     static constexpr eosio::name tested             = "tested"_n;
@@ -42,6 +41,7 @@ namespace strategy_status {
 namespace strategy_type {
     static constexpr eosio::name tokenbalance         = "tokenbalance"_n;
     static constexpr eosio::name tokenstake           = "tokenstake"_n;
+    static constexpr eosio::name tokensum             = "tokensum"_n;
     static constexpr eosio::name nftbalance           = "nftbalance"_n;
     static constexpr eosio::name nftstake             = "nftstake"_n;
     static constexpr eosio::name nparentstake         = "nparentstake"_n;
