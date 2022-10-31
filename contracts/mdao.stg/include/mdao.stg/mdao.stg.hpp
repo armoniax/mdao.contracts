@@ -4,6 +4,8 @@
 #include <thirdparty/picomath.hpp>
 #include <amax.token/amax.token.hpp>
 #include <amax.ntoken/amax.ntoken.hpp>
+#include <aplink.token/aplink.token.hpp>
+
 #include <thirdparty/utils.hpp>
 #include "mdao.stgdb.hpp"
 
@@ -81,7 +83,13 @@ public:
     void testalgo(const name& account,
                  const uint64_t& stg_id);
 
-   static int32_t cal_weight(const name& stg_contract_account, const uint64_t& value, const name& account, const uint64_t& stg_id )
+    [[eosio::action]]
+    void formatsym(const symbol_code& sym);
+
+   static int32_t cal_weight(const name& stg_contract_account, 
+                  const uint64_t& value, 
+                  const name& account, 
+                  const uint64_t& stg_id )
    {
         auto db = dbc(stg_contract_account);
         auto stg = strategy_t(stg_id);
@@ -120,6 +128,48 @@ public:
          case strategy_type::nparentbalanc.value:{
             amax::nsymbol sym(stg.ref_sym);
             value = amax::ntoken::get_balance_by_parent(stg.ref_contract, account, (uint32_t)sym.raw());
+            break;
+         }
+         case strategy_type::tokensum.value: {
+            symbol_code sym_code(stg.ref_sym);
+            value = aplink::token::get_sum(stg.ref_contract, account, sym_code).amount;
+            break;
+         }
+         default:
+            check(false, "unsupport calculating type");
+            break;
+         }
+
+         PicoMath pm;
+         auto &x = pm.addVariable("x");
+         x = value;
+         auto result = pm.evalExpression(stg.stg_algo.c_str());
+         CHECKC(result.isOk(), err::PARAM_ERROR, result.getError());
+         int32_t weight = int32_t(floor(result.getResult()));
+
+         // check(false, " balance: " + to_string(value) + " | weight: "+ to_string(weight));
+         return weight;
+   }
+
+   static int32_t cal_stake_weight(const name& stg_contract_account,  
+                             const uint64_t& stg_id,
+                             const name& stake_contract,
+                             const name& account )
+   {
+         auto db = dbc(stg_contract_account);
+         auto stg = strategy_t(stg_id);
+         check(db.get(stg), "cannot find strategy");
+
+         uint64_t value = 0;
+         switch (stg.type.value)
+         {
+         case strategy_type::tokenstake.value: {
+            break;
+         }
+         case strategy_type::nftstake.value:{
+            break;
+         }
+         case strategy_type::nparentstake.value:{
             break;
          }
          default:
