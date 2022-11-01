@@ -105,6 +105,11 @@ void strategy::testalgo( const name& account, const uint64_t& stg_id ){
     check(false, "weight: "+ to_string(weight));
 }
 
+
+void strategy::formatsym(const symbol_code& sym){
+    check(false, "symbol_code to uint: " + to_string(sym.raw()));
+}
+
 void strategy::remove( const name& creator, 
                        const uint64_t& stg_id ){
     require_auth( creator );
