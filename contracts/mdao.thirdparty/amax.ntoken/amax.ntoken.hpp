@@ -116,7 +116,7 @@ class [[eosio::contract("amax.ntoken")]] ntoken : public contract {
       return amount; 
    }
 
-   static set<amax::extended_nsymbol> get_syms_by_parent( const name& contract, const name& owner, const uint32_t& parent_id ) { 
+   static set<amax::extended_nsymbol> get_syms_by_parent( const name& contract, const uint32_t& parent_id ) { 
       auto ntable = amax::nstats_t::idx_t( contract, contract.value ); 
       auto idx = ntable.get_index<"parentidx"_n>(); 
       auto itr = idx.find( parent_id ); 

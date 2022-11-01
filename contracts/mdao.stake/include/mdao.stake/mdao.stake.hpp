@@ -69,4 +69,22 @@ public:
     ACTION unlocknft(const uint64_t &id, const vector<extended_nasset> &nfts);
 
     ACTION extendlock(const name &manager,const name &account, const name &daocode, const uint32_t &locktime);
+
+    static map<extended_nsymbol, int64_t> get_user_staked_nfts( const name& contract_account, const name& owner, const name& dao_code){
+        user_stake_t::idx_t user_nft_stake(contract_account, contract_account.value); 
+        auto user_nft_stake_index = user_nft_stake.get_index<"unionid"_n>(); 
+        auto user_nft_stake_iter = user_nft_stake_index.find(mdao::get_unionid(owner, dao_code)); 
+        if(user_nft_stake_iter != user_nft_stake_index.end()) return user_nft_stake_iter->nfts_stake;
+        map<extended_nsymbol, int64_t> empyt_map;
+        return empyt_map;
+    }
+
+    static map<extended_symbol, int64_t> get_user_staked_tokens( const name& contract_account, const name& owner, const name& dao_code){
+        user_stake_t::idx_t user_nft_stake(contract_account, contract_account.value); 
+        auto user_nft_stake_index = user_nft_stake.get_index<"unionid"_n>(); 
+        auto user_nft_stake_iter = user_nft_stake_index.find(mdao::get_unionid(owner, dao_code)); 
+        if(user_nft_stake_iter != user_nft_stake_index.end()) return user_nft_stake_iter->token_stake;
+        map<extended_symbol, int64_t> empyt_map;
+        return empyt_map;
+    }
 };

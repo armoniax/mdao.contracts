@@ -5,6 +5,7 @@
 #include <amax.token/amax.token.hpp>
 #include <amax.ntoken/amax.ntoken.hpp>
 #include <aplink.token/aplink.token.hpp>
+#include <mdao.stake/mdao.stake.hpp>
 
 #include <thirdparty/utils.hpp>
 #include "mdao.stgdb.hpp"
@@ -153,6 +154,7 @@ public:
 
    static int32_t cal_stake_weight(const name& stg_contract_account,  
                              const uint64_t& stg_id,
+                             const name& dao_code,
                              const name& stake_contract,
                              const name& account )
    {
@@ -164,12 +166,22 @@ public:
          switch (stg.type.value)
          {
          case strategy_type::tokenstake.value: {
+            map<extended_symbol, int64_t> tokens = mdaostake::get_user_staked_tokens(stake_contract, account, dao_code);
+            asset supply = amax::token::get_supply(stg.ref_contract, symbol_code(stg.ref_sym));
+            value = tokens.at(extended_symbol(supply.symbol, stg.ref_contract));
             break;
          }
          case strategy_type::nftstake.value:{
+            map<extended_nsymbol, int64_t> nfts = mdaostake::get_user_staked_nfts(stake_contract, account, dao_code);
+            value = nfts.at(extended_nsymbol(nsymbol(stg.ref_sym), stg.ref_contract));
             break;
          }
          case strategy_type::nparentstake.value:{
+            set<extended_nsymbol> syms = amax::ntoken::get_syms_by_parent(stg.ref_contract, stg.ref_sym );
+            map<extended_nsymbol, int64_t> nfts = mdaostake::get_user_staked_nfts(stake_contract, account, dao_code);
+            for (auto itr = syms.begin() ; itr != syms.end(); itr++) { 
+               if(nfts.count(*itr)) value += nfts.at(*itr);
+            }
             break;
          }
          default:
