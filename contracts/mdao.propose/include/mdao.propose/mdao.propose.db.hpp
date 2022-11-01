@@ -42,7 +42,7 @@ struct TG_TBL proposal_t {
     uint64_t        id;
     name            dao_code;
     uint64_t        vote_strategy_id;
-    uint64_t        propose_strategy_id;
+    uint64_t        proposal_strategy_id;
     name            status;
     name            creator;
     string          proposal_name;
@@ -69,7 +69,7 @@ struct TG_TBL proposal_t {
     proposal_t() {}
     proposal_t(const uint64_t& i): id(i) {}
 
-    EOSLIB_SERIALIZE( proposal_t, (id)(dao_code)(vote_strategy_id)(propose_strategy_id)(status)(creator)(proposal_name)(title)(desc)(type)
+    EOSLIB_SERIALIZE( proposal_t, (id)(dao_code)(vote_strategy_id)(proposal_strategy_id)(status)(creator)(proposal_name)(title)(desc)(type)
                 (recv_votes)(reject_votes)(users_count)(reject_users_count)(proposal_plan)(created_at)(started_at)(executed_at) )
 
     typedef eosio::multi_index <"proposals"_n, proposal_t,        

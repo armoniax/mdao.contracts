@@ -37,7 +37,7 @@ namespace mdaotoken {
                         const std::string &meta_data)
     {
         auto conf = _conf();
-        check(has_auth(conf.managers[manager_type::INFO]) || has_auth(conf.managers[manager_type::ALGOEX]), "insufficient permissions");
+        check(has_auth(conf.managers[manager_type::MEDIUM]) || has_auth(conf.managers[manager_type::ALGOEX]), "insufficient permissions");
         check(is_account(issuer), "issuer account does not exist");
         
         const auto &sym = maximum_supply.symbol;
@@ -65,6 +65,7 @@ namespace mdaotoken {
 
     void token::issue(const name &to, const asset &quantity, const string &memo)
     {
+        auto conf = _conf();
 
         const auto& sym = quantity.symbol;
         auto sym_code_raw = sym.code().raw();
@@ -75,7 +76,9 @@ namespace mdaotoken {
         auto existing = statstable.find(sym_code_raw);
         check(existing != statstable.end(), "token with symbol does not exist, create token before issue");
         const auto &st = *existing;
-        check( has_auth(to) && (st.issuer == to || MDAO_TREASURY == to || MDAO_ALGOEX == to), "insufficient permissions");
+        check( has_auth(to) && (st.issuer == to || conf.managers[manager_type::TREASURY] == to   || 
+                                conf.managers[manager_type::ALGOEX] == to || 
+                                conf.managers[manager_type::MEDIUM] == to), "insufficient permissions");
 
         check(quantity.is_valid(), "invalid quantity");
         check(quantity.amount > 0, "must issue positive quantity");

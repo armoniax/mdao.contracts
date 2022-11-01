@@ -9,7 +9,7 @@
 ACTION mdaoproposal::create(const name& dao_code, const name& creator, 
                             const string& proposal_name, const string& desc, 
                             const string& title, const uint64_t& vote_strategy_id, 
-                            const uint64_t& propose_strategy_id, const name& type)
+                            const uint64_t& proposal_strategy_id, const name& type)
 {
     auto conf = _conf();
     require_auth( conf.managers[manager_type::GOV] );
@@ -26,7 +26,7 @@ ACTION mdaoproposal::create(const name& dao_code, const name& creator,
         row.desc	            =   desc;
         row.title	            =   title;
         row.type	            =   type;
-        row.propose_strategy_id	=   propose_strategy_id;
+        row.proposal_strategy_id=   proposal_strategy_id;
         if(type == plan_type::SINGLE){
             single_plan s_plan;
             row.proposal_plan = s_plan;
@@ -99,11 +99,11 @@ ACTION mdaoproposal::startvote(const name& executor, const uint64_t& proposal_id
     CHECKC( executor == proposal.creator, proposal_err::PERMISSION_DENIED, "only the creator can operate" );
 
     strategy_t::idx_t stg(MDAO_STG, MDAO_STG.value);
-    auto propose_strategy = stg.find(proposal.propose_strategy_id);
+    auto propose_strategy = stg.find(proposal.proposal_strategy_id);
 
     int64_t value = 0;
     _cal_votes(proposal.dao_code, *propose_strategy, executor, value);
-    int32_t stg_weight = mdao::strategy::cal_weight(MDAO_STG, value, executor, proposal.propose_strategy_id );
+    int32_t stg_weight = mdao::strategy::cal_weight(MDAO_STG, value, executor, proposal.proposal_strategy_id );
     CHECKC( stg_weight > 0, proposal_err::VOTES_NOT_ENOUGH, "insufficient strategy weight")
 
     multiple_plan* multi_plan = std::get_if<multiple_plan>(&proposal.proposal_plan);
@@ -428,7 +428,7 @@ void mdaoproposal::_check_proposal_params(const action_data_variant& data_var,  
             setproposestg_data data = std::get<setproposestg_data>(data_var);
 
             strategy_t::idx_t stg(MDAO_STG, MDAO_STG.value);
-            CHECKC(stg.find(data.propose_strategy_id) != stg.end(), proposal_err::STRATEGY_NOT_FOUND, "strategy not found:"+to_string(data.propose_strategy_id) );
+            CHECKC(stg.find(data.proposal_strategy_id) != stg.end(), proposal_err::STRATEGY_NOT_FOUND, "strategy not found:"+to_string(data.proposal_strategy_id) );
 
             break;
         }

@@ -83,7 +83,7 @@ public:
         user_stake_t::idx_t user_nft_stake(contract_account, contract_account.value); 
         auto user_nft_stake_index = user_nft_stake.get_index<"unionid"_n>(); 
         auto user_nft_stake_iter = user_nft_stake_index.find(mdao::get_unionid(owner, dao_code)); 
-        if(user_nft_stake_iter != user_nft_stake_index.end()) return user_nft_stake_iter->token_stake;
+        if(user_nft_stake_iter != user_nft_stake_index.end()) return user_nft_stake_iter->tokens_stake;
         map<extended_symbol, int64_t> empyt_map;
         return empyt_map;
     }

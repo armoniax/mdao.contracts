@@ -94,13 +94,13 @@ public:
 
     ACTION recycledb(uint32_t max_rows);
 
-    [[eosio::action]]
-    void createtoken(const name& code, const name& owner, const uint16_t& transfer_ratio, 
-                     const string& fullname, const asset& maximum_supply, const string& metadata);
+    // [[eosio::action]]
+    // void createtoken(const name& code, const name& owner, const uint16_t& transfer_ratio, 
+    //                  const string& fullname, const asset& maximum_supply, const string& metadata);
 
-    [[eosio::action]]
-    void issuetoken(const name& owner, const name& code, const name& to, 
-                            const asset& quantity, const string& memo);
+    // [[eosio::action]]
+    // void issuetoken(const name& owner, const name& code, const name& to, 
+    //                         const asset& quantity, const string& memo);
    
     [[eosio::action]]
     void bindntoken(const name& owner, const name& code, const extended_nsymbol& ntoken);

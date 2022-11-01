@@ -148,8 +148,8 @@ struct setvotestg_data {
 
 struct setproposestg_data {
     name dao_code;   
-    uint64_t propose_strategy_id; 
-    EOSLIB_SERIALIZE( setproposestg_data, (dao_code)(propose_strategy_id) )
+    uint64_t proposal_strategy_id; 
+    EOSLIB_SERIALIZE( setproposestg_data, (dao_code)(proposal_strategy_id) )
 
 };
 
@@ -192,7 +192,7 @@ public:
     ACTION create(const name& dao_code, const name& creator, 
                     const string& proposal_name, const string& desc, 
                     const string& title, const uint64_t& vote_strategy_id, 
-                    const uint64_t& propose_strategy_id, const name& type);
+                    const uint64_t& proposal_strategy_id, const name& type);
 
     ACTION cancel(const name& owner, const uint64_t& proposalid);
 

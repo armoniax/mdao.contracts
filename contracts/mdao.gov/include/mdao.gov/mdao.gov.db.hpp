@@ -21,6 +21,11 @@ using namespace eosio;
 static constexpr uint64_t LOCK_HOURS = 48;
 static constexpr uint64_t VOTING_HOURS = 48;
 
+namespace propose_model_type {
+    static constexpr name MIX        = "mix"_n;
+    static constexpr name PROPOSAL   = "proposal"_n;
+};
+
 struct GOV_TG_TBL governance_t {
     name                        dao_code;
     map<name, uint64_t>         strategys;
@@ -29,14 +34,14 @@ struct GOV_TG_TBL governance_t {
     uint16_t                    limit_update_hours      = LOCK_HOURS;
     uint16_t                    voting_limit_hours      = VOTING_HOURS;
     time_point_sec              last_updated_at         = current_time_point();
-
+    name                        proposal_model          = propose_model_type::MIX;
     uint64_t    primary_key()const { return dao_code.value; }
     uint64_t    scope() const { return 0; }
 
     governance_t() {}
     governance_t(const name& c): dao_code(c) {}
 
-    EOSLIB_SERIALIZE( governance_t, (dao_code)(strategys)(require_participation)(require_pass)(limit_update_hours)(voting_limit_hours)(last_updated_at) )
+    EOSLIB_SERIALIZE( governance_t, (dao_code)(strategys)(require_participation)(require_pass)(limit_update_hours)(voting_limit_hours)(last_updated_at)(proposal_model) )
 
     typedef eosio::multi_index <"governances"_n, governance_t> idx_t;
 };
