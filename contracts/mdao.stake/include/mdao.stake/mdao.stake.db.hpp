@@ -43,7 +43,7 @@ namespace mdao
         dao_stake_t() {}
         dao_stake_t(const name& code): daocode(code) {}
 
-        EOSLIB_SERIALIZE(dao_stake_t, (daocode)(tokens_stake)(user_count));
+        EOSLIB_SERIALIZE(dao_stake_t, (daocode)(tokens_stake)(nfts_stake)(user_count));
         typedef eosio::multi_index<"daostake"_n, dao_stake_t> idx_t;
 
     };
