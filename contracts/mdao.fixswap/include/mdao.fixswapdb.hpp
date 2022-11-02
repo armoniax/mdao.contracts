@@ -34,6 +34,10 @@ namespace swap_status_t {
     static constexpr eosio::name created        = "created"_n;
     static constexpr eosio::name initialized        = "initialized"_n;
     static constexpr eosio::name maintaining       = "maintaining"_n;
+
+    static constexpr eosio::name matching       = "matching"_n;
+    static constexpr eosio::name cancel       = "cancel"_n;
+    static constexpr eosio::name matched       = "matched"_n;
 };
 
 namespace wasm
@@ -64,6 +68,7 @@ namespace wasm
     {
         name orderno;
         uint64_t id;
+        name status;
         name type;
         name maker;
         name taker = name(0);
@@ -79,11 +84,11 @@ namespace wasm
         swap_t() {}
         swap_t(const name &porderno) : orderno(porderno) {}
 
-        typedef eosio::multi_index<"tswaps"_n, swap_t,
+        typedef eosio::multi_index<"orders"_n, swap_t,
             indexed_by<"maker"_n, const_mem_fun<swap_t, uint64_t, &swap_t::by_maker> >
         > idx_t;
 
-        EOSLIB_SERIALIZE(swap_t, (orderno)(id)(type)(maker)(taker)(make_asset)(take_asset)(code)(created_at)(expired_at))
+        EOSLIB_SERIALIZE(swap_t, (orderno)(id)(status)(type)(maker)(taker)(make_asset)(take_asset)(code)(created_at)(expired_at))
     };
 }
 }

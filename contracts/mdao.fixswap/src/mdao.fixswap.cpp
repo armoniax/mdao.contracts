@@ -75,6 +75,7 @@ void fixswap::ontransfer(name from, name to, asset quantity, string memo)
         auto swap_order = swap_t(name(params[1]));
         CHECKC( !_db.get(swap_order), err::RECORD_EXISTING, "repeat swap order" )
         swap_order.id = _gstate.swap_id++;
+        swap_order.status = swap_status_t::matching;
         swap_order.maker = from;
         swap_order.created_at = current_time_point();
         swap_order.make_asset = extended_asset(quantity, get_first_receiver());
@@ -105,6 +106,7 @@ void fixswap::ontransfer(name from, name to, asset quantity, string memo)
         auto swap_order = swap_t(swap_orderno);
         CHECKC( _db.get(swap_order), err::RECORD_NOT_FOUND, "cannot found swap order" )
         CHECKC( time_point_sec(current_time_point()) < swap_order.expired_at , err::TIME_EXPIRED, "swap order expired")
+        CHECKC( swap_order.status == swap_status_t::matching, err::STATUS_MISMATCH, "order status mismatched" )
 
         if(swap_order.taker != name(0)) {
             CHECKC( swap_order.taker == from, err::NO_AUTH, "no auth to swap order" )
@@ -146,8 +148,6 @@ void fixswap::ontransfer(name from, name to, asset quantity, string memo)
             }
         }
 
-
-
         asset take_fee = swap_order.take_asset.quantity * _gstate.take_fee_ratio / percent_boost;
 
         TRANSFER(swap_order.take_asset.contract, 
@@ -173,7 +173,9 @@ void fixswap::ontransfer(name from, name to, asset quantity, string memo)
             }
         }
 
-        _db.del(swap_order);
+        swap_order.status = swap_status_t::matched;
+        _db.set(swap_order, get_self());
+        // _db.del(swap_order);
     }
 }
 
@@ -303,5 +305,6 @@ void fixswap::cancel(const name& maker, const name& orderno){
         swap_order.make_asset.quantity, 
         "Cancel swap order: " + orderno.to_string());
 
-    _db.del(swap_order);
+    swap_order.status = swap_status_t::cancel;
+    _db.set(swap_order, get_self());
 }
