@@ -86,11 +86,11 @@ ACTION mdaostake::unlocktoken(const uint64_t &id, const vector<extended_asset> &
         extended_asset token = *out_iter;
         extended_symbol sym = token.get_extended_symbol();
         CHECKC(token.quantity.amount > 0 && token.quantity.is_valid(), stake_err::INVALID_PARAMS, "invalid amount");
-        CHECKC(token.quantity.amount <= user_stake.tokens_stake[sym], stake_err::UNLOCK_OVERFLOW, "stake amount not enough");
+        CHECKC(token.quantity.amount <= user_stake.tokens_stake[sym], stake_err::unstake_OVERFLOW, "stake amount not enough");
         user_stake.tokens_stake[sym] =
-            (safe<int64_t>(dao_stake.tokens_stake[sym]) - safe<int64_t>(token.quantity.amount)).value;;
+            (safe<int64_t>(dao_stake.tokens_stake[sym]) - safe<int64_t>(token.quantity.amount)).value;
         dao_stake.tokens_stake[sym] = 
-            (safe<int64_t>(dao_stake.tokens_stake[sym]) - safe<int64_t>(token.quantity.amount)).value;;
+            (safe<int64_t>(dao_stake.tokens_stake[sym]) - safe<int64_t>(token.quantity.amount)).value;
         if(user_stake.tokens_stake[sym]==0) {
             user_stake.tokens_stake.erase(sym);
             if (dao_stake.tokens_stake[sym] == 0)
@@ -162,7 +162,7 @@ void mdaostake::stakenft( name from, name to, vector< nasset >& assets, string m
     _db.set(dao_stake,  get_self());
 }
 
-ACTION mdaostake::unlocknft(const uint64_t &id, const vector<extended_nasset> &nfts)
+ACTION mdaostake::unstakenft(const uint64_t &id, const vector<extended_nasset> &nfts)
 {
     CHECKC(_gstate.initialized, stake_err::UNINITIALIZED, "contract uninitialized");
     user_stake_t user_stake(id);
