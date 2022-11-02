@@ -16,11 +16,11 @@ using namespace wasm::db;
 using namespace picomath;
 
 namespace mdao {
-class [[eosio::contract("mdaostrateg1")]] strategy : public contract {
+class [[eosio::contract("mdaostrategy")]] strategy : public contract {
 private:
     dbc                 _db;
-    global_singleton    _global;
-    global_t            _gstate;
+    stg_singleton          _global;
+    stg_global_t           _gstate;
 
 public:
     using contract::contract;
@@ -29,7 +29,7 @@ public:
       if (_global.exists()) {
          _gstate = _global.get();
       } else {
-         _gstate = global_t{};
+         _gstate = stg_global_t{};
       }
     }
 
@@ -39,7 +39,7 @@ public:
                 const string& stg_algo,
                 const name& type,
                 const name& ref_contract,
-                const uint64_t& ref_sym);
+                const refsymbol& ref_sym);
 
    /**
     * @brief create a strategy for token/nft balance, 1 weight for account grater than balance_value
@@ -57,7 +57,7 @@ public:
                 const uint64_t& balance_value,
                 const name& type,
                 const name& ref_contract,
-                const uint64_t& ref_sym);
+                const refsymbol& ref_sym);
 
     [[eosio::action]]
     void setalgo(const name& creator, 
@@ -116,23 +116,23 @@ public:
          uint64_t value = 0;
          switch (stg.type.value)
          {
-         case strategy_type::tokenbalance.value: {
-            symbol_code sym_code(stg.ref_sym);
+         case strategy_type::TOKEN_BALANCE.value: {
+            symbol_code sym_code = std::get<symbol_code>(stg.ref_sym);
             value = eosio::token::get_balance(stg.ref_contract, account, sym_code).amount;
             break;
          }
-         case strategy_type::nftbalance.value:{
-            amax::nsymbol sym(stg.ref_sym);
-            value = amax::ntoken::get_balance(stg.ref_contract, account, sym).amount;
+         case strategy_type::NFT_BALANCE.value:{
+            nsymbol sym_code = std::get<nsymbol>(stg.ref_sym);
+            value = amax::ntoken::get_balance(stg.ref_contract, account, sym_code).amount;
             break;
          }
-         case strategy_type::nparentbalanc.value:{
-            amax::nsymbol sym(stg.ref_sym);
-            value = amax::ntoken::get_balance_by_parent(stg.ref_contract, account, (uint32_t)sym.raw());
+         case strategy_type::NFT_PARENT_BALANCE.value:{
+            nsymbol sym_code = std::get<nsymbol>(stg.ref_sym);
+            value = amax::ntoken::get_balance_by_parent(stg.ref_contract, account, sym_code.id);
             break;
          }
-         case strategy_type::tokensum.value: {
-            symbol_code sym_code(stg.ref_sym);
+         case strategy_type::TOKEN_SUM.value: {
+            symbol_code sym_code = std::get<symbol_code>(stg.ref_sym);
             value = aplink::token::get_sum(stg.ref_contract, account, sym_code).amount;
             break;
          }
@@ -165,19 +165,20 @@ public:
          uint64_t value = 0;
          switch (stg.type.value)
          {
-         case strategy_type::tokenstake.value: {
+         case strategy_type::TOKEN_STAKE.value: {
             map<extended_symbol, int64_t> tokens = mdaostake::get_user_staked_tokens(stake_contract, account, dao_code);
-            asset supply = amax::token::get_supply(stg.ref_contract, symbol_code(stg.ref_sym));
+            symbol_code sym_code = std::get<symbol_code>(stg.ref_sym);
+            asset supply = amax::token::get_supply(stg.ref_contract, symbol_code(sym_code));
             value = tokens.at(extended_symbol(supply.symbol, stg.ref_contract));
             break;
          }
-         case strategy_type::nftstake.value:{
+         case strategy_type::NFT_STAKE.value:{
             map<extended_nsymbol, int64_t> nfts = mdaostake::get_user_staked_nfts(stake_contract, account, dao_code);
-            value = nfts.at(extended_nsymbol(nsymbol(stg.ref_sym), stg.ref_contract));
+            value = nfts.at(extended_nsymbol(std::get<nsymbol>(stg.ref_sym), stg.ref_contract));
             break;
          }
-         case strategy_type::nparentstake.value:{
-            set<extended_nsymbol> syms = amax::ntoken::get_syms_by_parent(stg.ref_contract, stg.ref_sym );
+         case strategy_type::NFT_PARENT_STAKE.value:{
+            set<extended_nsymbol> syms = amax::ntoken::get_syms_by_parent(stg.ref_contract,  std::get<nsymbol>(stg.ref_sym).parent_id );
             map<extended_nsymbol, int64_t> nfts = mdaostake::get_user_staked_nfts(stake_contract, account, dao_code);
             for (auto itr = syms.begin() ; itr != syms.end(); itr++) { 
                if(nfts.count(*itr)) value += nfts.at(*itr);

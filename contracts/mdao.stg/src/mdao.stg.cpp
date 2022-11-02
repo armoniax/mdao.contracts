@@ -9,7 +9,7 @@ void strategy::create( const name& creator,
             const string& stg_algo,
             const name& type,
             const name& ref_contract,
-            const uint64_t& ref_sym){
+            const refsymbol& ref_sym){
     require_auth(creator);
 
     CHECKC( stg_name.size() < MAX_CONTENT_SIZE, err::OVERSIZED, "stg_name length should less than "+ to_string(MAX_CONTENT_SIZE) )
@@ -37,10 +37,11 @@ void strategy::balancestg(const name& creator,
                 const uint64_t& balance_value,
                 const name& type,
                 const name& ref_contract,
-                const uint64_t& ref_sym){
+                const refsymbol& ref_sym){
+    // check(false, "111");
     require_auth(creator);
-
-    CHECKC( stg_name.size() < MAX_CONTENT_SIZE, err::OVERSIZED, "stg_name length should less than "+ to_string(MAX_CONTENT_SIZE) )
+    
+    CHECKC( stg_name.size() < MAX_CONTENT_SIZE+1, err::OVERSIZED, "stg_name length should less than "+ to_string(MAX_CONTENT_SIZE) )
     
     string stg_algo = "min(x-"+ to_string(balance_value) + ",1)";
 
