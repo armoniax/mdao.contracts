@@ -57,6 +57,7 @@ ACTION mdaogov::create(const name& dao_code, const uint64_t& propose_strategy_id
 ACTION mdaogov::setvotestg(const name& dao_code, const uint64_t& vote_strategy_id, 
                             const uint32_t& require_participation, const uint32_t& require_pass )
 {
+
     auto conf = _conf();
     CHECKC( conf.status != conf_status::PENDING, gov_err::NOT_AVAILABLE, "under maintenance" );
 

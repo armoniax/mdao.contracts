@@ -5,19 +5,16 @@
 #include <mdao.stake/mdao.stake.db.hpp>
 #include <thirdparty/utils.hpp>
 #include <set>
-
 ACTION mdaoproposal::create(const name& dao_code, const name& creator, 
                             const string& desc, const string& title, 
                             const uint64_t& vote_strategy_id, 
-                            const uint64_t& proposal_strategy_id, 
-                            const name& type)
+                            const uint64_t& proposal_strategy_id)
 {
     auto conf = _conf();
     require_auth( conf.managers[manager_type::GOV] );
 
     proposal_t::idx_t proposal_tbl(_self, _self.value);
     auto id = proposal_tbl.available_primary_key();
-    check(false,"111");
     proposal_tbl.emplace( _self, [&]( auto& row ) {
         row.id                  =   id;
         row.dao_code            =   dao_code;
@@ -26,7 +23,6 @@ ACTION mdaoproposal::create(const name& dao_code, const name& creator,
         row.status              =   proposal_status::CREATED;
         row.desc	            =   desc;
         row.title	            =   title;
-        row.type	            =   type;
         row.proposal_strategy_id=   proposal_strategy_id;
    });
 }

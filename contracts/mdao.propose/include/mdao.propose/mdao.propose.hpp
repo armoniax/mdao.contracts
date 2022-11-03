@@ -198,7 +198,7 @@ public:
     ACTION create(const name& dao_code, const name& creator, 
                     const string& desc, const string& title, 
                     const uint64_t& vote_strategy_id, 
-                    const uint64_t& proposal_strategy_id, const name& type);
+                    const uint64_t& proposal_strategy_id);
 
     ACTION cancel(const name& owner, const uint64_t& proposalid);
 
