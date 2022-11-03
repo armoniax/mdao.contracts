@@ -28,8 +28,8 @@ static constexpr name MDAO_PROPOSAL{"mdaopropose2"_n};
 static constexpr name MDAO_TOKEN{"mdaotoken111"_n};
 static constexpr name MDAO_TREASURY{"mdaotreasury"_n};
 static constexpr name MDAO_ALGOEX{"mdao.algoex"_n};
-static constexpr name MDAO_STAKE{"mdao.stake"_n};
-static constexpr name MDAO_MEDIUM{"tokenmedium1"_n};
+static constexpr name MDAO_STAKE{"teststakerbb"_n};
+static constexpr name MDAO_MEDIUM{"tokenfactory"_n};
 
 // #define CONF_TG_TBL [[eosio::table, eosio::contract("mdao.conf")]]
 // static constexpr name MDAO_INFO{"mdao.info"_n};
@@ -60,7 +60,7 @@ namespace manager_type {
     static constexpr name CONF       = "conf"_n;
     static constexpr name ALGOEX     = "algoex"_n;
     static constexpr name STAKE      = "stake"_n;
-    static constexpr name MEDIUM     = "medium"_n;
+    static constexpr name FACTORY    = "factory"_n;
 
 };
 
@@ -114,10 +114,11 @@ struct [[eosio::table("global"), eosio::contract("mdao.conf")]] conf_global_t {
         symbol_code("MBTC"), symbol_code("MSOL"), symbol_code("MBNB"),
         symbol_code("MBUSD"), symbol_code("MUSDC"), symbol_code("METH"),
         symbol_code("METC"), symbol_code("AMAX"), symbol_code("APLINK")
-    };//Token creation restrictions
+    };
+    //Token creation restrictions
     asset token_create_fee = asset(1'0000'0000, AMAX_SYMBOL);
     map<name, name>   managers {
-        { manager_type::INFO, MDAO_INFO },
+        { manager_type::INFO, MDAO_INFO }
         // { manager_type::STRATEGY, MDAO_STG },
         // { manager_type::TOKEN, MDAO_TOKEN },
         // { manager_type::PROPOSAL, MDAO_PROPOSAL },

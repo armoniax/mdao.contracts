@@ -256,6 +256,8 @@ void mdaoinfo::_check_permission( dao_info_t& info, const name& code, const name
     const auto governance = governance_tbl.find(code.value);
     CHECKC( (governance == governance_tbl.end() && has_auth(owner)) || (governance != governance_tbl.end() && has_auth(conf.managers.at(manager_type::PROPOSAL))), 
                 info_err::PERMISSION_DENIED, "permission denied" );
+    _check_auth(*governance, conf, info);
+
     CHECKC( _db.get(info) ,info_err::RECORD_NOT_FOUND, "record not found");
     CHECKC( info.creator == owner, info_err::PERMISSION_DENIED, "only the creator can operate" );
     CHECKC( info.status == info_status::RUNNING, info_err::NOT_AVAILABLE, "under maintenance" );
@@ -271,3 +273,10 @@ const mdaoinfo::conf_t& mdaoinfo::_conf() {
     return *_conf_ptr;
 }
 
+void mdaoinfo::_check_auth(const governance_t& governance, const conf_t& conf, const dao_info_t& info) {
+    if(governance.proposal_model == propose_model_type::MIX ){
+        CHECKC(has_auth(conf.managers.at(manager_type::PROPOSAL)) || has_auth(info.creator), info_err::NOT_MODIFY, "cannot be modified for now" );
+    }else{
+        CHECKC( has_auth(conf.managers.at(manager_type::PROPOSAL)), info_err::NOT_MODIFY, "cannot be modified for now" );
+    }   
+}

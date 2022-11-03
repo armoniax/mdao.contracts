@@ -1,6 +1,6 @@
-add_contract(tokenmedium1 algoex.token.medium ${CMAKE_CURRENT_SOURCE_DIR}/src/algoex.token.medium.cpp)
+add_contract(tokenfactory algoex.token.factory ${CMAKE_CURRENT_SOURCE_DIR}/src/algoex.token.factory.cpp)
 
-target_include_directories(algoex.token.medium
+target_include_directories(algoex.token.factory
    PUBLIC
    ${CMAKE_CURRENT_SOURCE_DIR}/include
    ${CMAKE_CURRENT_SOURCE_DIR}/../mdao.conf/include   
@@ -11,8 +11,8 @@ target_include_directories(algoex.token.medium
    ${CMAKE_CURRENT_SOURCE_DIR}/../mdao.stake/include   
 
    )
-set_target_properties(algoex.token.medium
+set_target_properties(algoex.token.factory
    PROPERTIES
    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
 
-target_compile_options( algoex.token.medium PUBLIC -R${CMAKE_CURRENT_SOURCE_DIR}/ricardian -R${CMAKE_CURRENT_BINARY_DIR}/ricardian )
+target_compile_options( algoex.token.factory PUBLIC -R${CMAKE_CURRENT_SOURCE_DIR}/ricardian -R${CMAKE_CURRENT_BINARY_DIR}/ricardian )

@@ -22,9 +22,9 @@ static constexpr eosio::name token_active_perm{"active"_n};
     {	mdaotoken::token::open_action act{ bank, { {_self, token_active_perm} } };\
             act.send( owner, symbol, rampayer);}
 
-#define XTOKEN_CREATE_TOKEN(bank, creator, supply, fee_ratio, fullname, dao_code, meta_data) \
+#define XTOKEN_CREATE_TOKEN(bank, creator, supply, fullname, meta_data) \
     {	mdaotoken::token::create_action act{ bank, { {_self, token_active_perm} } };\
-            act.send( creator, supply, fee_ratio, fullname, dao_code, meta_data);}
+            act.send( creator, supply, fullname, meta_data);}
 
 namespace mdaotoken
 {
@@ -66,9 +66,7 @@ namespace mdaotoken
          */
         [[eosio::action]] void create(const name &issuer,
                                       const asset &maximum_supply,
-                                      const uint16_t &fee_ratio,
                                       const std::string &fullname,
-                                      const name &dao_code,                       
                                       const std::string &meta_data);
         /**
          *  This action issues to `to` account a `quantity` of tokens.
@@ -244,7 +242,6 @@ namespace mdaotoken
             asset max_supply;
             name issuer;
             bool is_paused = false;
-            name dao_code;
             uint16_t fee_ratio = 0;         // fee ratio, boost 10000
             asset min_fee_quantity;         // min fee quantity
             std::string fullname;

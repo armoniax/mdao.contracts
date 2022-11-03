@@ -6,6 +6,7 @@
 #include <eosio/time.hpp>
 #include "mdao.gov.db.hpp"
 #include <mdao.conf/mdao.conf.db.hpp>
+#include <mdao.info/mdao.info.db.hpp>
 
 using namespace eosio;
 using namespace wasm::db;
@@ -14,16 +15,12 @@ using namespace std;
 
 static constexpr symbol   AM_SYMBOL = symbol(symbol_code("AMAX"), 8);
 static constexpr uint64_t PROPOSE_STG_PERMISSION_AGING = 24 * 3600;
+static constexpr uint64_t seconds_per_hour      = 3600;
 
 namespace gov_status {
     static constexpr name RUNNING       = "running"_n;
     static constexpr name BLOCK         = "block"_n;
     static constexpr name CANCEL        = "cancel"_n;
-};
-
-namespace plan_type {
-    static constexpr name SINGLE        = "single"_n;
-    static constexpr name MULTIPLE      = "multiple"_n;
 };
 
 namespace strategy_action_type {
@@ -70,8 +67,9 @@ public:
 
     [[eosio::action]]
     ACTION create(const name& dao_code, const uint64_t& propose_strategy_id, 
-                    const uint64_t& vote_strategy_id, const uint32_t& require_participation, 
-                    const uint32_t& require_pass );
+                            const uint64_t& vote_strategy_id, const uint32_t& require_participation, 
+                            const uint32_t& require_pass, const uint16_t& update_interval,
+                            const uint16_t& voting_period);
 
     [[eosio::action]]
     ACTION setvotestg(const name& dao_code, const uint64_t& vote_strategy_id, 
@@ -89,8 +87,7 @@ public:
     
     [[eosio::action]]
     ACTION startpropose(const name& creator, const name& dao_code, const string& title,
-                                 const string& proposal_name, const string& desc, 
-                                 const name& plan_type);
+                                 const string& proposal_name, const string& desc);
     [[eosio::action]]
     void deletegov(name dao_code);
 
@@ -99,5 +96,6 @@ public:
 
 private:
     void _cal_votes(const name dao_code, const strategy_t& vote_strategy, const name voter, int64_t& value);
+    void _check_auth( const governance_t& governance, const conf_t& conf, const dao_info_t& info);
 
 };
