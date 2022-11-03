@@ -5,8 +5,8 @@
 #include <mdao.stake/mdao.stake.db.hpp>
 #include <set>
 
-#define VOTE_CREATE(bank, dao_code, creator, name, desc, title, vote_strategy_id, proposal_strategy_id) \
-{ action(permission_level{get_self(), "active"_n }, bank, "create"_n, std::make_tuple( dao_code, creator, name, desc, title, vote_strategy_id, proposal_strategy_id)).send(); }
+#define VOTE_CREATE(bank, dao_code, creator, desc, title, vote_strategy_id, proposal_strategy_id) \
+{ action(permission_level{get_self(), "active"_n }, bank, "create"_n, std::make_tuple( dao_code, creator, desc, title, vote_strategy_id, proposal_strategy_id)).send(); }
 
 #define VOTE_EXCUTE(bank, owner, proposeid) \
 { action(permission_level{get_self(), "active"_n }, bank, "create"_n, std::make_tuple( owner, proposeid)).send(); }
@@ -140,8 +140,7 @@ ACTION mdaogov::setvotetime(const name& dao_code, const uint16_t& voting_period)
     _db.set(governance, _self);
 }
  
-ACTION mdaogov::startpropose(const name& creator, const name& dao_code, const string& title,
-                                 const string& proposal_name, const string& desc)
+ACTION mdaogov::startpropose(const name& creator, const name& dao_code, const string& title, const string& desc)
 {
     require_auth( creator );
     auto conf = _conf();
@@ -160,7 +159,7 @@ ACTION mdaogov::startpropose(const name& creator, const name& dao_code, const st
     _cal_votes(dao_code, *propose_strategy, creator, stg_weight);
     CHECKC( stg_weight > 0, gov_err::INSUFFICIENT_WEIGHT, "insufficient strategy weight")
 
-    VOTE_CREATE(MDAO_PROPOSAL, dao_code, creator, proposal_name, desc, title, vote_strategy_id, proposal_strategy_id)
+    VOTE_CREATE(MDAO_PROPOSAL, dao_code, creator, desc, title, vote_strategy_id, proposal_strategy_id)
 }
 
 void mdaogov::deletegov(name dao_code) {

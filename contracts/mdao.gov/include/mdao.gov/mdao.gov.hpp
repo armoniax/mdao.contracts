@@ -87,7 +87,7 @@ public:
     
     [[eosio::action]]
     ACTION startpropose(const name& creator, const name& dao_code, const string& title,
-                                 const string& proposal_name, const string& desc);
+                                const string& desc);
     [[eosio::action]]
     void deletegov(name dao_code);
 

@@ -7,15 +7,17 @@
 #include <set>
 
 ACTION mdaoproposal::create(const name& dao_code, const name& creator, 
-                            const string& proposal_name, const string& desc, 
-                            const string& title, const uint64_t& vote_strategy_id, 
-                            const uint64_t& proposal_strategy_id, const name& type)
+                            const string& desc, const string& title, 
+                            const uint64_t& vote_strategy_id, 
+                            const uint64_t& proposal_strategy_id, 
+                            const name& type)
 {
     auto conf = _conf();
     require_auth( conf.managers[manager_type::GOV] );
 
     proposal_t::idx_t proposal_tbl(_self, _self.value);
     auto id = proposal_tbl.available_primary_key();
+    check(false,"111");
     proposal_tbl.emplace( _self, [&]( auto& row ) {
         row.id                  =   id;
         row.dao_code            =   dao_code;

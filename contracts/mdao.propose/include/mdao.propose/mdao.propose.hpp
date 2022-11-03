@@ -196,8 +196,8 @@ public:
     mdaoproposal(name receiver, name code, datastream<const char*> ds):_db(_self),  contract(receiver, code, ds){}
 
     ACTION create(const name& dao_code, const name& creator, 
-                    const string& proposal_name, const string& desc, 
-                    const string& title, const uint64_t& vote_strategy_id, 
+                    const string& desc, const string& title, 
+                    const uint64_t& vote_strategy_id, 
                     const uint64_t& proposal_strategy_id, const name& type);
 
     ACTION cancel(const name& owner, const uint64_t& proposalid);
