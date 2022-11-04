@@ -7,11 +7,6 @@
 // transfer out from contract self
 #define TRANSFERFROM(bank, from, to, quantity, memo) \
     { action(permission_level{get_self(), "active"_n }, bank, "transfer"_n, std::make_tuple(from, to, quantity, memo )).send(); }
-
-// transfer out from contract self
-#define TRANSFERFROM_N(bank, from, to, quants, memo) \
-    { action(permission_level{get_self(), "active"_n}, bank, "transfer"_n, std::make_tuple(from, to, quants, memo)).send(); }
-
 ACTION mdaostake::init( const set<name>& managers, const set<name>& supported_contracts ) {
     require_auth( _self );
     CHECKC(!_gstate.initialized, stake_err::INITIALIZED, "already initialized")
@@ -68,7 +63,7 @@ void mdaostake::staketoken(const name& from, const name& to, const asset& quanti
     _db.set(dao_stake, get_self());
 }
 
-ACTION mdaostake::unlocktoken(const uint64_t &id, const vector<extended_asset> &tokens)
+ACTION mdaostake::unstaketoken(const uint64_t &id, const vector<extended_asset> &tokens)
 {
     CHECKC(_gstate.initialized, stake_err::UNINITIALIZED, "contract uninitialized");
     user_stake_t user_stake(id);
@@ -187,7 +182,8 @@ ACTION mdaostake::unstakenft(const uint64_t &id, const vector<extended_nasset> &
             (safe<int64_t>(dao_stake.nfts_stake[sym]) - safe<int64_t>(ntoken.quantity.amount)).value;
         user_stake.nfts_stake[sym] =
             (safe<int64_t>(user_stake.nfts_stake[sym]) - safe<int64_t>(ntoken.quantity.amount)).value;
-        TRANSFERFROM_N(sym.get_contract(),get_self(), account, ntoken.quantity, string("redeem transfer"));
+        vector<nasset> nft = {ntoken.quantity};
+        TRANSFERFROM(sym.get_contract(),get_self(), account, nft , string("redeem transfer"));
         if(user_stake.nfts_stake[sym]==0) {
             user_stake.nfts_stake.erase(sym);
             if (dao_stake.nfts_stake[sym] == 0)
