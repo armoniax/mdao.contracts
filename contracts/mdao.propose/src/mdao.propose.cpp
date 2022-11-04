@@ -15,7 +15,7 @@ ACTION mdaoproposal::create(const name& dao_code, const name& creator,
 
     proposal_t::idx_t proposal_tbl(_self, _self.value);
     auto id = proposal_tbl.available_primary_key();
-    proposal_tbl.emplace( _self, [&]( auto& row ) {
+    proposal_tbl.emplace( creator, [&]( auto& row ) {
         row.id                  =   id;
         row.dao_code            =   dao_code;
         row.vote_strategy_id    =   vote_strategy_id;
@@ -171,7 +171,7 @@ ACTION mdaoproposal::votefor(const name& voter, const uint64_t& proposal_id,
     CHECKC( stg_weight > 0, proposal_err::INSUFFICIENT_VOTES, "insufficient votes" );
 
     auto id = vote_tbl.available_primary_key();
-    vote_tbl.emplace( _self, [&]( auto& row ) {
+    vote_tbl.emplace( voter, [&]( auto& row ) {
         row.id          =   id;
         row.account     =   voter;
         row.proposal_id =   proposal_id;
