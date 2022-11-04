@@ -52,9 +52,9 @@ public:
      * @memo "daocode"
     */
     [[eosio::on_notify("*::transfer")]]
-    ACTION staketoken(const name &from, const name &to, const asset &quantity, const string &memo);
+    void staketoken(const name &from, const name &to, const asset &quantity, const string &memo);
 
-    ACTION unlocktoken(const uint64_t &id, const vector<extended_asset> &tokens);
+    ACTION unstaketoken(const uint64_t &id, const vector<extended_asset> &tokens);
 
     /**
      * stake token method
@@ -64,27 +64,27 @@ public:
      * @memo "daocode"
      */
     [[eosio::on_notify("amax.ntoken::transfer")]]
-    ACTION stakenft(name from, name to, vector<nasset> &assets, string memo);
+    void stakenft(name from, name to, vector<nasset> &assets, string memo);
 
-    ACTION unlocknft(const uint64_t &id, const vector<extended_nasset> &nfts);
+    ACTION unstakenft(const uint64_t &id, const vector<extended_nasset> &nfts);
 
-    ACTION extendlock(const name &manager,const name &account, const name &daocode, const uint32_t &locktime);
+    ACTION extendlock(const name &manager, uint64_t &id, const uint32_t &locktime);
 
     static map<extended_nsymbol, int64_t> get_user_staked_nfts( const name& contract_account, const name& owner, const name& dao_code){
-        user_stake_t::idx_t user_nft_stake(contract_account, contract_account.value); 
-        auto user_nft_stake_index = user_nft_stake.get_index<"unionid"_n>(); 
-        auto user_nft_stake_iter = user_nft_stake_index.find(mdao::get_unionid(owner, dao_code)); 
-        if(user_nft_stake_iter != user_nft_stake_index.end()) return user_nft_stake_iter->nfts_stake;
-        map<extended_nsymbol, int64_t> empyt_map;
-        return empyt_map;
+        user_stake_t::idx_t user_stake(contract_account, contract_account.value); 
+        auto user_stake_index = user_stake.get_index<"unionid"_n>(); 
+        auto user_stake_iter = user_stake_index.find(mdao::get_unionid(owner, dao_code)); 
+        if(user_stake_iter != user_stake_index.end()) return user_stake_iter->nfts_stake;
+        map<extended_nsymbol, int64_t> empty_map;
+        return empty_map;
     }
 
     static map<extended_symbol, int64_t> get_user_staked_tokens( const name& contract_account, const name& owner, const name& dao_code){
-        user_stake_t::idx_t user_nft_stake(contract_account, contract_account.value); 
-        auto user_nft_stake_index = user_nft_stake.get_index<"unionid"_n>(); 
-        auto user_nft_stake_iter = user_nft_stake_index.find(mdao::get_unionid(owner, dao_code)); 
-        if(user_nft_stake_iter != user_nft_stake_index.end()) return user_nft_stake_iter->tokens_stake;
-        map<extended_symbol, int64_t> empyt_map;
-        return empyt_map;
+        user_stake_t::idx_t user_stake(contract_account, contract_account.value); 
+        auto user_stake_index = user_stake.get_index<"unionid"_n>(); 
+        auto user_stake_iter = user_stake_index.find(mdao::get_unionid(owner, dao_code)); 
+        if(user_stake_iter != user_stake_index.end()) return user_stake_iter->tokens_stake;
+        map<extended_symbol, int64_t> empty_map;
+        return empty_map;
     }
 };

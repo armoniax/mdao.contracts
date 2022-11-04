@@ -11,6 +11,7 @@
 
 using namespace eosio;
 #define STAKE_TBL [[eosio::table, eosio::contract("mdao.stake")]]
+#define TG_TBL_NAME(name) [[eosio::table(name), eosio::contract("mdao.stake")]]
 
 namespace mdao
 {
@@ -18,7 +19,7 @@ namespace mdao
     using namespace eosio;
     using namespace amax;
 
-    struct STAKE_TBL stake_global_t
+    struct TG_TBL_NAME("global") stake_global_t
     {
         set<name> managers;
         set<name> supported_contracts;
@@ -42,7 +43,7 @@ namespace mdao
         dao_stake_t() {}
         dao_stake_t(const name& code): daocode(code) {}
 
-        EOSLIB_SERIALIZE(dao_stake_t, (daocode)(tokens_stake)(user_count));
+        EOSLIB_SERIALIZE(dao_stake_t, (daocode)(tokens_stake)(nfts_stake)(user_count));
         typedef eosio::multi_index<"daostake"_n, dao_stake_t> idx_t;
 
     };
