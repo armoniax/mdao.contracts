@@ -21,7 +21,7 @@ using namespace eosio;
 //     return get_precision(a.symbol);
 // }
 
-void fixswap::init(const name& fee_collector, const uint32_t& fee_ratio){
+void fixswap::init(const name& admin, const name& fee_collector, const uint32_t& fee_ratio){
     require_auth(get_self());
 
     CHECKC( _gstate.status == swap_status_t::created, err::HAS_INITIALIZE, "cannot initialize again" )
@@ -30,11 +30,12 @@ void fixswap::init(const name& fee_collector, const uint32_t& fee_ratio){
 
     _gstate.status = swap_status_t::initialized;
     _gstate.fee_collector = fee_collector;
+    _gstate.admin = admin;
     _gstate.take_fee_ratio = fee_ratio;
     _gstate.make_fee_ratio = fee_ratio;
     _gstate.supported_contracts.insert("amax.token"_n);
     _gstate.supported_contracts.insert("amax.mtoken"_n);
-    _gstate.supported_contracts.insert("mdao.token"_n);
+    // _gstate.supported_contracts.insert("mdao.token"_n);
     _global.set( _gstate, get_self());
 }
 
@@ -82,7 +83,7 @@ void fixswap::ontransfer(name from, name to, asset quantity, string memo)
 
         if(params[2].length() > 0){
             name taker(params[2]);
-            CHECKC( is_account(taker), err::ACCOUNT_INVALID, "cannot found taker account" )
+            CHECKC( is_account(taker), err::ACCOUNT_INVALID, "cannot find taker account" )
             swap_order.taker = taker;
         }
 
@@ -90,7 +91,7 @@ void fixswap::ontransfer(name from, name to, asset quantity, string memo)
         CHECKC( take_quant.amount > 0, err::ACCOUNT_INVALID, "take quanity must be positive" )
 
         name take_contract = name(params[4]);
-        CHECKC( is_account(take_contract), err::ACCOUNT_INVALID, "cannot found take quantity contract" )
+        CHECKC( is_account(take_contract), err::ACCOUNT_INVALID, "cannot find take quantity contract" )
 
         swap_order.take_asset = extended_asset(take_quant, take_contract);
         if(params[5].length() > 0){
@@ -125,57 +126,23 @@ void fixswap::ontransfer(name from, name to, asset quantity, string memo)
         CHECKC( get_first_receiver() == swap_order.take_asset.contract, err::SYMBOL_MISMATCH, "quantity contract mismatch" )
 
         asset make_fee = swap_order.make_asset.quantity * _gstate.make_fee_ratio / percent_boost;
+        asset take_fee = swap_order.take_asset.quantity * _gstate.take_fee_ratio / percent_boost;
+
         TRANSFER(swap_order.make_asset.contract, 
             from, 
             swap_order.make_asset.quantity - make_fee, 
             "Swap with " + swap_order.make_asset.quantity.to_string());
 
-        if(make_fee.amount > 0){
-            TRANSFER(swap_order.make_asset.contract, 
-                _gstate.fee_collector, 
-                make_fee, 
-                "Swap take fee of " + swap_orderno.to_string());
-
-            if (_gstate.farm_lease_id > 0 && _gstate.farm_scales.count(swap_order.make_asset.get_extended_symbol())){
-                auto scale = _gstate.farm_scales.at(swap_order.make_asset.get_extended_symbol());
-                auto value = multiply_decimal64( make_fee.amount, get_precision(APLINK_SYMBOL), get_precision(make_fee.symbol));
-                value = value * scale / percent_boost;
-                asset apples = asset(0, APLINK_SYMBOL);
-                aplink::farm::available_apples(APLINK_FARM, _gstate.farm_lease_id, apples);
-                if(apples.amount >= value && value > 0)
-                    ALLOT(  APLINK_FARM, _gstate.farm_lease_id, swap_order.maker, asset(value, APLINK_SYMBOL), 
-                            "fixswap allot: "+swap_orderno.to_string() );
-            }
-        }
-
-        asset take_fee = swap_order.take_asset.quantity * _gstate.take_fee_ratio / percent_boost;
-
         TRANSFER(swap_order.take_asset.contract, 
             swap_order.maker, 
             swap_order.take_asset.quantity - take_fee, 
             "Swap with " + swap_order.take_asset.quantity.to_string());
-        
-        if(take_fee.amount > 0){
-            TRANSFER(swap_order.take_asset.contract, 
-                _gstate.fee_collector, 
-                take_fee, 
-                "Swap take fee of " + swap_orderno.to_string());
 
-            if (_gstate.farm_lease_id > 0 && _gstate.farm_scales.count(swap_order.take_asset.get_extended_symbol())){
-                auto scale = _gstate.farm_scales.at(swap_order.take_asset.get_extended_symbol());
-                auto value = multiply_decimal64( take_fee.amount, get_precision(APLINK_SYMBOL), get_precision(take_fee.symbol));
-                value = value * scale / percent_boost;
-                asset apples = asset(0, APLINK_SYMBOL);
-                aplink::farm::available_apples(APLINK_FARM, _gstate.farm_lease_id, apples);
-                if(apples.amount >= value && value > 0)
-                    ALLOT(  APLINK_FARM, _gstate.farm_lease_id, swap_order.maker, asset(value, APLINK_SYMBOL), 
-                            "fixswap allot: "+swap_orderno.to_string() );
-            }
-        }
+        _reward(swap_order.maker, extended_asset(make_fee, swap_order.make_asset.contract), swap_orderno);
+        _reward(swap_order.taker, extended_asset(take_fee, swap_order.take_asset.contract), swap_orderno);
 
         swap_order.status = swap_status_t::matched;
         _db.set(swap_order, get_self());
-        // _db.del(swap_order);
     }
 }
 
@@ -289,6 +256,30 @@ void fixswap::ontransfer(name from, name to, asset quantity, string memo)
 
 // }
 
+
+void fixswap::_reward(const name& owner, const extended_asset& fee, const name& orderno){
+        if(fee.quantity.amount == 0) return;
+        TRANSFER(fee.contract, 
+            _gstate.fee_collector, 
+            fee.quantity, 
+            "Swap take fee of " + orderno.to_string());
+
+        if (_gstate.farm_lease_id > 0 &&
+                _gstate.farm_scales.count(fee.get_extended_symbol())){
+            auto scale = _gstate.farm_scales.at(fee.get_extended_symbol());
+            auto value = multiply_decimal64( fee.quantity.amount, 
+                            get_precision(APLINK_SYMBOL), get_precision(fee.quantity.symbol));
+            value = value * scale / percent_boost;
+            asset apples = asset(0, APLINK_SYMBOL);
+            aplink::farm::available_apples(APLINK_FARM, _gstate.farm_lease_id, apples);
+            if(apples.amount >= value && value > 0)
+                ALLOT(  APLINK_FARM, _gstate.farm_lease_id, 
+                        owner, asset(value, APLINK_SYMBOL), 
+                        "fixswap allot: " + orderno.to_string() );
+        }
+}
+
+
 void fixswap::cancel(const name& maker, const name& orderno){
     require_auth(maker);
     
@@ -298,7 +289,8 @@ void fixswap::cancel(const name& maker, const name& orderno){
     CHECKC( _db.get(swap_order), err::RECORD_NOT_FOUND, "cannot found swap order" )
 
     CHECKC( swap_order.maker == maker, err::NO_AUTH, "no auth to cancel order" )
-    
+    CHECKC( swap_order.status == swap_status_t::matching, err::STATUS_MISMATCH, "order status mismatched" )
+
     // extended_asset make_asset = std::get<extended_asset>(swap_order.make_asset);
     TRANSFER(swap_order.make_asset.contract, 
         swap_order.maker, 
@@ -307,4 +299,19 @@ void fixswap::cancel(const name& maker, const name& orderno){
 
     swap_order.status = swap_status_t::cancel;
     _db.set(swap_order, get_self());
+}
+
+
+void fixswap::clear(const vector<name>& order_nos){
+    require_auth(_gstate.admin);
+
+    CHECKC(order_nos.size()>0, err::PARAM_ERROR, "empty ids");
+
+    for (auto& order_no : order_nos) {
+        auto order = swap_t(order_no);
+        CHECKC( _db.get( order ), err::RECORD_NOT_FOUND, "order not found: " + order_no.to_string() )
+        CHECKC( order.status == swap_status_t::matched || order.status == swap_status_t::cancel,
+            err::STATUS_MISMATCH, "can only clear order in matched or cancel");
+        _db.del( order );
+	}
 }

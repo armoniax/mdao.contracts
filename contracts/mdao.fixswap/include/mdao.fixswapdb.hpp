@@ -19,7 +19,7 @@ using namespace wasm;
 #define SYMBOL(sym_code, precision) symbol(symbol_code(sym_code), precision)
 
 static constexpr uint64_t seconds_per_day                   = 24 * 3600;
-static constexpr uint64_t default_expired_secs = 30 * seconds_per_day;
+static constexpr uint64_t default_expired_secs = 1 * seconds_per_day;
 
 static constexpr uint64_t percent_boost = 10000;
 // #define HASH256(str) sha256(str.c_str(), str.size())
@@ -52,6 +52,7 @@ namespace wasm
     {
         name status = swap_status_t::created;
         name fee_collector;
+        name admin;
         uint32_t make_fee_ratio      = 20;
         uint32_t take_fee_ratio      = 20;
         uint64_t swap_id        = 0;

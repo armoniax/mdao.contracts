@@ -18,9 +18,9 @@ using namespace picomath;
 namespace mdao {
 class [[eosio::contract("mdaostrategy")]] strategy : public contract {
 private:
-    dbc                 _db;
-    stg_singleton          _global;
-    stg_global_t           _gstate;
+   dbc                 _db;
+   stg_singleton          _global;
+   stg_global_t           _gstate;
 
 public:
     using contract::contract;
@@ -69,7 +69,7 @@ public:
                    const uint64_t& stg_id, 
                    const uint64_t& value,
                    const name& account,
-                   const uint64_t& respect_weight); 
+                   const uint64_t& expect_weight); 
 
     [[eosio::action]]
     void publish(const name& creator, 
@@ -84,12 +84,8 @@ public:
     void testalgo(const name& account,
                  const uint64_t& stg_id);
 
-    [[eosio::action]]
-    void formatsym(const symbol_code& sym);
-
    static int32_t cal_weight(const name& stg_contract_account, 
                   const uint64_t& value, 
-                  const name& account, 
                   const uint64_t& stg_id )
    {
         auto db = dbc(stg_contract_account);

@@ -26,6 +26,8 @@ private:
     gswap_t            _gstate;
     dbc           _db;
 
+    void _reward(const name& owner, const extended_asset& fee, const name& orderno);
+
 public:
     fixswap(eosio::name receiver, eosio::name code, datastream<const char *> ds) : _db(_self),contract(receiver, code, ds), _global(_self, _self.value)
     {
@@ -34,7 +36,7 @@ public:
     }
 
     [[eosio::action]]
-    void init(const name& fee_collector, const uint32_t& fee_ratio);
+    void init(const name& admin, const name& fee_collector, const uint32_t& fee_ratio);
 
     [[eosio::action]]
     void setfee(const name& fee_collector, const uint32_t& take_fee_ratio, const uint32_t& make_fee_ratio);
@@ -58,7 +60,7 @@ public:
      *              orderno: swap orderno
      *              code: the plain text of swap code
      */
-    [[eosio::on_notify("*::transfer")]] 
+    [[eosio::on_notify("*::transfer")]]
     void ontransfer(name from, name to, asset quantity, string memo);
 
     // [[eosio::on_notify("amax.ntoken::transfer")]] 
@@ -69,6 +71,9 @@ public:
      */
     [[eosio::action]]
     void cancel(const name& maker, const name& orderno);
+
+    [[eosio::action]]
+    void clear(const vector<name>& order_nos);
 };
 
 }
