@@ -48,7 +48,8 @@ enum class info_err: uint8_t {
     NOT_POSITIVE        = 17,
     NOT_ALLOW           = 18,
     ACCOUNT_NOT_EXITS   = 19,
-    TOKEN_NOT_EXIST     = 20
+    TOKEN_NOT_EXIST     = 20,
+    NOT_MODIFY          = 21
 };
 
 class [[eosio::contract("mdao.info")]] mdaoinfo : public contract {
@@ -62,6 +63,7 @@ private:
     std::unique_ptr<conf_t> _conf_ptr;
 
     const conf_t& _conf();
+    void _check_auth( const governance_t& governance, const conf_t& conf, const dao_info_t& info);
 
 public:
     using contract::contract;

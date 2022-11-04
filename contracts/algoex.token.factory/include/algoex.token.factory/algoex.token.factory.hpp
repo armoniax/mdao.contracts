@@ -9,7 +9,7 @@ namespace eosiosystem {
    class system_contract;
 }
 
-enum class medium_err: uint8_t {
+enum class factory_err: uint8_t {
     INVALID_FORMAT      = 1,
     DID_NOT_AUTH        = 2,
     TITLE_REPEAT        = 3,
@@ -32,13 +32,13 @@ enum class medium_err: uint8_t {
     TOKEN_NOT_EXIST     = 20,
     AMAX_NOT_ENOUGH     = 21
 };
-namespace mdaotokenmidium
+namespace algoextokenfactory
 {
     using std::string;
     using std::map;
     using namespace eosio;
 
-    class [[eosio::contract("tokenmedium1")]] tokenmedium : public contract
+    class [[eosio::contract("tokenfactory")]] tokenfactory : public contract
     {
         
     using conf_t = mdao::conf_global_t;
@@ -47,16 +47,16 @@ namespace mdaotokenmidium
     public:
         using contract::contract;
 
-        [[eosio::action]]
-        ACTION createtoken(const name& code, const name& creator, const uint16_t& transfer_ratio, 
-                                const string& fullname, const asset& maximum_supply, const string& metadata);
+        [[eosio::on_notify("amax.token::transfer")]] 
+        ACTION createtoken(const name& from, const name& to, const asset& quantity, const string& memo);
+        
         [[eosio::action]]
         ACTION issuetoken(const name& owner, const name& code, const name& to, 
                             const asset& quantity, const string& memo);
         void _check_permission( const name& dao_code, const name& owner, const conf_t& conf );
 
-        using create_action = eosio::action_wrapper<"create"_n, &tokenmedium::createtoken>;
-        using issue_action = eosio::action_wrapper<"issue"_n, &tokenmedium::issuetoken>;
+        using create_action = eosio::action_wrapper<"create"_n, &tokenfactory::createtoken>;
+        using issue_action = eosio::action_wrapper<"issue"_n, &tokenfactory::issuetoken>;
 
     private:
         std::unique_ptr<conf_table_t> _conf_tbl_ptr;

@@ -44,3 +44,9 @@ ACTION mdaoconf::setmetaverse( const bool& enable_metaverse )
     require_auth( _self );
     _gstate.enable_metaverse = enable_metaverse;
 }
+
+ACTION mdaoconf::settokenfee( const asset& quantity )
+{    
+    require_auth( _self );
+    _gstate.token_create_fee = quantity;
+}

@@ -43,5 +43,6 @@ public:
     ACTION setmanager( const name& manage_type, const name& manager );
     ACTION setsystem( const name& token_contract, const name& ntoken_contract, uint16_t stake_delay_days );
     ACTION setmetaverse( const bool& enable_metaverse );
+    ACTION settokenfee( const asset& quantity );
 
 };
