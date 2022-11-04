@@ -26,6 +26,7 @@ enum class stake_err : uint8_t
     UNSUPPORT_CONTRACT = 9,
     NOT_POSITIVE = 10,
     NO_PERMISSION = 11,
+    unstake_OVERFLOW = 12
 };
 
 class [[eosio::contract("mdao.stake")]] mdaostake : public contract
