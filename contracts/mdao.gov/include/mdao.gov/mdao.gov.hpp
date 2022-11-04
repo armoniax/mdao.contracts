@@ -14,7 +14,6 @@ using namespace mdao;
 using namespace std;
 
 static constexpr symbol   AM_SYMBOL = symbol(symbol_code("AMAX"), 8);
-static constexpr uint64_t PROPOSE_STG_PERMISSION_AGING = 24 * 3600;
 static constexpr uint64_t seconds_per_hour      = 3600;
 
 namespace gov_status {

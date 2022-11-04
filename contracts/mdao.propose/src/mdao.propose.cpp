@@ -2,7 +2,7 @@
 #include <mdao.info/mdao.info.db.hpp>
 #include <mdao.gov/mdao.gov.hpp>
 #include <mdao.treasury/mdao.treasury.hpp>
-#include <mdao.stake/mdao.stake.db.hpp>
+#include <mdao.stake/mdao.stake.hpp>
 #include <thirdparty/utils.hpp>
 #include <set>
 ACTION mdaoproposal::create(const name& dao_code, const name& creator, 
@@ -80,7 +80,7 @@ ACTION mdaoproposal::startvote(const name& creator, const uint64_t& proposal_id)
     auto propose_strategy = stg.find(proposal.proposal_strategy_id);
 
     int64_t stg_weight = 0;
-    _cal_votes(proposal.dao_code, *propose_strategy, creator, stg_weight);
+    _cal_votes(proposal.dao_code, *propose_strategy, creator, stg_weight, 0);
     CHECKC( stg_weight > 0, proposal_err::VOTES_NOT_ENOUGH, "insufficient strategy weight")
 
     proposal.status  =  proposal_status::VOTING;
@@ -167,7 +167,7 @@ ACTION mdaoproposal::votefor(const name& voter, const uint64_t& proposal_id,
     auto vote_strategy = stg.find(proposal.vote_strategy_id);
 
     int64_t stg_weight = 0;
-    _cal_votes(proposal.dao_code, *vote_strategy, voter, stg_weight);
+    _cal_votes(proposal.dao_code, *vote_strategy, voter, stg_weight, conf.stake_period_days * seconds_per_day);
     CHECKC( stg_weight > 0, proposal_err::INSUFFICIENT_VOTES, "insufficient votes" );
 
     auto id = vote_tbl.available_primary_key();
@@ -483,12 +483,22 @@ void mdaoproposal::recycledb(uint32_t max_rows) {
     }
 }
 
-void mdaoproposal::_cal_votes(const name dao_code, const strategy_t& vote_strategy, const name voter, int64_t& value) {
+void mdaoproposal::_cal_votes(const name dao_code, const strategy_t& vote_strategy, const name voter, int64_t& value, const uint32_t& lock_time) {
     switch(vote_strategy.type.value){
         case strategy_type::TOKEN_STAKE.value : 
         case strategy_type::NFT_STAKE.value : 
         case strategy_type::NFT_PARENT_STAKE.value:{
             value = mdao::strategy::cal_stake_weight(MDAO_STG, vote_strategy.id, dao_code, MDAO_STAKE, voter);
+
+            if(lock_time > 0){
+                user_stake_t::idx_t user_stake(MDAO_STAKE, MDAO_STAKE.value); 
+                auto user_stake_index = user_stake.get_index<"unionid"_n>(); 
+                auto user_stake_iter = user_stake_index.find(mdao::get_unionid(voter, dao_code)); 
+                CHECKC( user_stake_iter != user_stake_index.end(), proposal_err::RECORD_NOT_FOUND, "stake record not exist" );
+
+                EXTEND_LOCK(MDAO_STAKE, MDAO_GOV, user_stake_iter->id, lock_time);
+            }
+
             break;
         }
         case strategy_type::TOKEN_BALANCE.value:

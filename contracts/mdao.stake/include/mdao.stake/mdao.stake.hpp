@@ -28,6 +28,8 @@ enum class stake_err : uint8_t
     NO_PERMISSION = 11,
     unstake_OVERFLOW = 12
 };
+ #define EXTEND_LOCK(bank, manager, id, locktime) \
+{ action(permission_level{get_self(), "active"_n }, bank, "extendlock"_n, std::make_tuple( manager, id, locktime )).send(); }
 
 class [[eosio::contract("mdao.stake")]] mdaostake : public contract
 {

@@ -222,5 +222,5 @@ public:
 
 private:
     void _check_proposal_params(const action_data_variant& data_var,  const name& action_name, const name& action_account, const name& proposal_dao_code, const conf_t& conf);
-    void _cal_votes(const name dao_code, const strategy_t& vote_strategy, const name voter, int64_t& value) ;
+    void _cal_votes(const name dao_code, const strategy_t& vote_strategy, const name voter, int64_t& value, const uint32_t& lock_time) ;
 };
