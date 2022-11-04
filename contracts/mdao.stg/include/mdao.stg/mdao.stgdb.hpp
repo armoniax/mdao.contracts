@@ -31,13 +31,14 @@ struct STG_TABLE_NAME("global") stg_global_t {
     map<name,string> algos;
     EOSLIB_SERIALIZE( stg_global_t, (conf_contract)(algos) )
 };
+
 typedef eosio::singleton< "global"_n, stg_global_t > stg_singleton;
 
 typedef std::variant<symbol_code, nsymbol> refsymbol;
 
 namespace strategy_status {
     static constexpr eosio::name testing            = "testing"_n;
-    static constexpr eosio::name tested             = "tested"_n;
+    static constexpr eosio::name verified             = "verified"_n;
     static constexpr eosio::name published          = "published"_n;
 };
 

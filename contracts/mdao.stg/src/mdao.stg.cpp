@@ -38,7 +38,6 @@ void strategy::balancestg(const name& creator,
                 const name& type,
                 const name& ref_contract,
                 const refsymbol& ref_sym){
-    // check(false, "111");
     require_auth(creator);
     
     CHECKC( stg_name.size() < MAX_CONTENT_SIZE+1, err::OVERSIZED, "stg_name length should less than "+ to_string(MAX_CONTENT_SIZE) )
@@ -80,18 +79,18 @@ void strategy::verify( const name& creator,
                 const uint64_t& stg_id, 
                 const uint64_t& value,
                 const name& account,
-                const uint64_t& respect_weight ){
+                const uint64_t& expect_weight ){
     require_auth( creator );
 
     CHECKC( is_account(account), err::ACCOUNT_INVALID, "account invalid" )
-    CHECKC( respect_weight > 0, err::NOT_POSITIVE, "require positive weight to verify stg" )
+    CHECKC( expect_weight > 0, err::NOT_POSITIVE, "require positive weight to verify stg" )
 
     strategy_t stg = strategy_t( stg_id );
     CHECKC( _db.get( stg ), err::RECORD_NOT_FOUND, "strategy not found: " + to_string( stg_id ) )
     CHECKC( stg.status != strategy_status::published, err::NO_AUTH, "cannot verify published strategy" )
 
     int32_t weight = cal_weight( get_self(), value, account , stg_id);
-    CHECKC( weight == respect_weight, err::UNRESPECT_RESULT, "algo result weight is: "+to_string(weight) )
+    CHECKC( weight == expect_weight, err::UNRESPECT_RESULT, "algo result weight is: "+to_string(weight) )
 
     stg.status = strategy_status::tested;
     _db.set( stg, creator );
