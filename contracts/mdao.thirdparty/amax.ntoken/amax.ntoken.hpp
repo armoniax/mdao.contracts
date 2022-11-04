@@ -30,13 +30,13 @@ class [[eosio::contract("amax.ntoken")]] ntoken : public contract {
    public:
       using contract::contract;
 
-   ntoken(eosio::name receiver, eosio::name code, datastream<const char*> ds): contract(receiver, code, ds),
-        _global(get_self(), get_self().value)
-    {
-        _gstate = _global.exists() ? _global.get() : global_t{};
-    }
+   // ntoken(eosio::name receiver, eosio::name code, datastream<const char*> ds): contract(receiver, code, ds),
+   //      _global(get_self(), get_self().value)
+   //  {
+   //      _gstate = _global.exists() ? _global.get() : global_t{};
+   //  }
 
-    ~ntoken() { _global.set( _gstate, get_self() ); }
+   //  ~ntoken() { _global.set( _gstate, get_self() ); }
 
    /**
     * @brief Allows `issuer` account to create a token in supply of `maximum_supply`. If validation is successful a new entry in statsta
@@ -133,8 +133,8 @@ class [[eosio::contract("amax.ntoken")]] ntoken : public contract {
       void add_balance( const name& owner, const nasset& value, const name& ram_payer );
       void sub_balance( const name& owner, const nasset& value );
 
-   private:
-      global_singleton    _global;
-      global_t            _gstate;
+   // private:
+   //    global_singleton    _global;
+   //    global_t            _gstate;
 };
 } //namespace amax

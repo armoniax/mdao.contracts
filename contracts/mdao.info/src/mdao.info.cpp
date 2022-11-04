@@ -194,50 +194,50 @@ void mdaoinfo::recycledb(uint32_t max_rows) {
     }
 }
 
-ACTION mdaoinfo::createtoken(const name& code, const name& owner, const uint16_t& transfer_ratio, 
-                             const string& fullname, const asset& maximum_supply, const string& metadata)
-{
-    CHECKC( false, info_err::NOT_AVAILABLE, "under maintenance" );
+// ACTION mdaoinfo::createtoken(const name& code, const name& owner, const uint16_t& transfer_ratio, 
+//                              const string& fullname, const asset& maximum_supply, const string& metadata)
+// {
+//     CHECKC( false, info_err::NOT_AVAILABLE, "under maintenance" );
 
-    auto conf = _conf();
-    CHECKC( conf.status != conf_status::PENDING, info_err::NOT_AVAILABLE, "under maintenance" );
+//     auto conf = _conf();
+//     CHECKC( conf.status != conf_status::PENDING, info_err::NOT_AVAILABLE, "under maintenance" );
 
-    CHECKC( fullname.size() <= 20, info_err::SIZE_TOO_MUCH, "fullname has more than 20 bytes")
-    CHECKC( maximum_supply.amount > 0, info_err::NOT_POSITIVE, "not positive quantity:" + maximum_supply.to_string() )
-    symbol_code supply_code = maximum_supply.symbol.code();
-    CHECKC( supply_code.length() > 3, info_err::NO_AUTH, "cannot create limited token" )
-    CHECKC( !conf.black_symbols.count(supply_code) ,info_err::NOT_ALLOW, "token not allowed to create" );
+//     CHECKC( fullname.size() <= 20, info_err::SIZE_TOO_MUCH, "fullname has more than 20 bytes")
+//     CHECKC( maximum_supply.amount > 0, info_err::NOT_POSITIVE, "not positive quantity:" + maximum_supply.to_string() )
+//     symbol_code supply_code = maximum_supply.symbol.code();
+//     CHECKC( supply_code.length() > 3, info_err::NO_AUTH, "cannot create limited token" )
+//     CHECKC( !conf.black_symbols.count(supply_code) ,info_err::NOT_ALLOW, "token not allowed to create" );
 
-    stats statstable( MDAO_TOKEN, supply_code.raw() );
-    CHECKC( statstable.find(supply_code.raw()) == statstable.end(), info_err::CODE_REPEAT, "token already exist")
+//     stats statstable( MDAO_TOKEN, supply_code.raw() );
+//     CHECKC( statstable.find(supply_code.raw()) == statstable.end(), info_err::CODE_REPEAT, "token already exist")
 
-     dao_info_t info(code);
-     _check_permission(info, code, owner, conf);
+//      dao_info_t info(code);
+//      _check_permission(info, code, owner, conf);
         
-    XTOKEN_CREATE_TOKEN(MDAO_TOKEN, owner, maximum_supply, transfer_ratio, fullname, code, metadata)
+//     XTOKEN_CREATE_TOKEN(MDAO_TOKEN, owner, maximum_supply, transfer_ratio, fullname, code, metadata)
 
-    info.token = extended_symbol(maximum_supply.symbol, MDAO_TOKEN); 
-    _db.set(info, _self);
+//     info.token = extended_symbol(maximum_supply.symbol, MDAO_TOKEN); 
+//     _db.set(info, _self);
 
-}
+// }
 
-ACTION mdaoinfo::issuetoken(const name& owner, const name& code, const name& to, 
-                            const asset& quantity, const string& memo)
-{
-    CHECKC( false, info_err::NOT_AVAILABLE, "under maintenance" );
+// ACTION mdaoinfo::issuetoken(const name& owner, const name& code, const name& to, 
+//                             const asset& quantity, const string& memo)
+// {
+//     CHECKC( false, info_err::NOT_AVAILABLE, "under maintenance" );
 
-    auto conf = _conf();
+//     auto conf = _conf();
 
-    symbol_code supply_code = quantity.symbol.code();
-    stats statstable( MDAO_TOKEN, supply_code.raw() );
-    CHECKC( statstable.find(supply_code.raw()) != statstable.end(), info_err::TOKEN_NOT_EXIST, "token not exist")
+//     symbol_code supply_code = quantity.symbol.code();
+//     stats statstable( MDAO_TOKEN, supply_code.raw() );
+//     CHECKC( statstable.find(supply_code.raw()) != statstable.end(), info_err::TOKEN_NOT_EXIST, "token not exist")
 
-     dao_info_t info(code);
-     _check_permission(info, code, owner, conf);
+//      dao_info_t info(code);
+//      _check_permission(info, code, owner, conf);
         
-    XTOKEN_ISSUE(MDAO_TOKEN, to, quantity, memo)
+//     XTOKEN_ISSUE(MDAO_TOKEN, to, quantity, memo)
 
-}
+// }
 
 ACTION mdaoinfo::bindntoken(const name& owner, const name& code, const extended_nsymbol& ntoken)
 {
@@ -254,8 +254,10 @@ ACTION mdaoinfo::bindntoken(const name& owner, const name& code, const extended_
 void mdaoinfo::_check_permission( dao_info_t& info, const name& code, const name& owner,  const conf_t& conf ) {
     governance_t::idx_t governance_tbl(MDAO_GOV, MDAO_GOV.value);
     const auto governance = governance_tbl.find(code.value);
-    CHECKC( (governance == governance_tbl.end() && has_auth(owner)) || (governance != governance_tbl.end() && has_auth(conf.managers.at(manager_type::INFO))), 
+    CHECKC( (governance == governance_tbl.end() && has_auth(owner)) || (governance != governance_tbl.end() && has_auth(conf.managers.at(manager_type::PROPOSAL))), 
                 info_err::PERMISSION_DENIED, "permission denied" );
+    _check_auth(*governance, conf, info);
+
     CHECKC( _db.get(info) ,info_err::RECORD_NOT_FOUND, "record not found");
     CHECKC( info.creator == owner, info_err::PERMISSION_DENIED, "only the creator can operate" );
     CHECKC( info.status == info_status::RUNNING, info_err::NOT_AVAILABLE, "under maintenance" );
@@ -271,3 +273,10 @@ const mdaoinfo::conf_t& mdaoinfo::_conf() {
     return *_conf_ptr;
 }
 
+void mdaoinfo::_check_auth(const governance_t& governance, const conf_t& conf, const dao_info_t& info) {
+    if(governance.proposal_model == propose_model_type::MIX ){
+        CHECKC(has_auth(conf.managers.at(manager_type::PROPOSAL)) || has_auth(info.creator), info_err::NOT_MODIFY, "cannot be modified for now" );
+    }else{
+        CHECKC( has_auth(conf.managers.at(manager_type::PROPOSAL)), info_err::NOT_MODIFY, "cannot be modified for now" );
+    }   
+}

@@ -31,13 +31,11 @@ namespace mdaotoken {
 //     #define multiply_decimal64(a, b, precision) multiply_decimal<int64_t, int128_t>(a, b, precision)
     void token::create(const name &issuer,
                         const asset &maximum_supply,
-                        const uint16_t &fee_ratio,
                         const std::string &fullname,
-                        const name &dao_code,                       
                         const std::string &meta_data)
     {
         auto conf = _conf();
-        check(has_auth(conf.managers[manager_type::INFO]) || has_auth(conf.managers[manager_type::ALGOEX]), "insufficient permissions");
+        check(has_auth(conf.managers[manager_type::FACTORY]) || has_auth(conf.managers[manager_type::ALGOEX]), "insufficient permissions");
         check(is_account(issuer), "issuer account does not exist");
         
         const auto &sym = maximum_supply.symbol;
@@ -55,8 +53,6 @@ namespace mdaotoken {
             s.supply.symbol     = maximum_supply.symbol;
             s.max_supply        = maximum_supply;
             s.issuer            = issuer;
-            s.dao_code          = dao_code;
-            s.fee_ratio         = fee_ratio;
             s.min_fee_quantity  = asset(0, maximum_supply.symbol);
             s.fullname = fullname;
             s.meta_data = meta_data;
@@ -65,6 +61,7 @@ namespace mdaotoken {
 
     void token::issue(const name &to, const asset &quantity, const string &memo)
     {
+        auto conf = _conf();
 
         const auto& sym = quantity.symbol;
         auto sym_code_raw = sym.code().raw();
@@ -75,7 +72,7 @@ namespace mdaotoken {
         auto existing = statstable.find(sym_code_raw);
         check(existing != statstable.end(), "token with symbol does not exist, create token before issue");
         const auto &st = *existing;
-        check( has_auth(to) && (st.issuer == to || MDAO_TREASURY == to || MDAO_ALGOEX == to), "insufficient permissions");
+        check( has_auth(conf.managers[manager_type::FACTORY]) && (st.issuer == to), "insufficient permissions");
 
         check(quantity.is_valid(), "invalid quantity");
         check(quantity.amount > 0, "must issue positive quantity");

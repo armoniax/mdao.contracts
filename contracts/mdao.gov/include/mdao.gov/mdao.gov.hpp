@@ -6,6 +6,7 @@
 #include <eosio/time.hpp>
 #include "mdao.gov.db.hpp"
 #include <mdao.conf/mdao.conf.db.hpp>
+#include <mdao.info/mdao.info.db.hpp>
 
 using namespace eosio;
 using namespace wasm::db;
@@ -14,13 +15,7 @@ using namespace std;
 
 static constexpr symbol   AM_SYMBOL = symbol(symbol_code("AMAX"), 8);
 static constexpr uint64_t PROPOSE_STG_PERMISSION_AGING = 24 * 3600;
-
-// static constexpr name AMAX_TOKEN{"amax.token"_n};
-// static constexpr name MDAO_CONF{"mdao.conf"_n};
-// static constexpr name MDAO_STG{"mdao.stg"_n};
-// static constexpr name MDAO_GOV{"mdao.gov"_n};
-// static constexpr name MDAO_VOTE{"mdao.vote"_n};
-// static constexpr name AMAX_MULSIGN{"amax.mulsign"_n};
+static constexpr uint64_t seconds_per_hour      = 3600;
 
 namespace gov_status {
     static constexpr name RUNNING       = "running"_n;
@@ -28,27 +23,10 @@ namespace gov_status {
     static constexpr name CANCEL        = "cancel"_n;
 };
 
-namespace plan_type {
-    static constexpr name SINGLE        = "single"_n;
-    static constexpr name MULTIPLE      = "multiple"_n;
-
-};
-
 namespace strategy_action_type {
      static constexpr name VOTE         = "vote"_n;
-     static constexpr name PROPOSE      = "propose"_n;
-
+     static constexpr name PROPOSAL     = "proposal"_n;
 };
-
-// namespace manager {
-//     static constexpr name INFO       = "info"_n;
-//     static constexpr name STRATEGY   = "strategy"_n;
-//     static constexpr name GOV        = "gov"_n;
-//     static constexpr name WALLET     = "wallet"_n;
-//     static constexpr name TOKEN      = "token"_n;
-//     static constexpr name VOTE       = "vote"_n;
-
-// };
 
 enum class gov_err: uint8_t {
     ACCOUNT_NOT_EXITS       =1,
@@ -89,8 +67,9 @@ public:
 
     [[eosio::action]]
     ACTION create(const name& dao_code, const uint64_t& propose_strategy_id, 
-                    const uint64_t& vote_strategy_id, const uint32_t& require_participation, 
-                    const uint32_t& require_pass );
+                            const uint64_t& vote_strategy_id, const uint32_t& require_participation, 
+                            const uint32_t& require_pass, const uint16_t& update_interval,
+                            const uint16_t& voting_period);
 
     [[eosio::action]]
     ACTION setvotestg(const name& dao_code, const uint64_t& vote_strategy_id, 
@@ -108,11 +87,15 @@ public:
     
     [[eosio::action]]
     ACTION startpropose(const name& creator, const name& dao_code, const string& title,
-                                 const string& proposal_name, const string& desc, 
-                                 const name& plan_type);
+                                const string& desc);
     [[eosio::action]]
     void deletegov(name dao_code);
+
+    [[eosio::action]]
+    ACTION setpropmodel(const name& dao_code, const name& propose_model);
+
 private:
     void _cal_votes(const name dao_code, const strategy_t& vote_strategy, const name voter, int64_t& value);
+    void _check_auth( const governance_t& governance, const conf_t& conf, const dao_info_t& info);
 
 };

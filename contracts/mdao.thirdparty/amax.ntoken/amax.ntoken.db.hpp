@@ -24,12 +24,12 @@ using namespace eosio;
 #define TBL struct [[eosio::table, eosio::contract("amax.ntoken")]]
 #define NTBL(name) struct [[eosio::table(name), eosio::contract("amax.ntoken")]]
 
-NTBL("global") global_t {
-    set<name> notaries;
+// NTBL("global") global_t {
+//     set<name> notaries;
 
-    EOSLIB_SERIALIZE( global_t, (notaries) )
-};
-typedef eosio::singleton< "global"_n, global_t > global_singleton;
+//     EOSLIB_SERIALIZE( global_t, (notaries) )
+// };
+// typedef eosio::singleton< "global"_n, global_t > global_singleton;
 
 // struct nsymbol {
 //     uint32_t id;

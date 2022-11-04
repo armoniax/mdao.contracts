@@ -18,42 +18,30 @@ static uint128_t get_union_id(const name& account, const uint64_t& proposal_id){
     return ( (uint128_t)account.value ) << 64 | proposal_id;
 }
 
-struct plan{
-    uint32_t    id = 0;
+struct option{
     string      title;
     string      desc;
-    uint32_t    recv_votes = 0;
-};
-
-struct single_plan{
-    string      title;
-    string      desc;
-    uint32_t    recv_votes = 0;
     transaction execute_actions;
+    uint32_t    recv_votes = 0;
 };
-
-struct multiple_plan {
-    vector<plan>    plans;
-};
-
-typedef std::variant<single_plan, multiple_plan> plan_data;
 
 struct TG_TBL proposal_t {
     uint64_t        id;
     name            dao_code;
+    uint64_t        proposal_strategy_id;
     uint64_t        vote_strategy_id;
-    uint64_t        propose_strategy_id;
     name            status;
     name            creator;
-    string          proposal_name;
     string          title;
     string          desc;
     name            type;
-    uint32_t        recv_votes; //收到总票数
-    uint32_t        reject_votes; //弃权总票数
+    uint32_t        approve_votes; //同意总票数
+    uint32_t        deny_votes; //不同意总票数
+    uint32_t        waive_votes; //弃权总票数
     uint32_t        users_count; //参与人数
-    uint32_t        reject_users_count; //拒绝人数
-    plan_data       proposal_plan;
+    uint32_t        deny_users_count; //拒绝人数
+    uint32_t        waive_users_count; //弃权总人数
+    map<string, option>    options;
     time_point_sec  created_at = current_time_point();
     time_point_sec  started_at;
     time_point_sec  executed_at;
@@ -64,45 +52,44 @@ struct TG_TBL proposal_t {
         return creator.value;
     }
     uint128_t by_union_id()const {
-        return get_union_id( creator, id);
+        return get_union_id( creator, id );
     }
     proposal_t() {}
     proposal_t(const uint64_t& i): id(i) {}
 
-    EOSLIB_SERIALIZE( proposal_t, (id)(dao_code)(vote_strategy_id)(propose_strategy_id)(status)(creator)(proposal_name)(title)(desc)(type)
-                (recv_votes)(reject_votes)(users_count)(reject_users_count)(proposal_plan)(created_at)(started_at)(executed_at) )
+    EOSLIB_SERIALIZE( proposal_t, (id)(dao_code)(proposal_strategy_id)(vote_strategy_id)(status)(creator)(title)(desc)(type)
+                (approve_votes)(deny_votes)(waive_votes)(users_count)(deny_users_count)(waive_users_count)(options)(created_at)(started_at)(executed_at) )
 
     typedef eosio::multi_index <"proposals"_n, proposal_t,        
-        indexed_by<"accountid"_n,  const_mem_fun<proposal_t, uint64_t, &proposal_t::by_creator> >,
+        indexed_by<"creator"_n,  const_mem_fun<proposal_t, uint64_t, &proposal_t::by_creator> >,
         indexed_by<"unionid"_n,  const_mem_fun<proposal_t, uint128_t, &proposal_t::by_union_id> >
     > idx_t;
 };
 
-
-struct TG_TBL votelist_t {
+struct TG_TBL vote_t {
     uint64_t        id;
     name            account;
-    name            direction; //agree ｜ reject
+    name            direction; //approve ｜ deny ｜ waive
     uint64_t        proposal_id;
-    uint32_t        plan_id;
+    string          title;
     uint32_t        vote_weight;
     time_point_sec  voted_at;
 
     uint64_t    primary_key()const { return id; }
     uint64_t    scope() const { return 0; }
 
-    votelist_t() {}
-    votelist_t(const uint64_t& pid): proposal_id(pid) {}
+    vote_t() {}
+    vote_t(const uint64_t& pid): proposal_id(pid) {}
 
     uint64_t by_account() const { return account.value; }
     uint128_t by_union_id()const {
         return get_union_id( account, proposal_id);
     }
-    EOSLIB_SERIALIZE( votelist_t, (id)(account)(direction)(proposal_id)(plan_id)(vote_weight)(voted_at) )
+    EOSLIB_SERIALIZE( vote_t, (id)(account)(direction)(proposal_id)(title)(vote_weight)(voted_at) )
 
-    typedef eosio::multi_index <"votes"_n, votelist_t,
-        indexed_by<"accountid"_n,  const_mem_fun<votelist_t, uint64_t, &votelist_t::by_account> >,
-        indexed_by<"unionid"_n,  const_mem_fun<votelist_t, uint128_t, &votelist_t::by_union_id> >
+    typedef eosio::multi_index <"votes"_n, vote_t,
+        indexed_by<"accountid"_n,  const_mem_fun<vote_t, uint64_t, &vote_t::by_account> >,
+        indexed_by<"unionid"_n,  const_mem_fun<vote_t, uint128_t, &vote_t::by_union_id> >
     > idx_t;
 };
 

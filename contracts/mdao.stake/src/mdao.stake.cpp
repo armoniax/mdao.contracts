@@ -23,6 +23,7 @@ ACTION mdaostake::init( const set<name>& managers, const set<name>& supported_co
 
 void mdaostake::staketoken(const name& from, const name& to, const asset& quantity, const string& memo )
 {
+    // CHECKC( false, stake_err::UNINITIALIZED, "contract uninitialized" );
     if(to != get_self()) return;
     CHECKC( _gstate.initialized, stake_err::UNINITIALIZED, "contract uninitialized" );
     CHECKC( quantity.amount>0, stake_err::NOT_POSITIVE, "swap quanity must be positive" )

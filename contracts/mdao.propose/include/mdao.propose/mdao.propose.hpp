@@ -26,8 +26,9 @@ namespace proposal_status {
 };
 
 namespace vote_direction {
-    static constexpr name AGREE     = "agree"_n;
-    static constexpr name REJECT    = "reject"_n;
+    static constexpr name APPROVE     = "approve"_n;
+    static constexpr name DENY        = "deny"_n;
+    static constexpr name WAIVE       = "waive"_n;
 
 };
 
@@ -148,19 +149,19 @@ struct setvotestg_data {
 
 struct setproposestg_data {
     name dao_code;   
-    uint64_t propose_strategy_id; 
-    EOSLIB_SERIALIZE( setproposestg_data, (dao_code)(propose_strategy_id) )
+    uint64_t proposal_strategy_id; 
+    EOSLIB_SERIALIZE( setproposestg_data, (dao_code)(proposal_strategy_id) )
 
 };
 
 struct setvotetime_data {
     name dao_code;   
-    uint16_t voting_limit_hours; 
+    uint16_t voting_period; 
 };
 
 struct setlocktime_data {
     name dao_code;                    
-    uint16_t limit_update_hours; 
+    uint16_t update_interval; 
 };
 
 struct tokentranout_data {
@@ -168,6 +169,11 @@ struct tokentranout_data {
     name to;     
     extended_asset quantity;                    
     string memo; 
+};
+
+struct setpropmodel_data {
+    name dao_code;                    
+    name propose_model;     
 };
 
 typedef std::variant<updatedao_data, bindtoken_data, binddapp_data, createtoken_data, issuetoken_data, 
@@ -190,9 +196,9 @@ public:
     mdaoproposal(name receiver, name code, datastream<const char*> ds):_db(_self),  contract(receiver, code, ds){}
 
     ACTION create(const name& dao_code, const name& creator, 
-                    const string& proposal_name, const string& desc, 
-                    const string& title, const uint64_t& vote_strategy_id, 
-                    const uint64_t& propose_strategy_id, const name& type);
+                    const string& desc, const string& title, 
+                    const uint64_t& vote_strategy_id, 
+                    const uint64_t& proposal_strategy_id);
 
     ACTION cancel(const name& owner, const uint64_t& proposalid);
 
@@ -202,17 +208,19 @@ public:
 
     ACTION execute(const uint64_t& proposal_id);
 
-    ACTION votefor(const name& voter, const uint64_t& proposal_id, const uint32_t plan_id, const bool direction);
+    ACTION votefor(const name& voter, const uint64_t& proposal_id,  const string& title, const name& vote);
 
     ACTION setaction(const name& owner, const uint64_t& proposalid, 
                         const name& action_name, const name& action_account, 
-                        const string& packed_action_data_string);
+                        const string& packed_action_data_string, 
+                        const string& title);
     
     ACTION recycledb(uint32_t max_rows);
 
     ACTION deletepropose(uint64_t id);
+    ACTION deletevote(uint32_t id); 
 
 private:
-    void _check_proposal_params(const action_data_variant& data_var,  const name& action_name, const name& action_account, const conf_t& conf);
-    void _cal_votes(const name dao_code, const strategy_t& vote_strategy, const name voter, int64_t& value);
+    void _check_proposal_params(const action_data_variant& data_var,  const name& action_name, const name& action_account, const name& proposal_dao_code, const conf_t& conf);
+    void _cal_votes(const name dao_code, const strategy_t& vote_strategy, const name voter, int64_t& value) ;
 };

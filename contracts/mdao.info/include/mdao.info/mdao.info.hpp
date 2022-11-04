@@ -48,7 +48,8 @@ enum class info_err: uint8_t {
     NOT_POSITIVE        = 17,
     NOT_ALLOW           = 18,
     ACCOUNT_NOT_EXITS   = 19,
-    TOKEN_NOT_EXIST     = 20
+    TOKEN_NOT_EXIST     = 20,
+    NOT_MODIFY          = 21
 };
 
 class [[eosio::contract("mdao.info")]] mdaoinfo : public contract {
@@ -62,6 +63,7 @@ private:
     std::unique_ptr<conf_t> _conf_ptr;
 
     const conf_t& _conf();
+    void _check_auth( const governance_t& governance, const conf_t& conf, const dao_info_t& info);
 
 public:
     using contract::contract;
@@ -94,13 +96,13 @@ public:
 
     ACTION recycledb(uint32_t max_rows);
 
-    [[eosio::action]]
-    void createtoken(const name& code, const name& owner, const uint16_t& transfer_ratio, 
-                     const string& fullname, const asset& maximum_supply, const string& metadata);
+    // [[eosio::action]]
+    // void createtoken(const name& code, const name& owner, const uint16_t& transfer_ratio, 
+    //                  const string& fullname, const asset& maximum_supply, const string& metadata);
 
-    [[eosio::action]]
-    void issuetoken(const name& owner, const name& code, const name& to, 
-                            const asset& quantity, const string& memo);
+    // [[eosio::action]]
+    // void issuetoken(const name& owner, const name& code, const name& to, 
+    //                         const asset& quantity, const string& memo);
    
     [[eosio::action]]
     void bindntoken(const name& owner, const name& code, const extended_nsymbol& ntoken);
