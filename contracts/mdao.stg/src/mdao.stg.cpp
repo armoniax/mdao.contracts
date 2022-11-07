@@ -14,7 +14,7 @@ void strategy::create( const name& creator,
 
     CHECKC( stg_name.size() < MAX_CONTENT_SIZE, err::OVERSIZED, "stg_name length should less than "+ to_string(MAX_CONTENT_SIZE) )
     CHECKC( stg_algo.size() < MAX_ALGO_SIZE, err::OVERSIZED, "stg_algo length should less than "+ to_string(MAX_ALGO_SIZE) )
-
+    
     auto strategies         = strategy_t::idx_t(_self, _self.value);
     auto pid                = strategies.available_primary_key();
     auto strategy           = strategy_t(pid);
@@ -89,10 +89,10 @@ void strategy::verify( const name& creator,
     CHECKC( _db.get( stg ), err::RECORD_NOT_FOUND, "strategy not found: " + to_string( stg_id ) )
     CHECKC( stg.status != strategy_status::published, err::NO_AUTH, "cannot verify published strategy" )
 
-    int32_t weight = cal_weight( get_self(), value, account , stg_id);
+    int32_t weight = cal_weight( get_self(), value, stg_id);
     CHECKC( weight == expect_weight, err::UNRESPECT_RESULT, "algo result weight is: "+to_string(weight) )
 
-    stg.status = strategy_status::tested;
+    stg.status = strategy_status::verified;
     _db.set( stg, creator );
 }
 
@@ -103,11 +103,6 @@ void strategy::testalgo( const name& account, const uint64_t& stg_id ){
 
     auto weight = cal_balance_weight(get_self(), stg_id, account);
     check(false, "weight: "+ to_string(weight));
-}
-
-
-void strategy::formatsym(const symbol_code& sym){
-    check(false, "symbol_code to uint: " + to_string(sym.raw()));
 }
 
 void strategy::remove( const name& creator, 
@@ -129,7 +124,7 @@ void strategy::publish( const name& creator,
     strategy_t stg = strategy_t( stg_id );
     CHECKC( _db.get( stg ), err::RECORD_NOT_FOUND, "strategy not found: " + to_string( stg_id ) )
     CHECKC( stg.creator == creator, err::NO_AUTH, "require creator auth" )
-    CHECKC( stg.status == strategy_status::tested, err::NO_AUTH, "please verify your strategy before publish" );
+    CHECKC( stg.status == strategy_status::verified, err::NO_AUTH, "please verify your strategy before publish" );
 
     stg.status = strategy_status::published;
     _db.set( stg, creator );
