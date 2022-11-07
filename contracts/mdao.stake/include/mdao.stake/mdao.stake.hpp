@@ -45,6 +45,19 @@ public:
     
     ACTION init( const set<name>& managers, const set<name>&supported_contracts );
 
+
+
+    /**
+     * stake token method
+     * @from
+     * @to
+     * @quantity
+     * @memo "daocode"
+     */
+    [[eosio::on_notify("amax.ntoken::transfer")]]
+    void stakenft(name from, name to, vector<nasset> &assets, string memo);
+
+    
     /**
      * stake token method
      * @from 
@@ -57,15 +70,7 @@ public:
 
     ACTION unstaketoken(const uint64_t &id, const vector<extended_asset> &tokens);
 
-    /**
-     * stake token method
-     * @from
-     * @to
-     * @quantity
-     * @memo "daocode"
-     */
-    [[eosio::on_notify("amax.ntoken::transfer")]]
-    void stakenft(name from, name to, vector<nasset> &assets, string memo);
+    
 
     ACTION unstakenft(const uint64_t &id, const vector<extended_nasset> &nfts);
 
