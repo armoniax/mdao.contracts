@@ -85,9 +85,6 @@ public:
     ACTION setvotetime(const name& dao_code, const uint16_t& vote_time);
     
     [[eosio::action]]
-    ACTION startpropose(const name& creator, const name& dao_code, const string& title,
-                                const string& desc);
-    [[eosio::action]]
     void deletegov(name dao_code);
 
     [[eosio::action]]

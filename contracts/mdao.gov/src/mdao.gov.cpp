@@ -141,27 +141,28 @@ ACTION mdaogov::setvotetime(const name& dao_code, const uint16_t& voting_period)
     _db.set(governance, _self);
 }
  
-ACTION mdaogov::startpropose(const name& creator, const name& dao_code, const string& title, const string& desc)
-{
-    require_auth( creator );
-    auto conf = _conf();
-    CHECKC( conf.status != conf_status::PENDING, gov_err::NOT_AVAILABLE, "under maintenance" );
+// ACTION mdaogov::startpropose(const name& creator, const name& dao_code, const string& title, const string& desc)
+// {
+//     require_auth( creator );
+//     auto conf = _conf();
+//     CHECKC( conf.status != conf_status::PENDING, gov_err::NOT_AVAILABLE, "under maintenance" );
 
-    governance_t governance(dao_code);
-    CHECKC( _db.get(governance) ,gov_err::RECORD_NOT_FOUND, "governance not exist" );
-    uint64_t vote_strategy_id = governance.strategies.at(strategy_action_type::VOTE);
-    uint64_t proposal_strategy_id = governance.strategies.at(strategy_action_type::PROPOSAL);
+//     governance_t governance(dao_code);
+//     CHECKC( _db.get(governance) ,gov_err::RECORD_NOT_FOUND, "governance not exist" );
+//     uint64_t vote_strategy_id = governance.strategies.at(strategy_action_type::VOTE);
+//     uint64_t proposal_strategy_id = governance.strategies.at(strategy_action_type::PROPOSAL);
 
-    strategy_t::idx_t stg(MDAO_STG, MDAO_STG.value);
-    auto propose_strategy = stg.find(proposal_strategy_id);
-    CHECKC( propose_strategy != stg.end(), gov_err::STRATEGY_NOT_FOUND, "strategy not found" );
-        
-    int64_t stg_weight = 0;
-    _cal_votes(dao_code, *propose_strategy, creator, stg_weight);
-    CHECKC( stg_weight > 0, gov_err::INSUFFICIENT_WEIGHT, "insufficient strategy weight")
+//     strategy_t::idx_t stg(MDAO_STG, MDAO_STG.value);
+//     auto propose_strategy = stg.find(proposal_strategy_id);
+//     CHECKC( propose_strategy != stg.end(), gov_err::STRATEGY_NOT_FOUND, "strategy not found" );
+//     // CHECKC( false, gov_err::STRATEGY_NOT_FOUND, "strategy not found" );
 
-    VOTE_CREATE(MDAO_PROPOSAL, dao_code, creator, desc, title, vote_strategy_id, proposal_strategy_id)
-}
+//     int64_t stg_weight = 0;
+//     _cal_votes(dao_code, *propose_strategy, creator, stg_weight);
+//     CHECKC( stg_weight > 0, gov_err::INSUFFICIENT_WEIGHT, "insufficient strategy weight")
+
+//     VOTE_CREATE(MDAO_PROPOSAL, dao_code, creator, desc, title, vote_strategy_id, proposal_strategy_id)
+// }
 
 void mdaogov::deletegov(name dao_code) {
     governance_t governance(dao_code);

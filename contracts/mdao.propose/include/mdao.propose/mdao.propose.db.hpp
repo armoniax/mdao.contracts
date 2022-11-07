@@ -97,4 +97,10 @@ struct TG_TBL vote_t {
     > idx_t;
 };
 
+struct [[eosio::table("global"), eosio::contract("mdaopropose2")]] prop_global_t {
+    uint64_t last_propose_id;
+    EOSLIB_SERIALIZE( prop_global_t, (last_propose_id) )
+};
+
+typedef eosio::singleton< "global"_n, prop_global_t > propose_global_singleton;
 } //amax
