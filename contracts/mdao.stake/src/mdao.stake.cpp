@@ -15,17 +15,17 @@ ACTION mdaostake::init( const set<name>& managers, const set<name>& supported_co
     _gstate.initialized = true;
     // _global.set(_gstate, get_self());
 
-    dao_stake_t::idx_t ds( _self,_self.value);
-    auto itr = ds.begin();
-    while( itr != ds.end()){
-        itr = ds.erase(itr);
-    }
+    // dao_stake_t::idx_t ds( _self,_self.value);
+    // auto itr = ds.begin();
+    // while( itr != ds.end()){
+    //     itr = ds.erase(itr);
+    // }
 
-    user_stake_t::idx_t us( _self,_self.value);
-    auto d_itr = us.begin();
-    while(d_itr != us.end()){
-        d_itr = us.erase(d_itr);
-    }
+    // user_stake_t::idx_t us( _self,_self.value);
+    // auto d_itr = us.begin();
+    // while(d_itr != us.end()){
+    //     d_itr = us.erase(d_itr);
+    // }
 }
 
 void mdaostake::staketoken(const name& from, const name& to, const asset& quantity, const string& memo )
