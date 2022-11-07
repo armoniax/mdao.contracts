@@ -60,7 +60,7 @@ namespace wasm
 
         uint64_t farm_lease_id  = 0;
         map <extended_symbol, uint32_t> farm_scales;
-        EOSLIB_SERIALIZE(gswap_t, (status)(fee_collector)(make_fee_ratio)(take_fee_ratio)(swap_id)(supported_contracts)(farm_lease_id)(farm_scales))
+        EOSLIB_SERIALIZE(gswap_t, (status)(fee_collector)(admin)(make_fee_ratio)(take_fee_ratio)(swap_id)(supported_contracts)(farm_lease_id)(farm_scales))
     };
 
     typedef eosio::singleton<"global"_n, gswap_t> gswap_singleton;
