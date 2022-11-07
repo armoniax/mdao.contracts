@@ -15,17 +15,17 @@ ACTION mdaostake::init( const set<name>& managers, const set<name>& supported_co
     _gstate.initialized = true;
     // _global.set(_gstate, get_self());
 
-    // dao_stake_t::idx_t ds( _self,_self.value);
-    // auto itr = ds.begin();
-    // while( itr != ds.end()){
-    //     itr = ds.erase(itr);
-    // }
+    dao_stake_t::idx_t ds( _self,_self.value);
+    auto itr = ds.begin();
+    while( itr != ds.end()){
+        itr = ds.erase(itr);
+    }
 
-    // user_stake_t::idx_t us( _self,_self.value);
-    // auto d_itr = us.begin();
-    // while(d_itr != us.end()){
-    //     d_itr = us.erase(d_itr);
-    // }
+    user_stake_t::idx_t us( _self,_self.value);
+    auto d_itr = us.begin();
+    while(d_itr != us.end()){
+        d_itr = us.erase(d_itr);
+    }
 }
 
 void mdaostake::staketoken(const name& from, const name& to, const asset& quantity, const string& memo )
@@ -56,8 +56,8 @@ void mdaostake::staketoken(const name& from, const name& to, const asset& quanti
     user_stake_t user_stake(daocode, from);
     if(user_stake_iter == user_stake_index.end()) {
         // record not found
-        dao_stake.tokens_stake = map<extended_symbol, int64_t>();
-        dao_stake.nfts_stake = map<extended_nsymbol, int64_t>();
+        user_stake.tokens_stake = map<extended_symbol, int64_t>();
+        user_stake.nfts_stake = map<extended_nsymbol, int64_t>();
         user_stake.freeze_until = time_point_sec(uint32_t(0));
         dao_stake.user_count ++;
         user_stake.id = user_stake_table.available_primary_key();
@@ -147,8 +147,8 @@ void mdaostake::stakenft( name from, name to, vector< nasset >& assets, string m
     user_stake_t user_stake(daocode, from);
     if(user_stake_iter == user_stake_index.end()) {
         // record not found
-        dao_stake.tokens_stake = map<extended_symbol, int64_t>();
-        dao_stake.nfts_stake = map<extended_nsymbol, int64_t>();
+        user_stake.tokens_stake = map<extended_symbol, int64_t>();
+        user_stake.nfts_stake = map<extended_nsymbol, int64_t>();
         user_stake.freeze_until = time_point_sec(uint32_t(0));
         dao_stake.user_count ++;
         user_stake.id = user_stake_table.available_primary_key();
