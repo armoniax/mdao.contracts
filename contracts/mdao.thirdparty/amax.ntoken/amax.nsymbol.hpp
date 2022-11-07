@@ -46,15 +46,16 @@ struct nsymbol {
     friend bool operator==(const nsymbol&, const nsymbol&);
     bool is_valid()const { return( id > parent_id ); }
     uint64_t raw()const { return( (uint64_t) parent_id << 32 | id ); } 
-
     EOSLIB_SERIALIZE( nsymbol, (id)(parent_id) )
 };
 
 bool operator==(const nsymbol& symb1, const nsymbol& symb2) { 
+
     return( symb1.id == symb2.id && symb1.parent_id == symb2.parent_id ); 
 }
 bool operator<(const nsymbol& symb1, const nsymbol& symb2) { 
-    return( symb1.id < symb2.id && symb1.parent_id < symb2.parent_id ); 
+   
+    return( symb1.id < symb2.id ); 
 }
 /**
  *  Extended nasset which stores the information of the owner of the symbol
