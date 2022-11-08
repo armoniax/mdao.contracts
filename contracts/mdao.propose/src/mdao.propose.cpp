@@ -2,19 +2,32 @@
 #include <mdao.info/mdao.info.db.hpp>
 #include <mdao.gov/mdao.gov.hpp>
 #include <mdao.treasury/mdao.treasury.hpp>
-#include <mdao.stake/mdao.stake.db.hpp>
+#include <mdao.stake/mdao.stake.hpp>
 #include <thirdparty/utils.hpp>
 #include <set>
-ACTION mdaoproposal::create(const name& dao_code, const name& creator, 
-                            const string& desc, const string& title, 
-                            const uint64_t& vote_strategy_id, 
-                            const uint64_t& proposal_strategy_id)
+
+ACTION mdaoproposal::create(const name& creator, const name& dao_code, const string& title, const string& desc)
 {
+    require_auth( creator );
     auto conf = _conf();
-    require_auth( conf.managers[manager_type::GOV] );
+    CHECKC( conf.status != conf_status::PENDING, gov_err::NOT_AVAILABLE, "under maintenance" );
+
+    governance_t::idx_t governance(MDAO_GOV, MDAO_GOV.value);
+    auto gov = governance.find(dao_code.value);
+    CHECKC( gov != governance.end(), proposal_err::RECORD_NOT_FOUND, "governance not found" );
+    uint64_t vote_strategy_id = gov->strategies.at(strategy_action_type::VOTE);
+    uint64_t proposal_strategy_id = gov->strategies.at(strategy_action_type::PROPOSAL);
+
+    strategy_t::idx_t stg(MDAO_STG, MDAO_STG.value);
+    auto propose_strategy = stg.find(proposal_strategy_id);
+    CHECKC( propose_strategy != stg.end(), proposal_err::RECORD_NOT_FOUND, "strategy not found" );   
+
+    int64_t stg_weight = 0;
+    _cal_votes(dao_code, *propose_strategy, creator, stg_weight, 0);
+    CHECKC( stg_weight > 0, proposal_err::INSUFFICIENT_BALANCE, "insufficient strategy weight")
 
     proposal_t::idx_t proposal_tbl(_self, _self.value);
-    auto id = proposal_tbl.available_primary_key();
+    auto id = _gstate.last_propose_id;
     proposal_tbl.emplace( creator, [&]( auto& row ) {
         row.id                  =   id;
         row.dao_code            =   dao_code;
@@ -25,6 +38,8 @@ ACTION mdaoproposal::create(const name& dao_code, const name& creator,
         row.title	            =   title;
         row.proposal_strategy_id=   proposal_strategy_id;
    });
+    _gstate.last_propose_id++;
+    _global.set( _gstate, get_self() );
 }
 
 ACTION mdaoproposal::cancel(const name& owner, const uint64_t& proposal_id)
@@ -80,7 +95,7 @@ ACTION mdaoproposal::startvote(const name& creator, const uint64_t& proposal_id)
     auto propose_strategy = stg.find(proposal.proposal_strategy_id);
 
     int64_t stg_weight = 0;
-    _cal_votes(proposal.dao_code, *propose_strategy, creator, stg_weight);
+    _cal_votes(proposal.dao_code, *propose_strategy, creator, stg_weight, 0);
     CHECKC( stg_weight > 0, proposal_err::VOTES_NOT_ENOUGH, "insufficient strategy weight")
 
     proposal.status  =  proposal_status::VOTING;
@@ -167,7 +182,7 @@ ACTION mdaoproposal::votefor(const name& voter, const uint64_t& proposal_id,
     auto vote_strategy = stg.find(proposal.vote_strategy_id);
 
     int64_t stg_weight = 0;
-    _cal_votes(proposal.dao_code, *vote_strategy, voter, stg_weight);
+    _cal_votes(proposal.dao_code, *vote_strategy, voter, stg_weight, conf.stake_period_days * seconds_per_day);
     CHECKC( stg_weight > 0, proposal_err::INSUFFICIENT_VOTES, "insufficient votes" );
 
     auto id = vote_tbl.available_primary_key();
@@ -219,7 +234,7 @@ void mdaoproposal::deletevote(uint32_t id) {
 
 ACTION mdaoproposal::setaction(const name& owner, const uint64_t& proposal_id,
                                 const name& action_name, const name& action_account, 
-                                const string& packed_action_data_string, 
+                                const action_data_variant& data, 
                                 const string& title)
 {
     require_auth(owner);
@@ -234,34 +249,27 @@ ACTION mdaoproposal::setaction(const name& owner, const uint64_t& proposal_id,
 
     governance_t::idx_t governance_tbl(MDAO_GOV, MDAO_GOV.value);
     const auto governance = governance_tbl.find(proposal.dao_code.value);
-    CHECKC( (proposal.started_at + (governance->voting_period * seconds_per_hour)) >= current_time_point(), proposal_err::ALREADY_EXPIRED, "proposal is already expired" );
+    CHECKC( proposal_status::CREATED == proposal.status, proposal_err::STATUS_ERROR, "can only operate if the state is created" );
+    CHECKC(  proposal.options.count(title), proposal_err::PARAM_ERROR, "please add plan" );
 
     option p = proposal.options[title];
     permission_level pem({_self, "active"_n});
 
-    vector<char> packed_action_data_blob(packed_action_data_string.size()/2);
-    from_hex(packed_action_data_string, packed_action_data_blob.data(), packed_action_data_blob.size());
     switch (action_name.value)
     {
         case proposal_action_type::updatedao.value: {
-            updatedao_data action_data = unpack<updatedao_data>(packed_action_data_blob);
-            action_data_variant data_var = action_data;
-            _check_proposal_params(data_var, action_name, action_account, proposal.dao_code, conf);
-            p.execute_actions.actions.push_back(action(pem, action_account, action_name, action_data));
+            _check_proposal_params(data, action_name, action_account, proposal.dao_code, conf);
+            p.execute_actions.actions.push_back(action(pem, action_account, action_name, data));
             break;
         }
         case proposal_action_type::bindtoken.value: {
-            bindtoken_data action_data = unpack<bindtoken_data>(packed_action_data_blob);
-            action_data_variant data_var = action_data;
-            _check_proposal_params(data_var, action_name, action_account, proposal.dao_code, conf);
-            p.execute_actions.actions.push_back(action(pem, action_account, action_name, action_data));
+            _check_proposal_params(data, action_name, action_account, proposal.dao_code, conf);
+            p.execute_actions.actions.push_back(action(pem, action_account, action_name, data));
             break;
         }
         case proposal_action_type::binddapp.value: {
-            binddapp_data action_data = unpack<binddapp_data>(packed_action_data_blob);
-            action_data_variant data_var = action_data;
-            _check_proposal_params(data_var, action_name, action_account, proposal.dao_code, conf);
-            p.execute_actions.actions.push_back(action(pem, action_account, action_name, action_data));
+            _check_proposal_params(data, action_name, action_account, proposal.dao_code, conf);
+            p.execute_actions.actions.push_back(action(pem, action_account, action_name, data));
             break;
         }
         // case proposal_action_type::createtoken.value: {
@@ -279,46 +287,36 @@ ACTION mdaoproposal::setaction(const name& owner, const uint64_t& proposal_id,
         //     break;
         // }
         case proposal_action_type::setvotestg.value: {
-            setvotestg_data action_data = unpack<setvotestg_data>(packed_action_data_blob);
-            action_data_variant data_var = action_data;
-            _check_proposal_params(data_var, action_name, action_account, proposal.dao_code, conf);
-            p.execute_actions.actions.push_back(action(pem, action_account, action_name, action_data));
+            _check_proposal_params(data, action_name, action_account, proposal.dao_code, conf);
+            p.execute_actions.actions.push_back(action(pem, action_account, action_name, data));
             break;
         }
         case proposal_action_type::setproposestg.value: {
-            setproposestg_data action_data = eosio::unpack<setproposestg_data>(packed_action_data_blob);
-            action_data_variant data_var = action_data;
-            _check_proposal_params(data_var, action_name, action_account, proposal.dao_code, conf);
-            p.execute_actions.actions.push_back(action(pem, action_account, action_name, action_data));
+            _check_proposal_params(data, action_name, action_account, proposal.dao_code, conf);
+            p.execute_actions.actions.push_back(action(pem, action_account, action_name, data));
             break;
         }
         case proposal_action_type::setlocktime.value: {
-            setlocktime_data action_data = unpack<setlocktime_data>(packed_action_data_blob);
-            action_data_variant data_var = action_data;
-            _check_proposal_params(data_var, action_name, action_account, proposal.dao_code, conf);
-            p.execute_actions.actions.push_back(action(pem, action_account, action_name, action_data));
+            _check_proposal_params(data, action_name, action_account, proposal.dao_code, conf);
+            p.execute_actions.actions.push_back(action(pem, action_account, action_name, data));
             break;
         }
          case proposal_action_type::setvotetime.value: {
-            setvotetime_data action_data = unpack<setvotetime_data>(packed_action_data_blob);
-            action_data_variant data_var = action_data;
-            _check_proposal_params(data_var, action_name, action_account, proposal.dao_code, conf);
-            p.execute_actions.actions.push_back(action(pem, action_account, action_name, action_data));
+            _check_proposal_params(data, action_name, action_account, proposal.dao_code, conf);
+            p.execute_actions.actions.push_back(action(pem, action_account, action_name, data));
             break;
         }
-        case proposal_action_type::tokentranout.value: {
-            tokentranout_data action_data = unpack<tokentranout_data>(packed_action_data_blob);
-            action_data_variant data_var = action_data;
-            _check_proposal_params(data_var, action_name, action_account, proposal.dao_code, conf);
-            p.execute_actions.actions.push_back(action(pem, action_account, action_name, action_data));
-            break;
-        }
+        // case proposal_action_type::tokentranout.value: {
+        //     _check_proposal_params(data, action_name, action_account, proposal.dao_code, conf);
+        //     p.execute_actions.actions.push_back(action(pem, action_account, action_name, data));
+        //     break;
+        // }
         default: {
             CHECKC( false, err::PARAM_ERROR, "Unsupport proposal type")
             break;
         }
     }
-
+    proposal.options[title] = p;
     _db.set(proposal, _self);
 }
 
@@ -454,19 +452,19 @@ void mdaoproposal::_check_proposal_params(const action_data_variant& data_var,  
             CHECKC( _db.get(governance), proposal_err::RECORD_NOT_FOUND, "governance not exist" );
             break;
         }
-        case proposal_action_type::tokentranout.value: {
-            tokentranout_data data = std::get<tokentranout_data>(data_var);
-            CHECKC(proposal_dao_code == data.dao_code, proposal_err::PARAM_ERROR, "dao_code error");
-            CHECKC( data.quantity.quantity.amount > 0, proposal_err::NOT_POSITIVE, "quantity must be positive" )
+        // case proposal_action_type::tokentranout.value: {
+        //     tokentranout_data data = std::get<tokentranout_data>(data_var);
+        //     CHECKC(proposal_dao_code == data.dao_code, proposal_err::PARAM_ERROR, "dao_code error");
+        //     CHECKC( data.quantity.quantity.amount > 0, proposal_err::NOT_POSITIVE, "quantity must be positive" )
 
-            treasury_balance_t treasury_balance(data.dao_code);
-            CHECKC( _db.get(treasury_balance), proposal_err::RECORD_NOT_FOUND, "dao not found" )
+        //     treasury_balance_t treasury_balance(data.dao_code);
+        //     CHECKC( _db.get(treasury_balance), proposal_err::RECORD_NOT_FOUND, "dao not found" )
 
-            uint64_t amount = treasury_balance.stake_assets[data.quantity.get_extended_symbol()];
-            CHECKC( amount > data.quantity.quantity.amount, proposal_err::INSUFFICIENT_BALANCE, "not sufficient funds " )
+        //     uint64_t amount = treasury_balance.stake_assets[data.quantity.get_extended_symbol()];
+        //     CHECKC( amount > data.quantity.quantity.amount, proposal_err::INSUFFICIENT_BALANCE, "not sufficient funds " )
 
-            break;
-        }
+        //     break;
+        // }
         default:{
             CHECKC(false, err::PARAM_ERROR, "Unsupport proposal type")
             break;
@@ -483,12 +481,22 @@ void mdaoproposal::recycledb(uint32_t max_rows) {
     }
 }
 
-void mdaoproposal::_cal_votes(const name dao_code, const strategy_t& vote_strategy, const name voter, int64_t& value) {
+void mdaoproposal::_cal_votes(const name dao_code, const strategy_t& vote_strategy, const name voter, int64_t& value, const uint32_t& lock_time) {
     switch(vote_strategy.type.value){
         case strategy_type::TOKEN_STAKE.value : 
         case strategy_type::NFT_STAKE.value : 
         case strategy_type::NFT_PARENT_STAKE.value:{
             value = mdao::strategy::cal_stake_weight(MDAO_STG, vote_strategy.id, dao_code, MDAO_STAKE, voter);
+
+            if(lock_time > 0){
+                user_stake_t::idx_t user_stake(MDAO_STAKE, MDAO_STAKE.value); 
+                auto user_stake_index = user_stake.get_index<"unionid"_n>(); 
+                auto user_stake_iter = user_stake_index.find(mdao::get_unionid(voter, dao_code)); 
+                CHECKC( user_stake_iter != user_stake_index.end(), proposal_err::RECORD_NOT_FOUND, "stake record not exist" );
+
+                EXTEND_LOCK(MDAO_STAKE, MDAO_GOV, user_stake_iter->id, lock_time);
+            }
+
             break;
         }
         case strategy_type::TOKEN_BALANCE.value:

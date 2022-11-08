@@ -40,7 +40,7 @@ void fixswap::init(const name& admin, const name& fee_collector, const uint32_t&
 }
 
 void fixswap::setfee(const name& fee_collector, const uint32_t& take_fee_ratio, const uint32_t& make_fee_ratio){
-    require_auth(_gstate.fee_collector);
+    require_auth(_gstate.admin);
 
     CHECKC( is_account(fee_collector), err::ACCOUNT_INVALID, "cannot found fee_collector" )
     CHECKC( take_fee_ratio >= 0 && take_fee_ratio <= 1000, err::NOT_POSITIVE, "take_fee_ratio must be in range 0~10% (0~1000)" )
@@ -53,7 +53,7 @@ void fixswap::setfee(const name& fee_collector, const uint32_t& take_fee_ratio, 
 }
 
 void fixswap::setfarm(const uint64_t& farm_lease_id, const map<extended_symbol, uint32_t>& farm_scales){
-    require_auth(_gstate.fee_collector);
+    require_auth(_gstate.admin);
 
     CHECKC( farm_lease_id >= 0, err::NOT_POSITIVE, "farm_lease_id cannot a negtive number" )
 

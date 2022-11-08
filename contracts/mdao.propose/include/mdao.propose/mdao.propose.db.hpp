@@ -50,9 +50,12 @@ struct TG_TBL proposal_t {
     uint64_t    scope() const { return 0; }
     uint64_t    by_creator()const {
         return creator.value;
+    }    
+    uint64_t    by_daocode()const {
+        return dao_code.value;
     }
     uint128_t by_union_id()const {
-        return get_union_id( creator, id );
+        return get_union_id( creator, dao_code.value );
     }
     proposal_t() {}
     proposal_t(const uint64_t& i): id(i) {}
@@ -62,6 +65,7 @@ struct TG_TBL proposal_t {
 
     typedef eosio::multi_index <"proposals"_n, proposal_t,        
         indexed_by<"creator"_n,  const_mem_fun<proposal_t, uint64_t, &proposal_t::by_creator> >,
+        indexed_by<"daocode"_n,  const_mem_fun<proposal_t, uint64_t, &proposal_t::by_daocode> >,
         indexed_by<"unionid"_n,  const_mem_fun<proposal_t, uint128_t, &proposal_t::by_union_id> >
     > idx_t;
 };
@@ -93,4 +97,10 @@ struct TG_TBL vote_t {
     > idx_t;
 };
 
+struct [[eosio::table("global"), eosio::contract("mdaopropose2")]] prop_global_t {
+    uint64_t last_propose_id;
+    EOSLIB_SERIALIZE( prop_global_t, (last_propose_id) )
+};
+
+typedef eosio::singleton< "global"_n, prop_global_t > propose_global_singleton;
 } //amax

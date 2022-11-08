@@ -86,6 +86,19 @@ struct [[eosio::table("global"), eosio::contract("mdao.conf")]] conf_global_t {
     asset             upgrade_fee;
     uint16_t          dapp_seats_max = 5;
     name              admin;
+    //Token creation restrictions
+    asset token_create_fee = asset(1'0000'0000, AMAX_SYMBOL);
+    map<name, name>   managers {
+        { manager_type::INFO, MDAO_INFO }
+        // { manager_type::STRATEGY, MDAO_STG },
+        // { manager_type::TOKEN, MDAO_TOKEN },
+        // { manager_type::PROPOSAL, MDAO_PROPOSAL },
+        // { manager_type::GOV, MDAO_GOV },
+        // { manager_type::STAKE, MDAO_STAKE },
+    };
+    set<name> token_contracts;
+    set<name> ntoken_contracts;
+    uint16_t  stake_period_days = 2;
     set<symbol_code>  black_symbols {
         symbol_code("USDT"), symbol_code("DOGE"), symbol_code("WBTC"),
         symbol_code("SHIB"), symbol_code("AVAX"), symbol_code("LINK"),
@@ -115,24 +128,10 @@ struct [[eosio::table("global"), eosio::contract("mdao.conf")]] conf_global_t {
         symbol_code("MBUSD"), symbol_code("MUSDC"), symbol_code("METH"),
         symbol_code("METC"), symbol_code("AMAX"), symbol_code("APLINK")
     };
-    //Token creation restrictions
-    asset token_create_fee = asset(1'0000'0000, AMAX_SYMBOL);
-    map<name, name>   managers {
-        { manager_type::INFO, MDAO_INFO }
-        // { manager_type::STRATEGY, MDAO_STG },
-        // { manager_type::TOKEN, MDAO_TOKEN },
-        // { manager_type::PROPOSAL, MDAO_PROPOSAL },
-        // { manager_type::GOV, MDAO_GOV },
-        // { manager_type::STAKE, MDAO_STAKE },
-    };
-    set<name> token_contracts;
-    set<name> ntoken_contracts;
-    uint16_t  stake_period_days = 2;
     bool      enable_metaverse  = false;
-
-    EOSLIB_SERIALIZE( conf_global_t, (appinfo)(status)(fee_taker)(upgrade_fee)(dapp_seats_max)
-                                     (admin)(black_symbols)(token_create_fee)(managers)(token_contracts)
-                                        (ntoken_contracts)(stake_period_days)(enable_metaverse) )//
+    EOSLIB_SERIALIZE( conf_global_t,    (appinfo)(status)(fee_taker)(upgrade_fee)(dapp_seats_max)
+                                        (admin)(token_create_fee)(managers)(token_contracts)(ntoken_contracts)
+                                        (stake_period_days)(black_symbols)(enable_metaverse) )
 };
 
 typedef eosio::singleton< "global"_n, conf_global_t > conf_global_singleton;

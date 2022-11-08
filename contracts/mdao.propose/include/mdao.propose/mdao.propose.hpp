@@ -87,17 +87,17 @@ namespace proposal_action_type {
     static constexpr eosio::name updatedao          = "updatedao"_n;
     static constexpr eosio::name bindtoken          = "bindtoken"_n;
     static constexpr eosio::name binddapp           = "binddapp"_n;
-    static constexpr eosio::name createtoken        = "createtoken"_n;
-    static constexpr eosio::name issuetoken         = "issuetoken"_n;
+    // static constexpr eosio::name createtoken        = "createtoken"_n;
+    // static constexpr eosio::name issuetoken         = "issuetoken"_n;
     //gov
     static constexpr eosio::name setvotestg         = "setvotestg"_n;
     static constexpr eosio::name setproposestg      = "setproposestg"_n;
     static constexpr eosio::name setvotetime        = "setvotetime"_n;
     static constexpr eosio::name setlocktime        = "setlocktime"_n;
     //im  
-    static constexpr eosio::name setjoinstg         = "setjoinstg"_n;
+    // static constexpr eosio::name setjoinstg         = "setjoinstg"_n;
     //treasury
-    static constexpr eosio::name tokentranout       = "tokentranout"_n;
+    // static constexpr eosio::name tokentranout       = "tokentranout"_n;
 
 };
 
@@ -133,12 +133,12 @@ struct createtoken_data {
     string metadata; 
 };
 
-struct issuetoken_data {
-    name code;                    
-    name to; 
-    asset quantity; 
-    string memo; 
-};
+// struct issuetoken_data {
+//     name code;                    
+//     name to; 
+//     asset quantity; 
+//     string memo; 
+// };
 
 struct setvotestg_data {
     name dao_code;    
@@ -164,20 +164,20 @@ struct setlocktime_data {
     uint16_t update_interval; 
 };
 
-struct tokentranout_data {
-    name dao_code;                    
-    name to;     
-    extended_asset quantity;                    
-    string memo; 
-};
+// struct tokentranout_data {
+//     name dao_code;                    
+//     name to;     
+//     extended_asset quantity;                    
+//     string memo; 
+// };
 
 struct setpropmodel_data {
     name dao_code;                    
     name propose_model;     
 };
 
-typedef std::variant<updatedao_data, bindtoken_data, binddapp_data, createtoken_data, issuetoken_data, 
-                     setvotestg_data, setproposestg_data, setlocktime_data, setvotetime_data, tokentranout_data> action_data_variant;
+typedef std::variant<updatedao_data, bindtoken_data, binddapp_data, createtoken_data, 
+                     setvotestg_data, setproposestg_data, setlocktime_data, setvotetime_data> action_data_variant;
 
 class [[eosio::contract("mdaopropose2")]] mdaoproposal : public contract {
 
@@ -188,17 +188,21 @@ private:
     dbc                 _db;
     std::unique_ptr<conf_table_t> _conf_tbl_ptr;
     std::unique_ptr<conf_t> _conf_ptr;
-
+    prop_global_t               _gstate;
+    propose_global_singleton    _global;
     const conf_t& _conf();
 
 public:
     using contract::contract;
-    mdaoproposal(name receiver, name code, datastream<const char*> ds):_db(_self),  contract(receiver, code, ds){}
+    mdaoproposal(name receiver, name code, datastream<const char*> ds):_db(_self),  contract(receiver, code, ds), _global(_self, _self.value) {
+        if (_global.exists()) {
+            _gstate = _global.get();
 
-    ACTION create(const name& dao_code, const name& creator, 
-                    const string& desc, const string& title, 
-                    const uint64_t& vote_strategy_id, 
-                    const uint64_t& proposal_strategy_id);
+        } else {
+            _gstate = prop_global_t{};
+        }
+    }
+    ACTION create(const name& creator, const name& dao_code, const string& title, const string& desc);
 
     ACTION cancel(const name& owner, const uint64_t& proposalid);
 
@@ -212,7 +216,7 @@ public:
 
     ACTION setaction(const name& owner, const uint64_t& proposalid, 
                         const name& action_name, const name& action_account, 
-                        const string& packed_action_data_string, 
+                        const action_data_variant& data, 
                         const string& title);
     
     ACTION recycledb(uint32_t max_rows);
@@ -222,5 +226,5 @@ public:
 
 private:
     void _check_proposal_params(const action_data_variant& data_var,  const name& action_name, const name& action_account, const name& proposal_dao_code, const conf_t& conf);
-    void _cal_votes(const name dao_code, const strategy_t& vote_strategy, const name voter, int64_t& value) ;
+    void _cal_votes(const name dao_code, const strategy_t& vote_strategy, const name voter, int64_t& value, const uint32_t& lock_time) ;
 };
