@@ -52,7 +52,7 @@ enum class info_err: uint8_t {
     NOT_MODIFY          = 21
 };
 
-class [[eosio::contract("mdao.info")]] mdaoinfo : public contract {
+class [[eosio::contract("mdaoinfotest")]] mdaoinfo : public contract {
 
 using conf_t = mdao::conf_global_t;
 using conf_table_t = mdao::conf_global_singleton;

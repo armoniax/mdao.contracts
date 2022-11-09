@@ -26,6 +26,7 @@ void fixswap::init(const name& admin, const name& fee_collector, const uint32_t&
 
     CHECKC( _gstate.status == swap_status_t::created, err::HAS_INITIALIZE, "cannot initialize again" )
     CHECKC( is_account(fee_collector), err::ACCOUNT_INVALID, "cannot found fee_collector" )
+    CHECKC( is_account(admin), err::ACCOUNT_INVALID, "cannot found admin" )
     CHECKC( fee_ratio >= 0 && fee_ratio <= 1000, err::ACCOUNT_INVALID, "fee_ratio must be in range 0~10% (0~1000)" )
 
     _gstate.status = swap_status_t::initialized;
@@ -92,6 +93,7 @@ void fixswap::ontransfer(name from, name to, asset quantity, string memo)
 
         name take_contract = name(params[4]);
         CHECKC( is_account(take_contract), err::ACCOUNT_INVALID, "cannot find take quantity contract" )
+        CHECKC( _gstate.supported_contracts.count(take_contract), err::SYMBOL_MISMATCH, "unsupport token contract" )
 
         swap_order.take_asset = extended_asset(take_quant, take_contract);
         if(params[5].length() > 0){
@@ -109,10 +111,13 @@ void fixswap::ontransfer(name from, name to, asset quantity, string memo)
         CHECKC( time_point_sec(current_time_point()) < swap_order.expired_at , err::TIME_EXPIRED, "swap order expired")
         CHECKC( swap_order.status == swap_status_t::matching, err::STATUS_MISMATCH, "order status mismatched" )
 
-        if(swap_order.taker != name(0)) {
+        if(swap_order.taker != name(0)){
             CHECKC( swap_order.taker == from, err::NO_AUTH, "no auth to swap order" )
+        }else{
+            swap_order.taker = from;
         }
-        else if(swap_order.code.size() != 0){
+
+        if(swap_order.code.size() != 0){
             string data = string(params[2]);
             checksum256 digest = sha256(&data[0], data.size());
             auto bytes = digest.extract_as_byte_array();
