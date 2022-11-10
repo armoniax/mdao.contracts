@@ -403,9 +403,10 @@ void mdaoproposal::_check_proposal_params(const action_data_variant& data_var,  
         case proposal_action_type::setvotestg.value: {
             setvotestg_data data = std::get<setvotestg_data>(data_var);
             CHECKC(proposal_dao_code == data.dao_code, proposal_err::PARAM_ERROR, "dao_code error");
-
-            governance_t governance(data.dao_code);
-            CHECKC( _db.get(governance), proposal_err::RECORD_NOT_FOUND, "governance not exist!" );
+       
+            governance_t::idx_t governance(MDAO_GOV, MDAO_GOV.value);
+            auto gov = governance.find(data.dao_code.value);
+            CHECKC( gov != governance.end(), proposal_err::RECORD_NOT_FOUND, "governance not found" );
 
             strategy_t::idx_t stg(MDAO_STG, MDAO_STG.value);
             auto vote_strategy = stg.find(data.vote_strategy_id);
@@ -437,9 +438,10 @@ void mdaoproposal::_check_proposal_params(const action_data_variant& data_var,  
             setlocktime_data data = std::get<setlocktime_data>(data_var);
             CHECKC(proposal_dao_code == data.dao_code, proposal_err::PARAM_ERROR, "dao_code error");
 
-            governance_t governance(data.dao_code);
-            CHECKC( _db.get(governance), proposal_err::RECORD_NOT_FOUND, "governance not exist" );
-            CHECKC( data.update_interval >= governance.voting_period, proposal_err::TIME_LESS_THAN_ZERO, "lock time less than vote time" );
+            governance_t::idx_t governance(MDAO_GOV, MDAO_GOV.value);
+            auto gov = governance.find(data.dao_code.value);
+            CHECKC( gov != governance.end(), proposal_err::RECORD_NOT_FOUND, "governance not found" );
+            CHECKC( data.update_interval >= gov->voting_period, proposal_err::TIME_LESS_THAN_ZERO, "lock time less than vote time" );
             
             break;
         }
@@ -447,9 +449,10 @@ void mdaoproposal::_check_proposal_params(const action_data_variant& data_var,  
             setvotetime_data data = std::get<setvotetime_data>(data_var);
             CHECKC(proposal_dao_code == data.dao_code, proposal_err::PARAM_ERROR, "dao_code error");
 
-            governance_t governance(data.dao_code);
-            CHECKC( _db.get(governance), proposal_err::RECORD_NOT_FOUND, "governance not exist" );
-            break;
+            governance_t::idx_t governance(MDAO_GOV, MDAO_GOV.value);
+            auto gov = governance.find(data.dao_code.value);
+            CHECKC( gov != governance.end(), proposal_err::RECORD_NOT_FOUND, "governance not found" );
+            break;     
         }
         // case proposal_action_type::tokentranout.value: {
         //     tokentranout_data data = std::get<tokentranout_data>(data_var);
