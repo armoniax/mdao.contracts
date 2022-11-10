@@ -35,9 +35,10 @@ ACTION mdaogov::create(const name& dao_code, const uint64_t& propose_strategy_id
 
     switch (vote_strategy->type.value)
     {
+        case strategy_type::NFT_PARENT_STAKE.value:
         case strategy_type::NFT_STAKE.value:
         case strategy_type::TOKEN_STAKE.value:{
-            CHECKC( require_participation <= TEN_THOUSAND && require_pass <= TEN_THOUSAND, gov_err::STRATEGY_NOT_FOUND, 
+            CHECKC( require_participation <= TEN_THOUSAND, gov_err::STRATEGY_NOT_FOUND, 
                         "participation no more than" + to_string(TEN_THOUSAND));
         }
         default:
@@ -73,10 +74,11 @@ ACTION mdaogov::setvotestg(const name& dao_code, const uint64_t& vote_strategy_i
     auto vote_strategy = stg.find(vote_strategy_id);
     CHECKC( vote_strategy != stg.end(), gov_err::STRATEGY_NOT_FOUND, "strategy not found" );
     switch (vote_strategy->type.value)
-    {
+    {        
+        case strategy_type::NFT_PARENT_STAKE.value:
         case strategy_type::NFT_STAKE.value:
         case strategy_type::TOKEN_STAKE.value:{
-            CHECKC( require_participation <= TEN_THOUSAND && require_pass <= TEN_THOUSAND, gov_err::PARAM_ERROR, 
+            CHECKC( require_participation <= TEN_THOUSAND, gov_err::PARAM_ERROR, 
                         "participation no more than" + to_string(TEN_THOUSAND));
         }
         default:

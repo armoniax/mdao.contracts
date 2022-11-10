@@ -133,7 +133,7 @@ ACTION mdaoproposal::execute( const uint64_t& proposal_id )
         default : {
             mdao::dao_stake_t::idx_t stake(MDAO_STAKE, MDAO_STAKE.value);
             auto stake_itr = stake.find(proposal.dao_code.value);
-            CHECKC( proposal.approve_votes >= governance->require_pass, proposal_err::VOTES_NOT_ENOUGH, "votes must meet the minimum number of votes" );
+            CHECKC( proposal.approve_votes >= proposal.deny_votes, proposal_err::VOTES_NOT_ENOUGH, "votes must meet the minimum number of votes" );
             CHECKC( proposal.users_count >= (governance->require_participation * stake_itr -> user_count / TEN_THOUSAND), proposal_err::VOTES_NOT_ENOUGH, "votes must meet the minimum number of votes" );
         }
     }
@@ -197,8 +197,7 @@ ACTION mdaoproposal::votefor(const name& voter, const uint64_t& proposal_id,
 
     });
 
-    option p = proposal.options[title];
-    p.recv_votes = vote == vote_direction::APPROVE ? p.recv_votes + stg_weight : p.recv_votes;
+    proposal.options[title].recv_votes = vote == vote_direction::APPROVE ? proposal.options[title].recv_votes + stg_weight : proposal.options[title].recv_votes;
 
     switch (vote.value)
     {
@@ -250,7 +249,7 @@ ACTION mdaoproposal::setaction(const name& owner, const uint64_t& proposal_id,
     governance_t::idx_t governance_tbl(MDAO_GOV, MDAO_GOV.value);
     const auto governance = governance_tbl.find(proposal.dao_code.value);
     CHECKC( proposal_status::CREATED == proposal.status, proposal_err::STATUS_ERROR, "can only operate if the state is created" );
-    CHECKC(  proposal.options.count(title), proposal_err::PARAM_ERROR, "please add plan" );
+    CHECKC( proposal.options.count(title), proposal_err::PARAM_ERROR, "param error" );
 
     option p = proposal.options[title];
     permission_level pem({_self, "active"_n});
@@ -488,7 +487,7 @@ void mdaoproposal::_cal_votes(const name dao_code, const strategy_t& vote_strate
         case strategy_type::NFT_PARENT_STAKE.value:{
             value = mdao::strategy::cal_stake_weight(MDAO_STG, vote_strategy.id, dao_code, MDAO_STAKE, voter);
 
-            if(lock_time > 0){
+            if(lock_time > 0 && value>0){
                 user_stake_t::idx_t user_stake(MDAO_STAKE, MDAO_STAKE.value); 
                 auto user_stake_index = user_stake.get_index<"unionid"_n>(); 
                 auto user_stake_iter = user_stake_index.find(mdao::get_unionid(voter, dao_code)); 

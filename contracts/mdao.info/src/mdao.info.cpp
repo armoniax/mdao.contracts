@@ -170,6 +170,7 @@ ACTION mdaoinfo::bindtoken(const name& owner, const name& code, const extended_s
     _check_permission(info, code, owner, conf);
     
     info.token = token; 
+    _db.set(info, _self);
 }
 
 ACTION mdaoinfo::updatestatus(const name& code, const bool& is_enable)
