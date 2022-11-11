@@ -45,7 +45,7 @@ public:
         else _gstate = stake_global_t{};
     }
     
-    ACTION init( const set<name>& managers, const set<name>&supported_contracts );
+    ACTION init( const set<name>& managers, const set<name>&supported_tokens );
 
 
 

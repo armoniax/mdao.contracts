@@ -19,25 +19,24 @@ using namespace wasm;
 #define SYMBOL(sym_code, precision) symbol(symbol_code(sym_code), precision)
 
 static constexpr uint64_t seconds_per_day                   = 24 * 3600;
-static constexpr uint64_t default_expired_secs = 1 * seconds_per_day;
-
-static constexpr uint64_t percent_boost = 10000;
+static constexpr uint64_t default_expired_secs              = 1 * seconds_per_day;
+static constexpr uint64_t percent_boost                     = 10000;
 // #define HASH256(str) sha256(str.c_str(), str.size())
 
-static constexpr name   APLINK_FARM              = "aplink.farm"_n;
-static constexpr symbol   APLINK_SYMBOL              = SYMBOL("APL", 4);
+static constexpr name   APLINK_FARM                         = "aplink.farm"_n;
+static constexpr symbol   APLINK_SYMBOL                     = SYMBOL("APL", 4);
 
 using checksum256 = fixed_bytes<32>;
 
 
 namespace swap_status_t {
-    static constexpr eosio::name created        = "created"_n;
-    static constexpr eosio::name initialized        = "initialized"_n;
-    static constexpr eosio::name maintaining       = "maintaining"_n;
+    static constexpr eosio::name created                    = "created"_n;
+    static constexpr eosio::name initialized                = "initialized"_n;
+    static constexpr eosio::name maintaining                = "maintaining"_n;
 
-    static constexpr eosio::name matching       = "matching"_n;
-    static constexpr eosio::name cancel       = "cancel"_n;
-    static constexpr eosio::name matched       = "matched"_n;
+    static constexpr eosio::name matching                   = "matching"_n;
+    static constexpr eosio::name cancel                     = "cancel"_n;
+    static constexpr eosio::name matched                    = "matched"_n;
 };
 
 namespace wasm
@@ -50,17 +49,18 @@ namespace wasm
     
     struct SWAP_TBL_NAME("global") gswap_t
     {
-        name status = swap_status_t::created;
+        name status                     = swap_status_t::created;
         name fee_collector;
         name admin;
-        uint32_t make_fee_ratio      = 20;
-        uint32_t take_fee_ratio      = 20;
-        uint64_t swap_id        = 0;
-        set<name> supported_contracts;
+        uint32_t make_fee_ratio         = 20;
+        uint32_t take_fee_ratio         = 20;
+        uint64_t swap_id                = 0;
+        set<name> supported_tokens;
 
-        uint64_t farm_lease_id  = 0;
+        uint64_t farm_lease_id          = 0;
         map <extended_symbol, uint32_t> farm_scales;
-        EOSLIB_SERIALIZE(gswap_t, (status)(fee_collector)(admin)(make_fee_ratio)(take_fee_ratio)(swap_id)(supported_contracts)(farm_lease_id)(farm_scales))
+
+        EOSLIB_SERIALIZE(gswap_t, (status)(fee_collector)(admin)(make_fee_ratio)(take_fee_ratio)(swap_id)(supported_tokens)(farm_lease_id)(farm_scales))
     };
 
     typedef eosio::singleton<"global"_n, gswap_t> gswap_singleton;

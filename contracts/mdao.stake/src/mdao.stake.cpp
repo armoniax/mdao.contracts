@@ -7,11 +7,11 @@
 // transfer out from contract self
 #define TRANSFERFROM(bank, from, to, quantity, memo) \
     { action(permission_level{get_self(), "active"_n }, bank, "transfer"_n, std::make_tuple(from, to, quantity, memo )).send(); }
-ACTION mdaostake::init( const set<name>& managers, const set<name>& supported_contracts ) {
+ACTION mdaostake::init( const set<name>& managers, const set<name>& supported_tokens ) {
     require_auth( _self );
     //CHECKC(!_gstate.initialized, stake_err::INITIALIZED, "already initialized")
     _gstate.managers = managers;
-    _gstate.supported_contracts = supported_contracts;
+    _gstate.supported_tokens = supported_tokens;
     _gstate.initialized = true;
     // _global.set(_gstate, get_self());
 
@@ -39,7 +39,7 @@ void mdaostake::staketoken(const name& from, const name& to, const asset& quanti
     const auto info = info_tbl.find(daocode.value);
     CHECKC( info != info_tbl.end(), stake_err::DAO_NOT_FOUND, "dao not exists");
     name contract = get_first_receiver();
-    CHECKC( _gstate.supported_contracts.count(contract), stake_err::UNSUPPORT_CONTRACT, "unsupport token contract");
+    CHECKC( _gstate.supported_tokens.count(contract), stake_err::UNSUPPORT_CONTRACT, "unsupport token contract");
     // @todo dao, user check
     // find record at daostake table
     dao_stake_t dao_stake(daocode);
@@ -130,7 +130,7 @@ void mdaostake::stakenft( name from, name to, vector< nasset >& assets, string m
     const auto info = info_tbl.find(daocode.value);
     CHECKC( info != info_tbl.end(), stake_err::DAO_NOT_FOUND, "dao not exists");
     name contract = get_first_receiver();
-    CHECKC( _gstate.supported_contracts.count(contract), stake_err::UNSUPPORT_CONTRACT, "unsupport token contract");
+    CHECKC( _gstate.supported_tokens.count(contract), stake_err::UNSUPPORT_CONTRACT, "unsupport token contract");
     // @todo dao, user check
     // find record at daostake table
     dao_stake_t dao_stake(daocode);

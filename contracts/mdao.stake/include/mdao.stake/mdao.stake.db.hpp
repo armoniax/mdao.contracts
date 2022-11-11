@@ -22,10 +22,10 @@ namespace mdao
     struct TG_TBL_NAME("global") stake_global_t
     {
         set<name> managers;
-        set<name> supported_contracts;
+        set<name> supported_tokens;
         bool initialized = false;
 
-        EOSLIB_SERIALIZE(stake_global_t, (managers)(supported_contracts)(initialized));
+        EOSLIB_SERIALIZE(stake_global_t, (managers)(supported_tokens)(initialized));
         typedef eosio::singleton<"global"_n, stake_global_t> stake_global_singleton;
     };
 

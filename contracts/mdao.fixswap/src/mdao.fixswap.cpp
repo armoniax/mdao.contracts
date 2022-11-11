@@ -34,9 +34,9 @@ void fixswap::init(const name& admin, const name& fee_collector, const uint32_t&
     _gstate.admin = admin;
     _gstate.take_fee_ratio = fee_ratio;
     _gstate.make_fee_ratio = fee_ratio;
-    _gstate.supported_contracts.insert("amax.token"_n);
-    _gstate.supported_contracts.insert("amax.mtoken"_n);
-    // _gstate.supported_contracts.insert("mdao.token"_n);
+    _gstate.supported_tokens.insert("amax.token"_n);
+    _gstate.supported_tokens.insert("amax.mtoken"_n);
+    // _gstate.supported_tokens.insert("mdao.token"_n);
     _global.set( _gstate, get_self());
 }
 
@@ -68,7 +68,7 @@ void fixswap::ontransfer(name from, name to, asset quantity, string memo)
     if(from == get_self() || to != get_self()) return;
     CHECKC( _gstate.status == swap_status_t::initialized, err::PAUSED, "contract is maintaining" )
     CHECKC( quantity.amount>0, err::NOT_POSITIVE, "swap quanity must be positive" )
-    CHECKC( _gstate.supported_contracts.count(get_first_receiver()), err::SYMBOL_MISMATCH, "unsupport token contract" )
+    CHECKC( _gstate.supported_tokens.count(get_first_receiver()), err::SYMBOL_MISMATCH, "unsupport token contract" )
 
     vector<string_view> params = split(memo, ":");
     CHECKC( params.size() > 0, err::PARAM_ERROR, "unsupport memo" )
@@ -93,7 +93,7 @@ void fixswap::ontransfer(name from, name to, asset quantity, string memo)
 
         name take_contract = name(params[4]);
         CHECKC( is_account(take_contract), err::ACCOUNT_INVALID, "cannot find take quantity contract" )
-        CHECKC( _gstate.supported_contracts.count(take_contract), err::SYMBOL_MISMATCH, "unsupport token contract" )
+        CHECKC( _gstate.supported_tokens.count(take_contract), err::SYMBOL_MISMATCH, "unsupport token contract" )
 
         swap_order.take_asset = extended_asset(take_quant, take_contract);
         if(params[5].length() > 0){

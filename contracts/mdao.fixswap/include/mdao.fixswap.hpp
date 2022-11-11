@@ -22,9 +22,9 @@ class [[eosio::contract("fixswap")]] fixswap : public contract
     using contract::contract;
 
 private:
-    gswap_singleton    _global;
-    gswap_t            _gstate;
-    dbc           _db;
+    gswap_singleton     _global;
+    gswap_t             _gstate;
+    dbc                 _db;
 
     void _reward(const name& owner, const extended_asset& fee, const name& orderno);
 
