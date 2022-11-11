@@ -98,7 +98,7 @@ struct TG_TBL vote_t {
 };
 
 struct [[eosio::table("global"), eosio::contract("mdaopropose2")]] prop_global_t {
-    uint64_t last_propose_id;
+    uint64_t last_propose_id = 0;
     EOSLIB_SERIALIZE( prop_global_t, (last_propose_id) )
 };
 

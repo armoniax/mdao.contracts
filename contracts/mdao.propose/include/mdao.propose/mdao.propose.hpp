@@ -214,7 +214,7 @@ public:
 
     ACTION votefor(const name& voter, const uint64_t& proposal_id,  const string& title, const name& vote);
 
-    ACTION setaction(const name& owner, const uint64_t& proposalid, 
+    ACTION setaction(const name& owner, const uint64_t& proposal_id, 
                         const name& action_name, const name& action_account, 
                         const action_data_variant& data, 
                         const string& title);

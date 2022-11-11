@@ -56,7 +56,6 @@ ACTION mdaoinfo::updatedao(const name& owner, const name& code, const string& lo
                             const string& desc,const map<name, string>& links,
                             const string& sym_code, string sym_contract, const string& group_id)
 {   
-    require_auth( owner );
     auto conf = _conf();      
     CHECKC( conf.status != conf_status::PENDING, info_err::NOT_AVAILABLE, "under maintenance" );
  

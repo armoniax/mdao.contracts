@@ -257,18 +257,21 @@ ACTION mdaoproposal::setaction(const name& owner, const uint64_t& proposal_id,
     switch (action_name.value)
     {
         case proposal_action_type::updatedao.value: {
+            updatedao_data datav = std::get<updatedao_data>(data);
             _check_proposal_params(data, action_name, action_account, proposal.dao_code, conf);
-            p.execute_actions.actions.push_back(action(pem, action_account, action_name, data));
+            p.execute_actions.actions.push_back(action(pem, action_account, action_name, datav));
             break;
         }
         case proposal_action_type::bindtoken.value: {
+            bindtoken_data datav = std::get<bindtoken_data>(data);
             _check_proposal_params(data, action_name, action_account, proposal.dao_code, conf);
-            p.execute_actions.actions.push_back(action(pem, action_account, action_name, data));
+            p.execute_actions.actions.push_back(action(pem, action_account, action_name, datav));
             break;
         }
         case proposal_action_type::binddapp.value: {
+            binddapp_data datav = std::get<binddapp_data>(data);
             _check_proposal_params(data, action_name, action_account, proposal.dao_code, conf);
-            p.execute_actions.actions.push_back(action(pem, action_account, action_name, data));
+            p.execute_actions.actions.push_back(action(pem, action_account, action_name, datav));
             break;
         }
         // case proposal_action_type::createtoken.value: {
@@ -286,23 +289,27 @@ ACTION mdaoproposal::setaction(const name& owner, const uint64_t& proposal_id,
         //     break;
         // }
         case proposal_action_type::setvotestg.value: {
+            setvotestg_data datav = std::get<setvotestg_data>(data);
             _check_proposal_params(data, action_name, action_account, proposal.dao_code, conf);
-            p.execute_actions.actions.push_back(action(pem, action_account, action_name, data));
+            p.execute_actions.actions.push_back(action(pem, action_account, action_name, datav));
             break;
         }
         case proposal_action_type::setproposestg.value: {
+            setproposestg_data datav = std::get<setproposestg_data>(data);
             _check_proposal_params(data, action_name, action_account, proposal.dao_code, conf);
-            p.execute_actions.actions.push_back(action(pem, action_account, action_name, data));
+            p.execute_actions.actions.push_back(action(pem, action_account, action_name, datav));
             break;
         }
         case proposal_action_type::setlocktime.value: {
+            setlocktime_data datav = std::get<setlocktime_data>(data);
             _check_proposal_params(data, action_name, action_account, proposal.dao_code, conf);
-            p.execute_actions.actions.push_back(action(pem, action_account, action_name, data));
+            p.execute_actions.actions.push_back(action(pem, action_account, action_name, datav));
             break;
         }
          case proposal_action_type::setvotetime.value: {
+            setvotetime_data datav = std::get<setvotetime_data>(data);
             _check_proposal_params(data, action_name, action_account, proposal.dao_code, conf);
-            p.execute_actions.actions.push_back(action(pem, action_account, action_name, data));
+            p.execute_actions.actions.push_back(action(pem, action_account, action_name, datav));
             break;
         }
         // case proposal_action_type::tokentranout.value: {
@@ -474,13 +481,15 @@ void mdaoproposal::_check_proposal_params(const action_data_variant& data_var,  
     }
 }
 
-void mdaoproposal::recycledb(uint32_t max_rows) {
-    require_auth( _self );
-    proposal_t::idx_t proposal_tbl(_self, _self.value);
-    auto proposal_itr = proposal_tbl.begin();
-    for (size_t count = 0; count < max_rows && proposal_itr != proposal_tbl.end(); count++) {
-        proposal_itr = proposal_tbl.erase(proposal_itr);
-    }
+void mdaoproposal::recycledb(uint32_t id) {
+    // require_auth( _self );
+    // proposal_t::idx_t proposal_tbl(_self, _self.value);
+    // auto proposal_itr = proposal_tbl.begin();
+    // for (size_t count = 0; count < max_rows && proposal_itr != proposal_tbl.end(); count++) {
+    //     proposal_itr = proposal_tbl.erase(proposal_itr);
+    // }
+    proposal_t proposal(id);
+    _db.del(proposal);
 }
 
 void mdaoproposal::_cal_votes(const name dao_code, const strategy_t& vote_strategy, const name voter, int64_t& value, const uint32_t& lock_time) {
@@ -505,6 +514,7 @@ void mdaoproposal::_cal_votes(const name dao_code, const strategy_t& vote_strate
         case strategy_type::NFT_BALANCE.value:
         case strategy_type::NFT_PARENT_BALANCE.value:
         case strategy_type::TOKEN_SUM.value: {
+
             value = mdao::strategy::cal_balance_weight(MDAO_STG, vote_strategy.id, voter);
             break;
          }
