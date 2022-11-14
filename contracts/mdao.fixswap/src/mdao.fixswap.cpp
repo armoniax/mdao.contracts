@@ -149,8 +149,8 @@ void fixswap::ontransfer(name from, name to, asset quantity, string memo)
         CHECKC( quantity == swap_order.take_asset.quantity, err::SYMBOL_MISMATCH, "swap quantity mismatch" )
         CHECKC( get_first_receiver() == swap_order.take_asset.contract, err::SYMBOL_MISMATCH, "quantity contract mismatch" )
 
-        _transaction_transfer(swap_order.make_asset, swap_order.take_asset, swap_order.taker, swap_order.maker, swap_orderno);
-        _reward_transfer(swap_order.make_asset, swap_order.take_asset, swap_order.taker, swap_order.maker, swap_orderno);
+        _transaction_transfer(swap_order.make_asset, swap_order.take_asset, swap_order.maker, swap_order.taker, swap_orderno);
+        _reward_transfer(swap_order.make_asset, swap_order.take_asset, swap_order.maker, swap_order.taker, swap_orderno);
 
         _db.del(swap_order);
         NOTIFICATION(swap_orderno, swap_status_t::matched, current_time_point());
