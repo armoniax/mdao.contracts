@@ -49,7 +49,8 @@ enum class info_err: uint8_t {
     NOT_ALLOW           = 18,
     ACCOUNT_NOT_EXITS   = 19,
     TOKEN_NOT_EXIST     = 20,
-    NOT_MODIFY          = 21
+    NOT_MODIFY          = 21,
+    DID_NOT_AUTH        = 22
 };
 
 class [[eosio::contract("mdaoinfotest")]] mdaoinfo : public contract {

@@ -21,8 +21,8 @@ static uint128_t get_union_id(const name& account, const uint64_t& proposal_id){
 struct option{
     string      title;
     string      desc;
-    transaction execute_actions;
     uint32_t    recv_votes = 0;
+    transaction execute_actions;
 };
 
 struct TG_TBL proposal_t {
@@ -41,10 +41,10 @@ struct TG_TBL proposal_t {
     uint32_t        users_count; //参与人数
     uint32_t        deny_users_count; //拒绝人数
     uint32_t        waive_users_count; //弃权总人数
-    map<string, option>    options;
     time_point_sec  created_at = current_time_point();
     time_point_sec  started_at;
     time_point_sec  executed_at;
+    map<string, option>    options;
 
     uint64_t    primary_key()const { return id; }
     uint64_t    scope() const { return 0; }
@@ -61,7 +61,7 @@ struct TG_TBL proposal_t {
     proposal_t(const uint64_t& i): id(i) {}
 
     EOSLIB_SERIALIZE( proposal_t, (id)(dao_code)(proposal_strategy_id)(vote_strategy_id)(status)(creator)(title)(desc)(type)
-                (approve_votes)(deny_votes)(waive_votes)(users_count)(deny_users_count)(waive_users_count)(options)(created_at)(started_at)(executed_at) )
+                (approve_votes)(deny_votes)(waive_votes)(users_count)(deny_users_count)(waive_users_count)(created_at)(started_at)(executed_at)(options) )
 
     typedef eosio::multi_index <"proposals"_n, proposal_t,        
         indexed_by<"creator"_n,  const_mem_fun<proposal_t, uint64_t, &proposal_t::by_creator> >,

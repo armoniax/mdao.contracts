@@ -2,6 +2,7 @@
 #include "mdao.info/mdao.info.hpp"
 #include <set>
 #include <thirdparty/utils.hpp>
+#include <amax.ntoken/did.ntoken_db.hpp>
 
 #define AMAX_TRANSFER(bank, to, quantity, memo) \
 { action(permission_level{get_self(), "active"_n }, bank, "transfer"_n, std::make_tuple( _self, to, quantity, memo )).send(); }
@@ -31,6 +32,16 @@ ACTION mdaoinfo::onupgradedao(name from, name to, asset quantity, string memo)
 
     string_view logo = string_view(parts[3]);
     CHECKC( logo.size() <= 64, info_err::INVALID_FORMAT, "logo length is more than 64 bytes");
+
+    // auto did_acnts = amax::account_t::idx_t( did::DID_NTOKEN, from.value );
+    // bool is_auth = false;
+    // for( auto did_acnts_iter = did_acnts.begin(); did_acnts_iter!=did_acnts.end(); did_acnts_iter++ ){
+    //     if(did_acnts_iter->balance.amount > 0){
+    //         is_auth = true;
+    //         break;
+    //     } 
+    // }
+    // CHECKC( is_auth, info_err::DID_NOT_AUTH, "did is not authenticated" );
 
     AMAX_TRANSFER(AMAX_TOKEN, conf.fee_taker, quantity, string("upgrade fee collection"));
 

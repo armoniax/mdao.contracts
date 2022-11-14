@@ -22,11 +22,21 @@ class [[eosio::contract("fixswap")]] fixswap : public contract
     using contract::contract;
 
 private:
-    gswap_singleton     _global;
-    gswap_t             _gstate;
-    dbc                 _db;
+    gswap_singleton    _global;
+    gswap_t            _gstate;
+    dbc                _db;
 
-    void _reward(const name& owner, const extended_asset& fee, const name& orderno);
+    void _transaction_transfer(const extended_asset& make_asset, 
+                                    const extended_asset& take_asset, 
+                                    const name& maker, 
+                                    const name& taker, 
+                                    const name& order_no);
+
+    void _reward_transfer(const extended_asset& make_asset, 
+                                    const extended_asset& take_asset, 
+                                    const name& maker, 
+                                    const name& taker, 
+                                    const name& order_no);
 
 public:
     fixswap(eosio::name receiver, eosio::name code, datastream<const char *> ds) : _db(_self),contract(receiver, code, ds), _global(_self, _self.value)
@@ -42,7 +52,7 @@ public:
     void setfee(const name& fee_collector, const uint32_t& take_fee_ratio, const uint32_t& make_fee_ratio);
 
     [[eosio::action]]
-    void setfarm(const uint64_t& farm_lease_id, const map<extended_symbol, uint32_t>& farm_scales);
+    void setfarm(const uint64_t& farm_lease_id, const map<extended_symbol, int64_t>& farm_scales);
 
     /**
      * action trigger by transfer()
@@ -72,8 +82,14 @@ public:
     [[eosio::action]]
     void cancel(const name& maker, const name& orderno);
 
+    // [[eosio::action]]
+    // void clear(const vector<name>& order_nos);
+
     [[eosio::action]]
-    void clear(const vector<name>& order_nos);
+    void notification(const name& order_no, const name& status);
+
+    using notification_action = eosio::action_wrapper<"notification"_n, &fixswap::notification>;
+
 };
 
 }

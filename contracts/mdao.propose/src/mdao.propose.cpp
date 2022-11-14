@@ -306,8 +306,14 @@ ACTION mdaoproposal::setaction(const name& owner, const uint64_t& proposal_id,
             p.execute_actions.actions.push_back(action(pem, action_account, action_name, datav));
             break;
         }
-         case proposal_action_type::setvotetime.value: {
+        case proposal_action_type::setvotetime.value: {
             setvotetime_data datav = std::get<setvotetime_data>(data);
+            _check_proposal_params(data, action_name, action_account, proposal.dao_code, conf);
+            p.execute_actions.actions.push_back(action(pem, action_account, action_name, datav));
+            break;
+        }
+        case proposal_action_type::setpropmodel.value: {
+            setpropmodel_data datav = std::get<setpropmodel_data>(data);
             _check_proposal_params(data, action_name, action_account, proposal.dao_code, conf);
             p.execute_actions.actions.push_back(action(pem, action_account, action_name, datav));
             break;
@@ -452,13 +458,20 @@ void mdaoproposal::_check_proposal_params(const action_data_variant& data_var,  
             
             break;
         }
-         case proposal_action_type::setvotetime.value: {
+        case proposal_action_type::setvotetime.value: {
             setvotetime_data data = std::get<setvotetime_data>(data_var);
             CHECKC(proposal_dao_code == data.dao_code, proposal_err::PARAM_ERROR, "dao_code error");
 
             governance_t::idx_t governance(MDAO_GOV, MDAO_GOV.value);
             auto gov = governance.find(data.dao_code.value);
             CHECKC( gov != governance.end(), proposal_err::RECORD_NOT_FOUND, "governance not found" );
+            break;     
+        }
+        case proposal_action_type::setpropmodel.value: {
+            setpropmodel_data data = std::get<setpropmodel_data>(data_var);
+            CHECKC(proposal_dao_code == data.dao_code, proposal_err::PARAM_ERROR, "dao_code error");
+            CHECKC( data.propose_model == propose_model_type::MIX || data.propose_model == propose_model_type::PROPOSAL, proposal_err::PARAM_ERROR, "param error" );
+
             break;     
         }
         // case proposal_action_type::tokentranout.value: {

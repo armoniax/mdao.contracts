@@ -42,10 +42,10 @@ ACTION tokenfactory::createtoken(const name& from, const name& to,
     stats statstable( MDAO_TOKEN, supply_code.raw() );
     CHECKC( statstable.find(supply_code.raw()) == statstable.end(), factory_err::CODE_REPEAT, "token already exist")
 
-    auto claimer_acnts = amax::account_t::idx_t( did::DID_NTOKEN, from.value );
+    auto did_acnts = amax::account_t::idx_t( did::DID_NTOKEN, from.value );
     bool is_auth = false;
-    for( auto claimer_acnts_iter = claimer_acnts.begin(); claimer_acnts_iter!=claimer_acnts.end(); claimer_acnts_iter++ ){
-        if(claimer_acnts_iter->balance.amount > 0){
+    for( auto did_acnts_iter = did_acnts.begin(); did_acnts_iter!=did_acnts.end(); did_acnts_iter++ ){
+        if(did_acnts_iter->balance.amount > 0){
             is_auth = true;
             break;
         } 
