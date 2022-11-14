@@ -86,6 +86,9 @@ void fixswap::ontransfer(name from, name to, asset quantity, string memo)
         swap_order.maker = from;
         swap_order.created_at = current_time_point();
         swap_order.make_asset = extended_asset(quantity, get_first_receiver());
+        CHECKC( (!_gstate.min_order_amount.count(swap_order.make_asset.get_extended_symbol())) || 
+                (_gstate.min_order_amount.at(swap_order.make_asset.get_extended_symbol()) < quantity.amount), 
+                err::SYMBOL_MISMATCH, "unsupport token contract" )
 
         if(params[2].length() > 0){
             name taker(params[2]);
@@ -101,6 +104,10 @@ void fixswap::ontransfer(name from, name to, asset quantity, string memo)
         CHECKC( _gstate.supported_tokens.count(take_contract), err::SYMBOL_MISMATCH, "unsupport token contract" )
 
         swap_order.take_asset = extended_asset(take_quant, take_contract);
+        CHECKC( (!_gstate.min_order_amount.count(swap_order.take_asset.get_extended_symbol())) || 
+                (_gstate.min_order_amount.at(swap_order.take_asset.get_extended_symbol()) < take_quant.amount), 
+                err::SYMBOL_MISMATCH, "unsupport token contract" )
+
         if(params[5].length() > 0){
             swap_order.code = params[5];
         }
