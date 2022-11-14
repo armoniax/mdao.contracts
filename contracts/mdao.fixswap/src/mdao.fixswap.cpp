@@ -155,34 +155,34 @@ void fixswap::_transaction_transfer(const extended_asset& make_asset,
                                     const name& taker, 
                                     const name& order_no){
 
-        asset taker_fee = make_asset.quantity * _gstate.taker_fee_ratio / percent_boost;
-        asset maker_fee = take_asset.quantity * _gstate.maker_fee_ratio / percent_boost;
+    asset taker_fee = make_asset.quantity * _gstate.taker_fee_ratio / percent_boost;
+    asset maker_fee = take_asset.quantity * _gstate.maker_fee_ratio / percent_boost;
 
-        TRANSFER(make_asset.contract, 
-            taker, 
-            make_asset.quantity - taker_fee, 
-            "Swap with " + make_asset.quantity.to_string());
+    TRANSFER(make_asset.contract, 
+        taker, 
+        make_asset.quantity - taker_fee, 
+        "Swap with " + make_asset.quantity.to_string());
 
-        TRANSFER(take_asset.contract, 
-            maker, 
-            take_asset.quantity - maker_fee, 
-            "Swap with " + take_asset.quantity.to_string());
+    TRANSFER(take_asset.contract, 
+        maker, 
+        take_asset.quantity - maker_fee, 
+        "Swap with " + take_asset.quantity.to_string());
 
-        if(maker_fee.amount > 0){
-            extended_asset extended_asset_maker_fee = extended_asset(maker_fee, take_asset.contract);
-            TRANSFER(extended_asset_maker_fee.contract, 
-                _gstate.fee_collector, 
-                extended_asset_maker_fee.quantity, 
-                "Swap take fee of " + order_no.to_string());
-        }
+    if(maker_fee.amount > 0){
+        extended_asset extended_asset_maker_fee = extended_asset(maker_fee, take_asset.contract);
+        TRANSFER(extended_asset_maker_fee.contract, 
+            _gstate.fee_collector, 
+            extended_asset_maker_fee.quantity, 
+            "Swap take fee of " + order_no.to_string());
+    }
 
-        if(taker_fee.amount > 0){
-            extended_asset extended_asset_taker_fee = extended_asset(taker_fee, make_asset.contract);
-            TRANSFER(extended_asset_taker_fee.contract, 
-                _gstate.fee_collector, 
-                extended_asset_taker_fee.quantity, 
-                "Swap take fee of " + order_no.to_string());
-        }
+    if(taker_fee.amount > 0){
+        extended_asset extended_asset_taker_fee = extended_asset(taker_fee, make_asset.contract);
+        TRANSFER(extended_asset_taker_fee.contract, 
+            _gstate.fee_collector, 
+            extended_asset_taker_fee.quantity, 
+            "Swap take fee of " + order_no.to_string());
+    }
 }
 
 void fixswap::_reward_transfer(const extended_asset& make_asset, 
