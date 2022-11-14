@@ -52,15 +52,15 @@ namespace wasm
         name status                     = swap_status_t::created;
         name fee_collector;
         name admin;
-        uint32_t make_fee_ratio         = 20;
-        uint32_t take_fee_ratio         = 20;
+        uint32_t maker_fee_ratio         = 20;
+        uint32_t taker_fee_ratio         = 20;
         uint64_t swap_id                = 0;
         uint64_t farm_lease_id          = 0;
         set<name> supported_tokens;
         map <extended_symbol, int64_t> farm_scales;
         map <extended_symbol, int64_t> min_order_amount;
 
-        EOSLIB_SERIALIZE(gswap_t, (status)(fee_collector)(admin)(make_fee_ratio)(take_fee_ratio)(swap_id)(farm_lease_id)(supported_tokens)(farm_scales)(farm_scales)(min_order_amount))
+        EOSLIB_SERIALIZE(gswap_t, (status)(fee_collector)(admin)(maker_fee_ratio)(taker_fee_ratio)(swap_id)(farm_lease_id)(supported_tokens)(farm_scales)(farm_scales)(min_order_amount))
     };
 
     typedef eosio::singleton<"global"_n, gswap_t> gswap_singleton;

@@ -37,24 +37,24 @@ void fixswap::init(const name& admin, const name& fee_collector, const uint32_t&
     _gstate.status = swap_status_t::initialized;
     _gstate.fee_collector = fee_collector;
     _gstate.admin = admin;
-    _gstate.take_fee_ratio = fee_ratio;
-    _gstate.make_fee_ratio = fee_ratio;
+    _gstate.taker_fee_ratio = fee_ratio;
+    _gstate.maker_fee_ratio = fee_ratio;
     _gstate.supported_tokens.insert("amax.token"_n);
     _gstate.supported_tokens.insert("amax.mtoken"_n);
     // _gstate.supported_tokens.insert("mdao.token"_n);
     _global.set( _gstate, get_self());
 }
 
-void fixswap::setfee(const name& fee_collector, const uint32_t& take_fee_ratio, const uint32_t& make_fee_ratio){
+void fixswap::setfee(const name& fee_collector, const uint32_t& taker_fee_ratio, const uint32_t& maker_fee_ratio){
     require_auth(_gstate.admin);
 
     CHECKC( is_account(fee_collector), err::ACCOUNT_INVALID, "cannot found fee_collector" )
-    CHECKC( take_fee_ratio >= 0 && take_fee_ratio <= 1000, err::NOT_POSITIVE, "take_fee_ratio must be in range 0~10% (0~1000)" )
-    CHECKC( make_fee_ratio >= 0 && make_fee_ratio <= 1000, err::NOT_POSITIVE, "make_fee_ratio must be in range 0~10% (0~1000)" )
+    CHECKC( taker_fee_ratio >= 0 && taker_fee_ratio <= 1000, err::NOT_POSITIVE, "taker_fee_ratio must be in range 0~10% (0~1000)" )
+    CHECKC( maker_fee_ratio >= 0 && maker_fee_ratio <= 1000, err::NOT_POSITIVE, "maker_fee_ratio must be in range 0~10% (0~1000)" )
 
     _gstate.fee_collector = fee_collector;
-    _gstate.take_fee_ratio = take_fee_ratio;
-    _gstate.make_fee_ratio = make_fee_ratio;
+    _gstate.taker_fee_ratio = taker_fee_ratio;
+    _gstate.maker_fee_ratio = maker_fee_ratio;
     _global.set( _gstate, get_self());
 }
 
@@ -144,7 +144,7 @@ void fixswap::ontransfer(name from, name to, asset quantity, string memo)
         _reward_transfer(swap_order.make_asset, swap_order.take_asset, swap_order.taker, swap_order.maker, swap_orderno);
 
         _db.del(swap_order);
-        notification(swap_orderno, swap_status_t::matched);
+        notification(swap_orderno, swap_status_t::matched, current_time_point());
 
     }
 }
@@ -155,29 +155,29 @@ void fixswap::_transaction_transfer(const extended_asset& make_asset,
                                     const name& taker, 
                                     const name& order_no){
 
-        asset make_fee = make_asset.quantity * _gstate.make_fee_ratio / percent_boost;
-        asset take_fee = take_asset.quantity * _gstate.take_fee_ratio / percent_boost;
+        asset taker_fee = make_asset.quantity * _gstate.taker_fee_ratio / percent_boost;
+        asset maker_fee = take_asset.quantity * _gstate.maker_fee_ratio / percent_boost;
 
         TRANSFER(make_asset.contract, 
             taker, 
-            make_asset.quantity - make_fee, 
+            make_asset.quantity - taker_fee, 
             "Swap with " + make_asset.quantity.to_string());
 
         TRANSFER(take_asset.contract, 
             maker, 
-            take_asset.quantity - take_fee, 
+            take_asset.quantity - maker_fee, 
             "Swap with " + take_asset.quantity.to_string());
 
-        if(make_fee.amount > 0){
-            extended_asset extended_asset_maker_fee = extended_asset(make_fee, make_asset.contract);
+        if(maker_fee.amount > 0){
+            extended_asset extended_asset_maker_fee = extended_asset(maker_fee, take_asset.contract);
             TRANSFER(extended_asset_maker_fee.contract, 
                 _gstate.fee_collector, 
                 extended_asset_maker_fee.quantity, 
                 "Swap take fee of " + order_no.to_string());
         }
 
-        if(take_fee.amount > 0){
-            extended_asset extended_asset_taker_fee = extended_asset(take_fee, take_asset.contract);
+        if(taker_fee.amount > 0){
+            extended_asset extended_asset_taker_fee = extended_asset(taker_fee, make_asset.contract);
             TRANSFER(extended_asset_taker_fee.contract, 
                 _gstate.fee_collector, 
                 extended_asset_taker_fee.quantity, 
@@ -238,7 +238,7 @@ void fixswap::cancel(const name& maker, const name& order_no){
         "Cancel swap order: " + order_no.to_string());
 
     _db.del(swap_order);
-    notification(order_no, swap_status_t::cancel);
+    notification(order_no, swap_status_t::cancel,current_time_point());
 }
 
 
@@ -256,6 +256,6 @@ void fixswap::cancel(const name& maker, const name& order_no){
 // 	}
 // }
 
-void fixswap::notification(const name& order_no, const name& status){
+void fixswap::notification(const name& order_no, const name& status, const time_point_sec& now){
     require_auth(get_self());
 }
