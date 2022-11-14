@@ -50,7 +50,8 @@ enum class err: uint8_t {
    HAS_INITIALIZE       = 17,
    UNRESPECT_RESULT     = 18,
    MAINTAINING          = 19,
-   STATUS_MISMATCH          = 20
+   STATUS_MISMATCH      = 20,
+   AMOUNT_TOO_SMALL     = 21
 };
 
 
