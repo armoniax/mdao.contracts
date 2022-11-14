@@ -60,7 +60,7 @@ namespace wasm
         map <extended_symbol, int64_t> farm_scales;
         map <extended_symbol, int64_t> min_order_amount;
 
-        EOSLIB_SERIALIZE(gswap_t, (status)(fee_collector)(admin)(maker_fee_ratio)(taker_fee_ratio)(swap_id)(farm_lease_id)(supported_tokens)(farm_scales)(farm_scales)(min_order_amount))
+        EOSLIB_SERIALIZE(gswap_t, (status)(fee_collector)(admin)(maker_fee_ratio)(taker_fee_ratio)(swap_id)(farm_lease_id)(supported_tokens)(farm_scales)(min_order_amount))
     };
 
     typedef eosio::singleton<"global"_n, gswap_t> gswap_singleton;
