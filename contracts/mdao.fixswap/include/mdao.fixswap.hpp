@@ -86,7 +86,7 @@ public:
     // void clear(const vector<name>& order_nos);
 
     [[eosio::action]]
-    void notification(const name& order_no, const name& status);
+    void notification(const name& order_no, const name& status, const time_point_sec& now );
 
     using notification_action = eosio::action_wrapper<"notification"_n, &fixswap::notification>;
 
