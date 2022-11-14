@@ -189,6 +189,7 @@ void fixswap::_reward_transfer(const extended_asset& make_asset,
         auto scale = _gstate.farm_scales.at(make_asset.get_extended_symbol());
         auto value = multiply_decimal64( make_asset.quantity.amount, 
                          get_precision(APLINK_SYMBOL), get_precision(make_asset.quantity.symbol));
+        value = value * scale / get_precision(APLINK_SYMBOL);
 
         asset apples = asset(0, APLINK_SYMBOL);
         aplink::farm::available_apples(APLINK_FARM, _gstate.farm_lease_id, apples);
@@ -202,6 +203,7 @@ void fixswap::_reward_transfer(const extended_asset& make_asset,
         auto scale = _gstate.farm_scales.at(take_asset.get_extended_symbol());
         auto value = multiply_decimal64( take_asset.quantity.amount, 
                          get_precision(APLINK_SYMBOL), get_precision(take_asset.quantity.symbol));
+        value = value * scale / get_precision(APLINK_SYMBOL);
 
         asset apples = asset(0, APLINK_SYMBOL);
         aplink::farm::available_apples(APLINK_FARM, _gstate.farm_lease_id, apples);
