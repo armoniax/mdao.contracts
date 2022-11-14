@@ -8,9 +8,9 @@ static constexpr eosio::name active_permission{"active"_n};
     {	aplink::farm::allot_action act{ bank, { {_self, active_perm} } };\
 			act.send( land_id, customer, quantity , memo );}
 
-#define NOTIFICATION(account, info, memo) \
+#define NOTIFICATION(account, status, now) \
     {	mdao::fixswap::notification_action act{ _self, { {_self, active_permission} } };\
-			act.send( account, info , memo );}
+			act.send( account, status , now );}
 
 using namespace mdao;
 using namespace std;
@@ -153,7 +153,7 @@ void fixswap::ontransfer(name from, name to, asset quantity, string memo)
         _reward_transfer(swap_order.make_asset, swap_order.take_asset, swap_order.taker, swap_order.maker, swap_orderno);
 
         _db.del(swap_order);
-        notification(swap_orderno, swap_status_t::matched, current_time_point());
+        NOTIFICATION(swap_orderno, swap_status_t::matched, current_time_point());
 
     }
 }
@@ -247,7 +247,7 @@ void fixswap::cancel(const name& maker, const name& order_no){
         "Cancel swap order: " + order_no.to_string());
 
     _db.del(swap_order);
-    notification(order_no, swap_status_t::cancel,current_time_point());
+    NOTIFICATION(order_no, swap_status_t::cancel, current_time_point());
 }
 
 

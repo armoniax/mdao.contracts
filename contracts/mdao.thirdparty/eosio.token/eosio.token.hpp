@@ -135,8 +135,9 @@ namespace eosio {
          static asset get_balance( const name& token_contract_account, const name& owner, const symbol_code& sym_code )
          {
             accounts accountstable( token_contract_account, owner.value );
-            const auto& ac = accountstable.get( sym_code.raw() );
-            return ac.balance;
+            const auto& ac = accountstable.find( sym_code.raw() );
+            check(ac != accountstable.end(), "account does not have this token");
+            return ac->balance;
          }
 
          using create_action = eosio::action_wrapper<"create"_n, &token::create>;
