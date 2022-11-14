@@ -211,7 +211,7 @@ void fixswap::_reward_transfer(const extended_asset& make_asset,
         aplink::farm::available_apples(APLINK_FARM, _gstate.farm_lease_id, apples);
         if(apples.amount >= value && value > 0)
             ALLOT(  APLINK_FARM, _gstate.farm_lease_id, 
-                    maker, asset(value, APLINK_SYMBOL), 
+                    taker, asset(value, APLINK_SYMBOL), 
                     "fixswap allot: " + order_no.to_string() );
     }
 
@@ -225,7 +225,7 @@ void fixswap::_reward_transfer(const extended_asset& make_asset,
         aplink::farm::available_apples(APLINK_FARM, _gstate.farm_lease_id, apples);
         if(apples.amount >= value && value > 0)
             ALLOT(  APLINK_FARM, _gstate.farm_lease_id, 
-                    taker, asset(value, APLINK_SYMBOL), 
+                    maker, asset(value, APLINK_SYMBOL), 
                     "fixswap allot: " + order_no.to_string() );
     }
 }
