@@ -54,6 +54,9 @@ public:
     [[eosio::action]]
     void setfarm(const uint64_t& farm_lease_id, const map<extended_symbol, int64_t>& farm_scales);
 
+    [[eosio::action]]
+    void setorderval(const extended_symbol& symbol, const int64_t& value);
+
     /**
      * action trigger by transfer()
      * @param from from account name

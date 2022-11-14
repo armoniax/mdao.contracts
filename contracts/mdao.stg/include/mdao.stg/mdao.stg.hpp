@@ -115,6 +115,7 @@ public:
          case strategy_type::TOKEN_BALANCE.value: {
             symbol_code sym_code = std::get<symbol_code>(stg.ref_sym);
             value = eosio::token::get_balance(stg.ref_contract, account, sym_code).amount;
+            check(false, "111:"+to_string(value));
             break;
          }
          case strategy_type::NFT_BALANCE.value:{

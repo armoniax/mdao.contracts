@@ -68,6 +68,15 @@ void fixswap::setfarm(const uint64_t& farm_lease_id, const map<extended_symbol, 
     _global.set( _gstate, get_self());
 }
 
+void fixswap::setorderval(const extended_symbol& symbol, const int64_t& value){
+    require_auth(_gstate.admin);
+
+    CHECKC( value > 0, err::NOT_POSITIVE, "value cannot a negtive number" )
+
+    _gstate.min_order_amount[symbol] = value;
+    _global.set( _gstate, get_self());
+}
+
 void fixswap::ontransfer(name from, name to, asset quantity, string memo)
 {
     if(from == get_self() || to != get_self()) return;
