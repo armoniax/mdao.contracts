@@ -134,7 +134,7 @@ ACTION mdaoproposal::execute( const uint64_t& proposal_id )
             mdao::dao_stake_t::idx_t stake(MDAO_STAKE, MDAO_STAKE.value);
             auto stake_itr = stake.find(proposal.dao_code.value);
             CHECKC( proposal.approve_votes >= proposal.deny_votes, proposal_err::VOTES_NOT_ENOUGH, "votes must meet the minimum number of votes" );
-            CHECKC( proposal.users_count >= (governance->require_participation * stake_itr -> user_count / TEN_THOUSAND), proposal_err::VOTES_NOT_ENOUGH, "votes must meet the minimum number of votes" );
+            CHECKC( proposal.users_count >= ((governance->require_participation * stake_itr -> user_count + TEN_THOUSAND - 1) / TEN_THOUSAND), proposal_err::VOTES_NOT_ENOUGH, "votes must meet the minimum number of votes" );
         }
     }
     
