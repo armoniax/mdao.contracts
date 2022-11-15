@@ -78,11 +78,9 @@ void strategy::setalgo( const name& creator,
 void strategy::verify( const name& creator,
                 const uint64_t& stg_id, 
                 const uint64_t& value,
-                const name& account,
                 const uint64_t& expect_weight ){
     require_auth( creator );
 
-    CHECKC( is_account(account), err::ACCOUNT_INVALID, "account invalid" )
     CHECKC( expect_weight > 0, err::NOT_POSITIVE, "require positive weight to verify stg" )
 
     strategy_t stg = strategy_t( stg_id );
