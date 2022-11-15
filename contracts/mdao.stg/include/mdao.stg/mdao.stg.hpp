@@ -68,7 +68,6 @@ public:
     void verify(const name& creator,
                    const uint64_t& stg_id, 
                    const uint64_t& value,
-                   const name& account,
                    const uint64_t& expect_weight); 
 
     [[eosio::action]]
