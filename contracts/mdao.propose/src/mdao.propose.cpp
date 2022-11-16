@@ -54,8 +54,7 @@ ACTION mdaoproposal::cancel(const name& owner, const uint64_t& proposal_id)
     CHECKC( owner == proposal.creator, proposal_err::PERMISSION_DENIED, "only the creator can operate" );
     CHECKC( proposal_status::CREATED == proposal.status || proposal_status::VOTING == proposal.status, proposal_err::STATUS_ERROR, "can only operate if the state is created and voting" );
 
-    proposal.status  =  proposal_status::CANCELLED;
-    _db.set(proposal, _self);
+    _db.del(proposal);
 }
 
 ACTION mdaoproposal::addplan( const name& owner, const uint64_t& proposal_id, 
@@ -115,7 +114,7 @@ ACTION mdaoproposal::execute( const uint64_t& proposal_id )
 
     governance_t::idx_t governance_tbl(MDAO_GOV, MDAO_GOV.value);
     const auto governance = governance_tbl.find(proposal.dao_code.value);
-    CHECKC( (proposal.started_at + (governance->voting_period * seconds_per_hour)) >= current_time_point(), proposal_err::ALREADY_EXPIRED, "proposal is already expired" );
+    CHECKC( (proposal.started_at + (governance->voting_period * seconds_per_hour)) <= current_time_point(), proposal_err::ALREADY_EXPIRED, "proposal is already expired" );
 
     strategy_t::idx_t stg(MDAO_STG, MDAO_STG.value);
     auto vote_strategy = stg.find(proposal.vote_strategy_id);
@@ -232,7 +231,7 @@ void mdaoproposal::deletevote(uint32_t id) {
 }
 
 ACTION mdaoproposal::setaction(const name& owner, const uint64_t& proposal_id,
-                                const name& action_name, const name& action_account, 
+                                const name& action_name, 
                                 const action_data_variant& data, 
                                 const string& title)
 {
@@ -258,20 +257,20 @@ ACTION mdaoproposal::setaction(const name& owner, const uint64_t& proposal_id,
     {
         case proposal_action_type::updatedao.value: {
             updatedao_data datav = std::get<updatedao_data>(data);
-            _check_proposal_params(data, action_name, action_account, proposal.dao_code, conf);
-            p.execute_actions.actions.push_back(action(pem, action_account, action_name, datav));
+            _check_proposal_params(data, action_name, proposal.dao_code, conf);
+            p.execute_actions.actions.push_back(action(pem, MDAO_INFO, action_name, datav));
             break;
         }
         case proposal_action_type::bindtoken.value: {
             bindtoken_data datav = std::get<bindtoken_data>(data);
-            _check_proposal_params(data, action_name, action_account, proposal.dao_code, conf);
-            p.execute_actions.actions.push_back(action(pem, action_account, action_name, datav));
+            _check_proposal_params(data, action_name, proposal.dao_code, conf);
+            p.execute_actions.actions.push_back(action(pem, MDAO_INFO, action_name, datav));
             break;
         }
         case proposal_action_type::binddapp.value: {
             binddapp_data datav = std::get<binddapp_data>(data);
-            _check_proposal_params(data, action_name, action_account, proposal.dao_code, conf);
-            p.execute_actions.actions.push_back(action(pem, action_account, action_name, datav));
+            _check_proposal_params(data, action_name, proposal.dao_code, conf);
+            p.execute_actions.actions.push_back(action(pem, MDAO_INFO, action_name, datav));
             break;
         }
         // case proposal_action_type::createtoken.value: {
@@ -290,32 +289,32 @@ ACTION mdaoproposal::setaction(const name& owner, const uint64_t& proposal_id,
         // }
         case proposal_action_type::setvotestg.value: {
             setvotestg_data datav = std::get<setvotestg_data>(data);
-            _check_proposal_params(data, action_name, action_account, proposal.dao_code, conf);
-            p.execute_actions.actions.push_back(action(pem, action_account, action_name, datav));
+            _check_proposal_params(data, action_name, proposal.dao_code, conf);
+            p.execute_actions.actions.push_back(action(pem, MDAO_GOV, action_name, datav));
             break;
         }
         case proposal_action_type::setproposestg.value: {
             setproposestg_data datav = std::get<setproposestg_data>(data);
-            _check_proposal_params(data, action_name, action_account, proposal.dao_code, conf);
-            p.execute_actions.actions.push_back(action(pem, action_account, action_name, datav));
+            _check_proposal_params(data, action_name, proposal.dao_code, conf);
+            p.execute_actions.actions.push_back(action(pem, MDAO_GOV, action_name, datav));
             break;
         }
         case proposal_action_type::setlocktime.value: {
             setlocktime_data datav = std::get<setlocktime_data>(data);
-            _check_proposal_params(data, action_name, action_account, proposal.dao_code, conf);
-            p.execute_actions.actions.push_back(action(pem, action_account, action_name, datav));
+            _check_proposal_params(data, action_name, proposal.dao_code, conf);
+            p.execute_actions.actions.push_back(action(pem, MDAO_GOV, action_name, datav));
             break;
         }
         case proposal_action_type::setvotetime.value: {
             setvotetime_data datav = std::get<setvotetime_data>(data);
-            _check_proposal_params(data, action_name, action_account, proposal.dao_code, conf);
-            p.execute_actions.actions.push_back(action(pem, action_account, action_name, datav));
+            _check_proposal_params(data, action_name, proposal.dao_code, conf);
+            p.execute_actions.actions.push_back(action(pem, MDAO_GOV, action_name, datav));
             break;
         }
         case proposal_action_type::setpropmodel.value: {
             setpropmodel_data datav = std::get<setpropmodel_data>(data);
-            _check_proposal_params(data, action_name, action_account, proposal.dao_code, conf);
-            p.execute_actions.actions.push_back(action(pem, action_account, action_name, datav));
+            _check_proposal_params(data, action_name, proposal.dao_code, conf);
+            p.execute_actions.actions.push_back(action(pem, MDAO_GOV, action_name, datav));
             break;
         }
         // case proposal_action_type::tokentranout.value: {
@@ -332,7 +331,7 @@ ACTION mdaoproposal::setaction(const name& owner, const uint64_t& proposal_id,
     _db.set(proposal, _self);
 }
 
-void mdaoproposal::_check_proposal_params(const action_data_variant& data_var,  const name& action_name, const name& action_account, const name& proposal_dao_code, const conf_t& conf)
+void mdaoproposal::_check_proposal_params(const action_data_variant& data_var,  const name& action_name, const name& proposal_dao_code, const conf_t& conf)
 {
 
     switch (action_name.value){
@@ -425,17 +424,8 @@ void mdaoproposal::_check_proposal_params(const action_data_variant& data_var,  
             auto vote_strategy = stg.find(data.vote_strategy_id);
             CHECKC( vote_strategy != stg.end(), proposal_err::STRATEGY_NOT_FOUND, "strategy not found" );
 
-            switch (vote_strategy->type.value)
-            {
-                case strategy_type::NFT_STAKE.value:
-                case strategy_type::NFT_PARENT_STAKE.value:
-                case strategy_type::TOKEN_STAKE.value:{
-                    CHECKC( data.require_participation <= TEN_THOUSAND && data.require_pass <= TEN_THOUSAND, proposal_err::STRATEGY_NOT_FOUND, 
-                                "participation no more than" + to_string(TEN_THOUSAND));
-                }
-                default:
-                    break;
-            }
+            CHECKC( data.require_participation <= TEN_THOUSAND && data.require_pass <= TEN_THOUSAND, proposal_err::STRATEGY_NOT_FOUND, 
+                        "participation no more than" + to_string(TEN_THOUSAND));
             break;
         }
         case proposal_action_type::setproposestg.value:{

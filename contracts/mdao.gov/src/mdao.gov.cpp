@@ -73,17 +73,8 @@ ACTION mdaogov::setvotestg(const name& dao_code, const uint64_t& vote_strategy_i
     strategy_t::idx_t stg(MDAO_STG, MDAO_STG.value);
     auto vote_strategy = stg.find(vote_strategy_id);
     CHECKC( vote_strategy != stg.end(), gov_err::STRATEGY_NOT_FOUND, "strategy not found" );
-    switch (vote_strategy->type.value)
-    {        
-        case strategy_type::NFT_PARENT_STAKE.value:
-        case strategy_type::NFT_STAKE.value:
-        case strategy_type::TOKEN_STAKE.value:{
-            CHECKC( require_participation <= TEN_THOUSAND, gov_err::PARAM_ERROR, 
-                        "participation no more than" + to_string(TEN_THOUSAND));
-        }
-        default:
-            break;
-    }
+    CHECKC( require_participation <= TEN_THOUSAND, gov_err::PARAM_ERROR, 
+                "participation no more than" + to_string(TEN_THOUSAND));
 
     governance.updated_at                                                 = current_time_point();
     governance.strategies[strategy_action_type::VOTE]                     = vote_strategy_id;
