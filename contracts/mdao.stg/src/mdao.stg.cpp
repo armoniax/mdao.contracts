@@ -62,6 +62,7 @@ void strategy::thresholdstg(const name& creator,
 
 void strategy::balancestg(const name& creator, 
                 const string& stg_name, 
+                const uint64_t& weight_value,
                 const name& type,
                 const name& ref_contract,
                 const refsymbol& ref_sym){
@@ -69,7 +70,7 @@ void strategy::balancestg(const name& creator,
     
     CHECKC( stg_name.size() < MAX_CONTENT_SIZE+1, err::OVERSIZED, "stg_name length should less than "+ to_string(MAX_CONTENT_SIZE) )
     
-    string stg_algo = "x";
+    string stg_algo = "x/"+ to_string(weight_value);
 
     auto strategies         = strategy_t::idx_t(_self, _self.value);
     auto pid                = strategies.available_primary_key();
