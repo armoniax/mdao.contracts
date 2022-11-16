@@ -32,7 +32,7 @@ void strategy::create( const name& creator,
 }
 
 
-void strategy::balancestg(const name& creator, 
+void strategy::thresholdstg(const name& creator, 
                 const string& stg_name, 
                 const uint64_t& balance_value,
                 const name& type,
@@ -43,6 +43,33 @@ void strategy::balancestg(const name& creator,
     CHECKC( stg_name.size() < MAX_CONTENT_SIZE+1, err::OVERSIZED, "stg_name length should less than "+ to_string(MAX_CONTENT_SIZE) )
     
     string stg_algo = "min(x-"+ to_string(balance_value) + ",1)";
+
+    auto strategies         = strategy_t::idx_t(_self, _self.value);
+    auto pid                = strategies.available_primary_key();
+    auto strategy           = strategy_t(pid);
+    strategy.id             = pid;
+    strategy.creator        = creator;
+    strategy.stg_name       = stg_name;
+    strategy.stg_algo       = stg_algo;
+    strategy.type           = type;
+    strategy.ref_sym        = ref_sym;
+    strategy.ref_contract   = ref_contract;
+    strategy.status         = strategy_status::published;
+    strategy.created_at     = current_time_point();
+
+    _db.set( strategy, creator );
+}
+
+void strategy::balancestg(const name& creator, 
+                const string& stg_name, 
+                const name& type,
+                const name& ref_contract,
+                const refsymbol& ref_sym){
+    require_auth(creator);
+    
+    CHECKC( stg_name.size() < MAX_CONTENT_SIZE+1, err::OVERSIZED, "stg_name length should less than "+ to_string(MAX_CONTENT_SIZE) )
+    
+    string stg_algo = "x";
 
     auto strategies         = strategy_t::idx_t(_self, _self.value);
     auto pid                = strategies.available_primary_key();
