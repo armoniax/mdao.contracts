@@ -34,7 +34,7 @@ struct STG_TABLE_NAME("global") stg_global_t {
 
 typedef eosio::singleton< "global"_n, stg_global_t > stg_singleton;
 
-typedef std::variant<symbol_code, nsymbol> refsymbol;
+typedef std::variant<symbol_code, nsymbol, symbol> refsymbol;
 
 namespace strategy_status {
     static constexpr eosio::name testing            = "testing"_n;

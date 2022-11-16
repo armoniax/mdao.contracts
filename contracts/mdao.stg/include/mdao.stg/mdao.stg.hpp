@@ -112,24 +112,24 @@ public:
          switch (stg.type.value)
          {
          case strategy_type::TOKEN_BALANCE.value: {
-            symbol_code sym_code = std::get<symbol_code>(stg.ref_sym);
-            value = eosio::token::get_balance(stg.ref_contract, account, sym_code).amount;
+            symbol sym = std::get<symbol>(stg.ref_sym);
+            value = eosio::token::get_balance(stg.ref_contract, account, sym.code()).amount;
             // check(false, "111:"+to_string(value));
             break;
          }
          case strategy_type::NFT_BALANCE.value:{
-            nsymbol sym_code = std::get<nsymbol>(stg.ref_sym);
-            value = amax::ntoken::get_balance(stg.ref_contract, account, sym_code).amount;
+            nsymbol sym = std::get<nsymbol>(stg.ref_sym);
+            value = amax::ntoken::get_balance(stg.ref_contract, account, sym).amount;
             break;
          }
          case strategy_type::NFT_PARENT_BALANCE.value:{
-            nsymbol sym_code = std::get<nsymbol>(stg.ref_sym);
-            value = amax::ntoken::get_balance_by_parent(stg.ref_contract, account, sym_code.id);
+            nsymbol sym = std::get<nsymbol>(stg.ref_sym);
+            value = amax::ntoken::get_balance_by_parent(stg.ref_contract, account, sym.id);
             break;
          }
          case strategy_type::TOKEN_SUM.value: {
-            symbol_code sym_code = std::get<symbol_code>(stg.ref_sym);
-            value = aplink::token::get_sum(stg.ref_contract, account, sym_code).amount;
+            symbol sym = std::get<symbol>(stg.ref_sym);
+            value = aplink::token::get_sum(stg.ref_contract, account, sym.code()).amount;
             break;
          }
          default:
@@ -163,8 +163,8 @@ public:
          {
          case strategy_type::TOKEN_STAKE.value: {
             map<extended_symbol, int64_t> tokens = mdaostake::get_user_staked_tokens(stake_contract, account, dao_code);
-            symbol_code sym_code = std::get<symbol_code>(stg.ref_sym);
-            asset supply = amax::token::get_supply(stg.ref_contract, symbol_code(sym_code));
+            symbol sym = std::get<symbol>(stg.ref_sym);
+            asset supply = amax::token::get_supply(stg.ref_contract, sym.code());
             value = tokens.at(extended_symbol(supply.symbol, stg.ref_contract));
             break;
          }
