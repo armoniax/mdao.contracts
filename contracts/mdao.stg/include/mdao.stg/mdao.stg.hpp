@@ -42,11 +42,11 @@ public:
                 const refsymbol& ref_sym);
 
    /**
-    * @brief create a strategy for token/nft thresholdstg, 1 weight for account grater than balance_value
+    * @brief create a strategy for token/nft thresholdstg, 1 weight for balance threshold_value
     *
     * @param creator - the account to create strategy
     * @param stg_name - name of strategy,
-    * @param balance_value - the require token amount of strategy
+    * @param threshold_value - the require token amount of strategy
     * @param type - the type of strategy
     * @param ref_contract - the asset contract account
     * @param ref_sym - the symbol of token/nft, should format as nsymbol or symbol
