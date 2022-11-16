@@ -42,11 +42,29 @@ public:
                 const refsymbol& ref_sym);
 
    /**
-    * @brief create a strategy for token/nft balance, 1 weight for account grater than balance_value
+    * @brief create a strategy for token/nft thresholdstg, 1 weight for balance threshold_value
     *
     * @param creator - the account to create strategy
     * @param stg_name - name of strategy,
-    * @param balance_value - the require token amount of strategy
+    * @param threshold_value - the require token amount of strategy
+    * @param type - the type of strategy
+    * @param ref_contract - the asset contract account
+    * @param ref_sym - the symbol of token/nft, should format as nsymbol or symbol
+    */
+    [[eosio::action]]
+    void thresholdstg(const name& creator, 
+                const string& stg_name, 
+                const uint64_t& threshold_value,
+                const name& type,
+                const name& ref_contract,
+                const refsymbol& ref_sym);
+
+      /**
+    * @brief create a strategy for token/nft balance, 1 weight for 1 weight_value
+    *
+    * @param creator - the account to create strategy
+    * @param stg_name - name of strategy,
+    * @param weight_value - the require token amount of strategy
     * @param type - the type of strategy
     * @param ref_contract - the asset contract account
     * @param ref_sym - the symbol of token/nft, should format as nsymbol or symbol
@@ -54,7 +72,7 @@ public:
     [[eosio::action]]
     void balancestg(const name& creator, 
                 const string& stg_name, 
-                const uint64_t& balance_value,
+                const uint64_t& weight_value,
                 const name& type,
                 const name& ref_contract,
                 const refsymbol& ref_sym);
