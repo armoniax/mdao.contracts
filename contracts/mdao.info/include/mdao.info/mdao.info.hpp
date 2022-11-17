@@ -53,7 +53,7 @@ enum class info_err: uint8_t {
     DID_NOT_AUTH        = 22
 };
 
-class [[eosio::contract("mdaoinfotest")]] mdaoinfo : public contract {
+class [[eosio::contract("mdao.info")]] mdaoinfo : public contract {
 
 using conf_t = mdao::conf_global_t;
 using conf_table_t = mdao::conf_global_singleton;

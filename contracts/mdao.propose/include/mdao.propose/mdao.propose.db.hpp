@@ -12,7 +12,8 @@ namespace mdao {
 using namespace std;
 using namespace eosio;
 
-#define TG_TBL [[eosio::table, eosio::contract("mdaopropose2")]]
+#define TG_TBL [[eosio::table, eosio::contract("mdao.propose")]]
+#define PROPOSE_TABLE_NAME(name) [[eosio::table(name), eosio::contract("mdao.propose")]]
 
 static uint128_t get_union_id(const name& account, const uint64_t& proposal_id){
     return ( (uint128_t)account.value ) << 64 | proposal_id;
@@ -97,7 +98,7 @@ struct TG_TBL vote_t {
     > idx_t;
 };
 
-struct [[eosio::table("global"), eosio::contract("mdaopropose2")]] prop_global_t {
+struct PROPOSE_TABLE_NAME("global") prop_global_t {
     uint64_t last_propose_id = 0;
     EOSLIB_SERIALIZE( prop_global_t, (last_propose_id) )
 };

@@ -1,4 +1,4 @@
-add_contract(mdaostrategy mdao.stg
+add_contract(mdao.stg mdao.stg
 ${CMAKE_CURRENT_SOURCE_DIR}/src/mdao.stg.cpp
 )
 

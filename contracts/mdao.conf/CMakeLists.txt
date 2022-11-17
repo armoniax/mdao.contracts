@@ -1,4 +1,4 @@
-add_contract(mdaoconftes1 mdao.conf ${CMAKE_CURRENT_SOURCE_DIR}/src/mdao.conf.cpp)
+add_contract(mdao.conf mdao.conf ${CMAKE_CURRENT_SOURCE_DIR}/src/mdao.conf.cpp)
 
 target_include_directories(mdao.conf
    PUBLIC

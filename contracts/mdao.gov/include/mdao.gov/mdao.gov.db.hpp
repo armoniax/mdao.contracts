@@ -16,7 +16,7 @@ namespace mdao {
 using namespace std;
 using namespace eosio;
 
-#define GOV_TG_TBL [[eosio::table, eosio::contract("mdaogovtest1")]]
+#define GOV_TG_TBL [[eosio::table, eosio::contract("mdao.gov")]]
 // static constexpr uint64_t UNLOCK_TIME = 48 * 3600;
 static constexpr uint64_t LOCK_HOURS = 48;
 static constexpr uint64_t VOTING_HOURS = 48;

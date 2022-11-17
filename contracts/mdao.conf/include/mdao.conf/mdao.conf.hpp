@@ -10,7 +10,7 @@
 using namespace eosio;
 using namespace mdao;
 
-class [[eosio::contract("mdaoconftes1")]] mdaoconf : public contract {
+class [[eosio::contract("mdao.conf")]] mdaoconf : public contract {
 private:
     conf_global_t            _gstate;
     conf_global_singleton    _global;

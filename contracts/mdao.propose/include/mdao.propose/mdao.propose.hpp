@@ -79,7 +79,8 @@ enum class proposal_err: uint8_t {
     TOKEN_NOT_EXIST         = 22,
     NOT_MODIFY              = 23,
     TIME_LESS_THAN_ZERO     = 24,
-    INSUFFICIENT_BALANCE    = 25
+    INSUFFICIENT_BALANCE    = 25,
+    VOTING                  = 26
 };
 
 namespace proposal_action_type {
@@ -180,7 +181,7 @@ struct setpropmodel_data {
 typedef std::variant<updatedao_data, bindtoken_data, binddapp_data, 
                      setvotestg_data, setproposestg_data, setlocktime_data, setvotetime_data, setpropmodel_data> action_data_variant;
 
-class [[eosio::contract("mdaopropose2")]] mdaoproposal : public contract {
+class [[eosio::contract("mdao.propose")]] mdaoproposal : public contract {
 
 using conf_t = mdao::conf_global_t;
 using conf_table_t = mdao::conf_global_singleton;

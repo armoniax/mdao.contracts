@@ -18,29 +18,18 @@ using namespace eosio;
 #define SYMBOL(sym_code, precision) symbol(symbol_code(sym_code), precision)
 static constexpr symbol AMAX_SYMBOL            = SYMBOL("AMAX", 8);
 static constexpr uint16_t TEN_THOUSAND         = 10000;
-static constexpr name AMAX_TOKEN{"amax.token"_n};
-static constexpr name MDAO_INFO{"mdaoinfotest"_n};
-static constexpr name MDAO_CONF{"mdaoconftes1"_n};
-static constexpr name MDAO_STG{"mdaostrategy"_n};
-static constexpr name MDAO_GOV{"mdaogovtest1"_n};
-static constexpr name MDAO_PROPOSAL{"mdaopropose2"_n};
-static constexpr name MDAO_TOKEN{"mdaotoken111"_n};
-static constexpr name MDAO_TREASURY{"mdaotreasury"_n};
-static constexpr name MDAO_ALGOEX{"mdao.algoex"_n};
-static constexpr name MDAO_STAKE{"teststakerbb"_n};
-static constexpr name MDAO_MEDIUM{"tokenfactory"_n};
 
-// #define CONF_TG_TBL [[eosio::table, eosio::contract("mdao.conf")]]
-// static constexpr name MDAO_INFO{"mdao.info"_n};
-// static constexpr name MDAO_CONF{"mdao.conf"_n};
-// static constexpr name MDAO_MEDIUM{"tokenmedium"_n};
-// static constexpr name MDAO_STG{"mdaostrategy"_n};
-// static constexpr name MDAO_GOV{"mdaogovtest1"_n};
-// static constexpr name MDAO_PROPOSAL{"mdaopropose2"_n};
-// static constexpr name MDAO_TOKEN{"mdaotoken111"_n};
-// static constexpr name MDAO_TREASURY{"mdaotreasury"_n};
-// static constexpr name MDAO_ALGOEX{"mdao.algoex"_n};
-// static constexpr name MDAO_STAKE{"mdao.stake"_n}; 
+#define CONF_TG_TBL [[eosio::table, eosio::contract("mdao.conf")]]
+#define CONF_TABLE_NAME(name) [[eosio::table(name), eosio::contract("mdao.conf")]]
+
+static constexpr name AMAX_TOKEN{"amax.token"_n};
+static constexpr name MDAO_INFO{"mdao.info"_n};
+static constexpr name MDAO_CONF{"mdao.conf"_n};
+static constexpr name MDAO_STG{"mdao.stg"_n};
+static constexpr name MDAO_GOV{"mdao.gov"_n};
+static constexpr name MDAO_PROPOSAL{"mdao.propose"_n};
+static constexpr name MDAO_STAKE{"mdao.stake"_n};
+
 namespace conf_status {
     static constexpr name INITIAL    = "initial"_n;
     static constexpr name RUNNING    = "running"_n;
@@ -78,7 +67,7 @@ bool operator < (const app_info& appinfo1, const app_info& appinfo2) {
     return appinfo1.app_name < appinfo2.app_name;
 }
 
-struct [[eosio::table("global"), eosio::contract("mdaoconftes1")]] conf_global_t {
+struct CONF_TABLE_NAME("global") conf_global_t {
     app_info          appinfo;
     name              status = conf_status::INITIAL;
     name              fee_taker;

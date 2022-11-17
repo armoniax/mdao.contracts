@@ -21,7 +21,7 @@ static constexpr string_view     meta_limit            = "meta";
 
 namespace mdao {
 
-#define INFO_TG_TBL [[eosio::table, eosio::contract("mdaoinfotest")]]
+#define INFO_TG_TBL [[eosio::table, eosio::contract("mdao.info")]]
 
 struct INFO_TG_TBL dao_info_t {
     name                    dao_code;

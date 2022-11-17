@@ -16,7 +16,7 @@ using namespace wasm::db;
 using namespace picomath;
 
 namespace mdao {
-class [[eosio::contract("mdaostrategy")]] strategy : public contract {
+class [[eosio::contract("mdao.stg")]] strategy : public contract {
 private:
    dbc                 _db;
    stg_singleton          _global;

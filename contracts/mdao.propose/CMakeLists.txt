@@ -1,4 +1,4 @@
-add_contract(mdaopropose2 mdao.propose ${CMAKE_CURRENT_SOURCE_DIR}/src/mdao.propose.cpp)
+add_contract(mdao.propose mdao.propose ${CMAKE_CURRENT_SOURCE_DIR}/src/mdao.propose.cpp)
 
 target_include_directories(mdao.propose
    PUBLIC

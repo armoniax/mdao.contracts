@@ -1,4 +1,4 @@
-add_contract(mdaogovtest1 mdao.gov ${CMAKE_CURRENT_SOURCE_DIR}/src/mdao.gov.cpp)
+add_contract(mdao.gov mdao.gov ${CMAKE_CURRENT_SOURCE_DIR}/src/mdao.gov.cpp)
 
 target_include_directories(mdao.gov
    PUBLIC

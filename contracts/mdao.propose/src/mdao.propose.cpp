@@ -37,7 +37,7 @@ ACTION mdaoproposal::create(const name& creator, const name& dao_code, const str
         row.desc	            =   desc;
         row.title	            =   title;
         row.proposal_strategy_id=   proposal_strategy_id;
-   });
+    });
     _gstate.last_propose_id++;
     _global.set( _gstate, get_self() );
 }
@@ -114,7 +114,7 @@ ACTION mdaoproposal::execute( const uint64_t& proposal_id )
 
     governance_t::idx_t governance_tbl(MDAO_GOV, MDAO_GOV.value);
     const auto governance = governance_tbl.find(proposal.dao_code.value);
-    CHECKC( (proposal.started_at + (governance->voting_period * seconds_per_hour)) <= current_time_point(), proposal_err::ALREADY_EXPIRED, "proposal is already expired" );
+    CHECKC( (proposal.started_at + (governance->voting_period * seconds_per_hour)) <= current_time_point(), proposal_err::VOTING, "voting is not yet complete" );
 
     strategy_t::idx_t stg(MDAO_STG, MDAO_STG.value);
     auto vote_strategy = stg.find(proposal.vote_strategy_id);

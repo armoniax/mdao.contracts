@@ -48,7 +48,7 @@ enum class gov_err: uint8_t {
 
 };
 
-class [[eosio::contract("mdaogovtest1")]] mdaogov : public contract {
+class [[eosio::contract("mdao.gov")]] mdaogov : public contract {
 
 using conf_t = mdao::conf_global_t;
 using conf_table_t = mdao::conf_global_singleton;
