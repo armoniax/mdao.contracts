@@ -152,14 +152,12 @@ ACTION mdaoinfo::updatecode(const name& admin, const name& code, const name& new
 
 ACTION mdaoinfo::binddapps(const name& owner, const name& code, const set<app_info>& dapps)
 {
-    require_auth( owner );
+    // require_auth( owner );
     auto conf = _conf();
     CHECKC( conf.status != conf_status::PENDING, info_err::NOT_AVAILABLE, "under maintenance" );
 
     dao_info_t info(code);
-    CHECKC( _db.get(info) ,info_err::RECORD_NOT_FOUND, "record not found");
-    CHECKC( info.creator == owner, info_err::PERMISSION_DENIED, "only the creator can operate" );
-    CHECKC( info.status == info_status::RUNNING, info_err::NOT_AVAILABLE, "under maintenance" );
+    _check_permission(info, code, owner, conf);
     CHECKC( dapps.size() != 0 ,info_err::CANNOT_ZERO, "dapp size cannot be zero" );
     CHECKC( ( info.dapps.size() + dapps.size() ) <= conf.dapp_seats_max, info_err::SIZE_TOO_MUCH, "dapp size more than limit" );
 
@@ -172,7 +170,7 @@ ACTION mdaoinfo::binddapps(const name& owner, const name& code, const set<app_in
 
 ACTION mdaoinfo::bindtoken(const name& owner, const name& code, const extended_symbol& token)
 {
-    require_auth( owner );
+    // require_auth( owner );
     auto conf = _conf();
     CHECKC( conf.status != conf_status::PENDING, info_err::NOT_AVAILABLE, "under maintenance" );
 
@@ -252,7 +250,7 @@ void mdaoinfo::recycledb(uint32_t max_rows) {
 
 ACTION mdaoinfo::bindntoken(const name& owner, const name& code, const extended_nsymbol& ntoken)
 {
-    require_auth( owner );
+    // require_auth( owner );
     auto conf = _conf();
     CHECKC( conf.status != conf_status::PENDING, info_err::NOT_AVAILABLE, "under maintenance" );
 

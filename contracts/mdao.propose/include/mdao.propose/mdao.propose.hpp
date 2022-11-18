@@ -87,7 +87,7 @@ namespace proposal_action_type {
     //info
     static constexpr eosio::name updatedao          = "updatedao"_n;
     static constexpr eosio::name bindtoken          = "bindtoken"_n;
-    static constexpr eosio::name binddapp           = "binddapp"_n;
+    static constexpr eosio::name binddapp           = "binddapps"_n;
     // static constexpr eosio::name createtoken        = "createtoken"_n;
     // static constexpr eosio::name issuetoken         = "issuetoken"_n;
     //gov
