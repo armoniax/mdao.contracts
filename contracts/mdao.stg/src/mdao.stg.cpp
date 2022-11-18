@@ -41,7 +41,8 @@ void strategy::thresholdstg(const name& creator,
     require_auth(creator);
     
     CHECKC( stg_name.size() < MAX_CONTENT_SIZE+1, err::OVERSIZED, "stg_name length should less than "+ to_string(MAX_CONTENT_SIZE) )
-    
+    CHECKC( balance_value != 0, err::PARAM_ERROR, "balance_value cannot equal zero" )
+     
     string stg_algo = "min(x-"+ to_string(balance_value) + ",1)";
 
     auto strategies         = strategy_t::idx_t(_self, _self.value);
