@@ -38,6 +38,10 @@ private:
                                     const name& taker, 
                                     const name& order_no);
 
+    void _make_order(const name& from, const asset& quantity, const name& order_no, const name& taker, 
+                    const asset& take_quant, const name& take_contract, const string& code);
+    void _take_order(const name& from, const asset& quantity, const name& order_no, const string& data);
+
 public:
     fixswap(eosio::name receiver, eosio::name code, datastream<const char *> ds) : _db(_self),contract(receiver, code, ds), _global(_self, _self.value)
     {

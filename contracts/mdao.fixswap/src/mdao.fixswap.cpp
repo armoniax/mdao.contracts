@@ -87,75 +87,80 @@ void fixswap::ontransfer(name from, name to, asset quantity, string memo)
     vector<string_view> params = split(memo, ":");
     CHECKC( params.size() > 0, err::PARAM_ERROR, "unsupport memo" )
 
-    if(params.size() == 6 && params[0] == "make"){
-        auto swap_order = swap_t(name(params[1]));
-        CHECKC( !_db.get(swap_order), err::RECORD_EXISTING, "repeat swap order" )
-        swap_order.id = _gstate.swap_id++;
-        swap_order.status = swap_status_t::matching;
-        swap_order.maker = from;
-        swap_order.created_at = current_time_point();
-        swap_order.make_asset = extended_asset(quantity, get_first_receiver());
-        CHECKC( (!_gstate.min_order_amount.count(swap_order.make_asset.get_extended_symbol())) || 
-                (_gstate.min_order_amount.at(swap_order.make_asset.get_extended_symbol()) <= quantity.amount), 
-                err::AMOUNT_TOO_SMALL, "make asset is too small" )
-
-        if(params[2].length() > 0){
-            name taker(params[2]);
-            CHECKC( is_account(taker), err::ACCOUNT_INVALID, "cannot find taker account" )
-            swap_order.taker = taker;
-        }
-
+    if (params.size() == 6 && params[0] == "make") {
+        auto order_no = name(params[1]);
+        auto taker = params[2].length() > 0 ? name(params[2]) : name(0);
         asset take_quant = asset_from_string(params[3]);
-        CHECKC( take_quant.amount > 0, err::ACCOUNT_INVALID, "take quanity must be positive" )
-
         name take_contract = name(params[4]);
+        CHECKC( take_quant.amount > 0, err::ACCOUNT_INVALID, "take quanity must be positive" )
         CHECKC( is_account(take_contract), err::ACCOUNT_INVALID, "cannot find take quantity contract" )
         CHECKC( _gstate.supported_tokens.count(take_contract), err::SYMBOL_MISMATCH, "unsupport token contract" )
 
-        swap_order.take_asset = extended_asset(take_quant, take_contract);
-        CHECKC( (!_gstate.min_order_amount.count(swap_order.take_asset.get_extended_symbol())) || 
-                (_gstate.min_order_amount.at(swap_order.take_asset.get_extended_symbol()) <= take_quant.amount), 
-                err::AMOUNT_TOO_SMALL, "take asset is too small" )
-
-        if(params[5].length() > 0){
-            swap_order.code = params[5];
-        }
-        swap_order.expired_at = time_point_sec(current_time_point()) + default_expired_secs;
-
-        _db.set(swap_order, get_self());
-        _global.set( _gstate, get_self());
+        auto code = string(params[5]);
+        _make_order( from, quantity, order_no, taker, take_quant, take_contract, code );
     }
     else if(params.size() == 3 && params[0] == "take"){
-        auto swap_orderno = name(params[1]);
-        auto swap_order = swap_t(swap_orderno);
-        CHECKC( _db.get(swap_order), err::RECORD_NOT_FOUND, "cannot found swap order" )
-        CHECKC( time_point_sec(current_time_point()) < swap_order.expired_at , err::TIME_EXPIRED, "swap order expired")
-        CHECKC( swap_order.status == swap_status_t::matching, err::STATUS_MISMATCH, "order status mismatched" )
-
-        if(swap_order.taker != name(0)){
-            CHECKC( swap_order.taker == from, err::NO_AUTH, "no auth to swap order" )
-        }else{
-            swap_order.taker = from;
-        }
-
-        if(swap_order.code.size() != 0){
-            string data = string(params[2]);
-            checksum256 digest = sha256(&data[0], data.size());
-            auto bytes = digest.extract_as_byte_array();
-            string hexstr = to_hex(bytes.data(), bytes.size());
-            CHECKC( hexstr == swap_order.code, err::NO_AUTH, "auth failed: code mismatch: " + data + " | " + hexstr)
-        }
-
-        CHECKC( quantity == swap_order.take_asset.quantity, err::SYMBOL_MISMATCH, "swap quantity mismatch" )
-        CHECKC( get_first_receiver() == swap_order.take_asset.contract, err::SYMBOL_MISMATCH, "quantity contract mismatch" )
-
-        _transaction_transfer(swap_order.make_asset, swap_order.take_asset, swap_order.maker, swap_order.taker, swap_orderno);
-        _reward_transfer(swap_order.make_asset, swap_order.take_asset, swap_order.maker, swap_order.taker, swap_orderno);
-
-        _db.del(swap_order);
-        NOTIFICATION(swap_orderno, swap_status_t::matched, current_time_point());
-
+        auto order_no = name(params[1]);
+        auto data = string(params[2]);
+       _take_order(from, quantity, order_no, data);
     }
+}
+
+void fixswap::_make_order(const name& from, const asset& quantity, const name& order_no, const name& taker, 
+                        const asset& take_quant, const name& take_contract, const string& code) {
+    auto swap_order = swap_t(order_no);
+    CHECKC( !_db.get(swap_order), err::RECORD_EXISTING, "repeat swap order" )
+    
+    swap_order.id = _gstate.swap_id++;
+    swap_order.status = swap_status_t::matching;
+    swap_order.maker = from;
+    swap_order.taker = taker;
+    swap_order.created_at = current_time_point();
+    swap_order.make_asset = extended_asset(quantity, get_first_receiver());
+    swap_order.code = code;
+
+    CHECKC( (!_gstate.min_order_amount.count(swap_order.make_asset.get_extended_symbol())) || 
+            (_gstate.min_order_amount.at(swap_order.make_asset.get_extended_symbol()) <= quantity.amount), 
+            err::AMOUNT_TOO_SMALL, "make asset is too small" )
+
+    swap_order.take_asset = extended_asset(take_quant, take_contract);
+    CHECKC( (!_gstate.min_order_amount.count(swap_order.take_asset.get_extended_symbol())) || 
+            (_gstate.min_order_amount.at(swap_order.take_asset.get_extended_symbol()) <= take_quant.amount), 
+            err::AMOUNT_TOO_SMALL, "take asset is too small" )
+
+    swap_order.expired_at = time_point_sec(current_time_point()) + default_expired_secs;
+
+    _db.set(swap_order, get_self());
+    _global.set( _gstate, get_self());
+}
+void fixswap::_take_order(const name& from, const asset& quantity, const name& order_no, const string& data) {
+    auto swap_order = swap_t(order_no);
+    CHECKC( _db.get(swap_order), err::RECORD_NOT_FOUND, "cannot found swap order" )
+    CHECKC( time_point_sec(current_time_point()) < swap_order.expired_at , err::TIME_EXPIRED, "swap order expired")
+    CHECKC( swap_order.status == swap_status_t::matching, err::STATUS_MISMATCH, "order status mismatched" )
+
+    if (swap_order.taker != name(0)) {
+        CHECKC( swap_order.taker == from, err::NO_AUTH, "no auth to swap order" )
+
+    } else {
+        swap_order.taker = from;
+    }
+
+    if (swap_order.code.size() != 0) {
+        checksum256 digest = sha256(&data[0], data.size());
+        auto bytes = digest.extract_as_byte_array();
+        string hexstr = to_hex(bytes.data(), bytes.size());
+        CHECKC( hexstr == swap_order.code, err::NO_AUTH, "auth failed: code mismatch: " + data + " | " + hexstr)
+    }
+
+    CHECKC( quantity == swap_order.take_asset.quantity, err::SYMBOL_MISMATCH, "swap quantity mismatch" )
+    CHECKC( get_first_receiver() == swap_order.take_asset.contract, err::SYMBOL_MISMATCH, "quantity contract mismatch" )
+
+    _transaction_transfer(swap_order.make_asset, swap_order.take_asset, swap_order.maker, swap_order.taker, order_no);
+    _reward_transfer(swap_order.make_asset, swap_order.take_asset, swap_order.maker, swap_order.taker, order_no);
+
+    _db.del(swap_order);
+    NOTIFICATION(order_no, swap_status_t::matched, current_time_point());
 }
 
 void fixswap::_transaction_transfer(const extended_asset& make_asset, 
