@@ -21,7 +21,10 @@ private:
    dbc                 _db;
    stg_singleton          _global;
    stg_global_t           _gstate;
-
+   
+   int64_t _check_contract_and_sym( const name& contract, 
+                                    const refsymbol& ref_symbol, 
+                                    const name& type);
 public:
     using contract::contract;
     strategy(eosio::name receiver, eosio::name code, datastream<const char*> ds):
@@ -105,16 +108,12 @@ public:
                   const uint64_t& value, 
                   const uint64_t& stg_id )
    {
-        auto db = dbc(stg_contract_account);
-        auto stg = strategy_t(stg_id);
-        check(db.get(stg), "cannot find strategy");
+         auto db = dbc(stg_contract_account);
+         auto stg = strategy_t(stg_id);
+         check(db.get(stg), "cannot find strategy");
 
-         PicoMath pm;
-         auto &x = pm.addVariable("x");
-         x = value;
-         auto result = pm.evalExpression(stg.stg_algo.c_str());
-         CHECKC(result.isOk(), err::PARAM_ERROR, result.getError());
-         int32_t weight = int32_t(floor(result.getResult()));
+         int32_t weight = cal_algo(stg.stg_algo, value);
+
          return weight;
    }
 
@@ -155,12 +154,7 @@ public:
             break;
          }
 
-         PicoMath pm;
-         auto &x = pm.addVariable("x");
-         x = value;
-         auto result = pm.evalExpression(stg.stg_algo.c_str());
-         CHECKC(result.isOk(), err::PARAM_ERROR, result.getError());
-         int32_t weight = int32_t(floor(result.getResult()));
+         int32_t weight = cal_algo(stg.stg_algo, value);
 
          // check(false, " balance: " + to_string(value) + " | weight: "+ to_string(weight));
          return weight;
@@ -203,16 +197,24 @@ public:
             check(false, "unsupport calculating type");
             break;
          }
-
-         PicoMath pm;
-         auto &x = pm.addVariable("x");
-         x = value;
-         auto result = pm.evalExpression(stg.stg_algo.c_str());
-         CHECKC(result.isOk(), err::PARAM_ERROR, result.getError());
-         int32_t weight = int32_t(floor(result.getResult()));
+         int32_t weight = cal_algo(stg.stg_algo, value);
 
          // check(false, " balance: " + to_string(value) + " | weight: "+ to_string(weight));
          return weight;
    }
+
+   static int32_t cal_algo(const string& stg_algo,  
+                            const uint64_t& value)
+   {
+         PicoMath pm;
+         auto &x = pm.addVariable("x");
+         x = value;
+         auto result = pm.evalExpression(stg_algo.c_str());
+         CHECKC(result.isOk(), err::PARAM_ERROR, result.getError());
+         int32_t weight = int32_t(floor(result.getResult()));
+
+         return weight;
+   }
 };
+
 }

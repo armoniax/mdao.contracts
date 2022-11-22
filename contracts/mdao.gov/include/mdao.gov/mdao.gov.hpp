@@ -44,7 +44,8 @@ enum class gov_err: uint8_t {
     TIME_LESS_THAN_ZERO     =14,
     NOT_MODIFY              =15,
     TYPE_ERROR              =16,
-    PARAM_ERROR             =17
+    PARAM_ERROR             =17,
+    STRATEGY_TYPE_ERROR     =18
 
 };
 

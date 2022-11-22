@@ -38,7 +38,7 @@ typedef std::variant<symbol_code, nsymbol, symbol> refsymbol;
 
 namespace strategy_status {
     static constexpr eosio::name testing            = "testing"_n;
-    static constexpr eosio::name verified             = "verified"_n;
+    static constexpr eosio::name verified           = "verified"_n;
     static constexpr eosio::name published          = "published"_n;
 };
 

@@ -14,6 +14,14 @@ void strategy::create( const name& creator,
 
     CHECKC( stg_name.size() < MAX_CONTENT_SIZE, err::OVERSIZED, "stg_name length should less than "+ to_string(MAX_CONTENT_SIZE) )
     CHECKC( stg_algo.size() < MAX_ALGO_SIZE, err::OVERSIZED, "stg_algo length should less than "+ to_string(MAX_ALGO_SIZE) )
+    CHECKC( type == strategy_type::TOKEN_BALANCE ||
+            type == strategy_type::TOKEN_STAKE ||
+            type == strategy_type::TOKEN_SUM ||
+            type == strategy_type::NFT_BALANCE ||
+            type == strategy_type::NFT_STAKE ||
+            type == strategy_type::NFT_PARENT_STAKE ||
+            type == strategy_type::NFT_PARENT_BALANCE, err::PARAM_ERROR, "type error" )
+    _check_contract_and_sym(ref_contract, ref_sym, type);
     
     auto strategies         = strategy_t::idx_t(_self, _self.value);
     auto pid                = strategies.available_primary_key();
@@ -41,7 +49,15 @@ void strategy::thresholdstg(const name& creator,
     require_auth(creator);
     
     CHECKC( stg_name.size() < MAX_CONTENT_SIZE+1, err::OVERSIZED, "stg_name length should less than "+ to_string(MAX_CONTENT_SIZE) )
-     
+    
+    CHECKC( type == strategy_type::TOKEN_BALANCE ||
+            type == strategy_type::TOKEN_STAKE ||
+            type == strategy_type::TOKEN_SUM ||
+            type == strategy_type::NFT_BALANCE ||
+            type == strategy_type::NFT_STAKE ||
+            type == strategy_type::NFT_PARENT_STAKE ||
+            type == strategy_type::NFT_PARENT_BALANCE, err::PARAM_ERROR, "type error" )
+    _check_contract_and_sym(ref_contract, ref_sym, type);
     string stg_algo = "min(x-"+ to_string(balance_value) + ",1)";
 
     auto strategies         = strategy_t::idx_t(_self, _self.value);
@@ -67,9 +83,18 @@ void strategy::balancestg(const name& creator,
                 const name& ref_contract,
                 const refsymbol& ref_sym){
     require_auth(creator);
-    
+
     CHECKC( stg_name.size() < MAX_CONTENT_SIZE+1, err::OVERSIZED, "stg_name length should less than "+ to_string(MAX_CONTENT_SIZE) )
     CHECKC( weight_value != 0, err::PARAM_ERROR, "balance_value cannot equal zero" )
+   
+    CHECKC( type == strategy_type::TOKEN_BALANCE ||
+            type == strategy_type::TOKEN_STAKE ||
+            type == strategy_type::TOKEN_SUM ||
+            type == strategy_type::NFT_BALANCE ||
+            type == strategy_type::NFT_STAKE ||
+            type == strategy_type::NFT_PARENT_STAKE ||
+            type == strategy_type::NFT_PARENT_BALANCE, err::PARAM_ERROR, "type error" )
+    _check_contract_and_sym(ref_contract, ref_sym, type);
 
     string stg_algo = "x/"+ to_string(weight_value);
 
@@ -115,6 +140,7 @@ void strategy::verify( const name& creator,
     strategy_t stg = strategy_t( stg_id );
     CHECKC( _db.get( stg ), err::RECORD_NOT_FOUND, "strategy not found: " + to_string( stg_id ) )
     CHECKC( stg.status != strategy_status::published, err::NO_AUTH, "cannot verify published strategy" )
+    CHECKC( stg.creator == creator, err::NO_AUTH, "require creator auth" )
 
     int32_t weight = cal_weight( get_self(), value, stg_id);
     CHECKC( weight == expect_weight, err::UNRESPECT_RESULT, "algo result weight is: "+to_string(weight) )
@@ -122,7 +148,6 @@ void strategy::verify( const name& creator,
     stg.status = strategy_status::verified;
     _db.set( stg, creator );
 }
-
 
 void strategy::testalgo( const name& account, const uint64_t& stg_id ){
     strategy_t stg = strategy_t( stg_id );
@@ -155,4 +180,33 @@ void strategy::publish( const name& creator,
 
     stg.status = strategy_status::published;
     _db.set( stg, creator );
+}
+
+int64_t strategy::_check_contract_and_sym( const name& contract, 
+                                            const refsymbol& ref_symbol, 
+                                            const name& type){
+    int64_t value = 0;
+    switch (type.value)
+    {
+        case strategy_type::NFT_STAKE.value:
+        case strategy_type::NFT_BALANCE.value:
+        case strategy_type::NFT_PARENT_STAKE.value:
+        case strategy_type::NFT_PARENT_BALANCE.value:{
+            nsymbol sym = std::get<nsymbol>(ref_symbol);
+            value = amax::ntoken::get_supply(contract, sym);
+            break;
+        }
+        case strategy_type::TOKEN_BALANCE.value: 
+        case strategy_type::TOKEN_SUM.value: 
+        case strategy_type::TOKEN_STAKE.value: {
+            symbol sym = std::get<symbol>(ref_symbol);
+            value = amax::token::get_supply(contract, sym.code()).amount;
+            break;
+        }
+        default:
+            check(false, "unsupport calculating type");
+            break;
+    }
+
+    CHECKC( value > 0, err::PARAM_ERROR, "contract or symbol error " )
 }

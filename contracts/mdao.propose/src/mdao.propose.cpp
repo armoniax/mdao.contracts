@@ -424,7 +424,7 @@ void mdaoproposal::_check_proposal_params(const action_data_variant& data_var,  
             auto vote_strategy = stg.find(data.vote_strategy_id);
             CHECKC( vote_strategy != stg.end(), proposal_err::STRATEGY_NOT_FOUND, "strategy not found" );
 
-            CHECKC( data.require_participation <= TEN_THOUSAND && data.require_pass <= TEN_THOUSAND, proposal_err::STRATEGY_NOT_FOUND, 
+            CHECKC( data.require_participation <= TEN_THOUSAND, proposal_err::STRATEGY_NOT_FOUND, 
                         "participation no more than" + to_string(TEN_THOUSAND));
             break;
         }
@@ -451,6 +451,7 @@ void mdaoproposal::_check_proposal_params(const action_data_variant& data_var,  
         case proposal_action_type::setvotetime.value: {
             setvotetime_data data = std::get<setvotetime_data>(data_var);
             CHECKC(proposal_dao_code == data.dao_code, proposal_err::PARAM_ERROR, "dao_code error");
+            CHECKC(data.voting_period > 0, proposal_err::PARAM_ERROR, "voting_period not less than 0");
 
             governance_t::idx_t governance(MDAO_GOV, MDAO_GOV.value);
             auto gov = governance.find(data.dao_code.value);

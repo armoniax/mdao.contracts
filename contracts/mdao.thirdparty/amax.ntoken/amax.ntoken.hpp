@@ -98,13 +98,19 @@ class [[eosio::contract("amax.ntoken")]] ntoken : public contract {
       const auto& acnt = acnts.get( sym.raw(), "no balance object found" ); 
       return acnt.balance; 
    } 
+
+   static int64_t get_supply(const name& contract, const nsymbol& sym) { 
+      auto ntable = amax::nstats_t::idx_t( contract, contract.value ); 
+      const auto& stats = ntable.get( sym.id, "no nft object found" ); 
+      return stats.supply.amount; 
+   } 
  
-   static uint64_t get_balance_by_parent( const name& contract, const name& owner, const uint32_t& parent_id ) { 
+   static int64_t get_balance_by_parent( const name& contract, const name& owner, const uint32_t& parent_id ) { 
       auto ntable = amax::nstats_t::idx_t( contract, contract.value ); 
       auto idx = ntable.get_index<"parentidx"_n>(); 
       auto itr = idx.find( parent_id ); 
       
-      uint64_t amount = 0; 
+      int64_t amount = 0; 
       for (uint8_t i = 0; itr != idx.end() && itr->supply.symbol.parent_id == parent_id; itr++, i++) { 
          if(i == MAX_BALANCE_COUNT) break; 
          auto acnts = amax::account_t::idx_t( contract, owner.value ); 
