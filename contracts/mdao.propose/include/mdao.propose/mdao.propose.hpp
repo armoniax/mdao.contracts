@@ -80,7 +80,8 @@ enum class proposal_err: uint8_t {
     NOT_MODIFY              = 23,
     TIME_LESS_THAN_ZERO     = 24,
     INSUFFICIENT_BALANCE    = 25,
-    VOTING                  = 26
+    VOTING                  = 26,
+    STRATEGY_TYPE_ERROR     = 27
 };
 
 namespace proposal_action_type {

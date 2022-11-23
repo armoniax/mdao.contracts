@@ -423,27 +423,37 @@ void mdaoproposal::_check_proposal_params(const action_data_variant& data_var,  
             strategy_t::idx_t stg(MDAO_STG, MDAO_STG.value);
             auto vote_strategy = stg.find(data.vote_strategy_id);
             CHECKC( vote_strategy != stg.end(), proposal_err::STRATEGY_NOT_FOUND, "strategy not found" );
-
+            CHECKC( vote_strategy->type == strategy_status::published, 
+                        proposal_err::STRATEGY_TYPE_ERROR, "strategy type must be published" );
             CHECKC( data.require_participation <= TEN_THOUSAND, proposal_err::STRATEGY_NOT_FOUND, 
                         "participation no more than" + to_string(TEN_THOUSAND));
             break;
         }
         case proposal_action_type::setproposestg.value:{
             setproposestg_data data = std::get<setproposestg_data>(data_var);
-            CHECKC(proposal_dao_code == data.dao_code, proposal_err::PARAM_ERROR, "dao_code error");
+            CHECKC( proposal_dao_code == data.dao_code, proposal_err::PARAM_ERROR, "dao_code error" );
 
             strategy_t::idx_t stg(MDAO_STG, MDAO_STG.value);
-            CHECKC(stg.find(data.proposal_strategy_id) != stg.end(), proposal_err::STRATEGY_NOT_FOUND, "strategy not found:"+to_string(data.proposal_strategy_id) );
+            auto propose_strategy = stg.find(data.proposal_strategy_id);
+            CHECKC( propose_strategy != stg.end(), proposal_err::STRATEGY_NOT_FOUND, "strategy not found:"+to_string(data.proposal_strategy_id) );
+            CHECKC( propose_strategy->type == strategy_status::published, 
+                    proposal_err::STRATEGY_TYPE_ERROR, "strategy type must be published" );
+            
+            governance_t::idx_t governance(MDAO_GOV, MDAO_GOV.value);
+            auto gov = governance.find(data.dao_code.value);
+            CHECKC( data.proposal_strategy_id != gov->strategies.at(strategy_action_type::PROPOSAL), 
+                    proposal_err::PARAM_ERROR, "modified value is the same as the original one" );
 
             break;
         }
         case proposal_action_type::setlocktime.value: {
             setlocktime_data data = std::get<setlocktime_data>(data_var);
-            CHECKC(proposal_dao_code == data.dao_code, proposal_err::PARAM_ERROR, "dao_code error");
+            CHECKC( proposal_dao_code == data.dao_code, proposal_err::PARAM_ERROR, "dao_code error" );
 
             governance_t::idx_t governance(MDAO_GOV, MDAO_GOV.value);
             auto gov = governance.find(data.dao_code.value);
             CHECKC( gov != governance.end(), proposal_err::RECORD_NOT_FOUND, "governance not found" );
+            CHECKC( data.update_interval != gov->update_interval, proposal_err::PARAM_ERROR, "modified value is the same as the original one" );
             CHECKC( data.update_interval >= gov->voting_period, proposal_err::TIME_LESS_THAN_ZERO, "lock time less than vote time" );
             
             break;
@@ -456,12 +466,18 @@ void mdaoproposal::_check_proposal_params(const action_data_variant& data_var,  
             governance_t::idx_t governance(MDAO_GOV, MDAO_GOV.value);
             auto gov = governance.find(data.dao_code.value);
             CHECKC( gov != governance.end(), proposal_err::RECORD_NOT_FOUND, "governance not found" );
+            CHECKC( data.voting_period != gov->voting_period, proposal_err::PARAM_ERROR, "modified value is the same as the original one" );
+
             break;     
         }
         case proposal_action_type::setpropmodel.value: {
             setpropmodel_data data = std::get<setpropmodel_data>(data_var);
-            CHECKC(proposal_dao_code == data.dao_code, proposal_err::PARAM_ERROR, "dao_code error");
+            CHECKC( proposal_dao_code == data.dao_code, proposal_err::PARAM_ERROR, "dao_code error" );
             CHECKC( data.propose_model == propose_model_type::MIX || data.propose_model == propose_model_type::PROPOSAL, proposal_err::PARAM_ERROR, "param error" );
+           
+            governance_t::idx_t governance(MDAO_GOV, MDAO_GOV.value);
+            auto gov = governance.find(data.dao_code.value);
+            CHECKC( data.propose_model != gov->proposal_model, proposal_err::PARAM_ERROR, "modified value is the same as the original one" );
 
             break;     
         }

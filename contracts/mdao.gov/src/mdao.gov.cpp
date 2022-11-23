@@ -33,7 +33,7 @@ ACTION mdaogov::create(const name& dao_code, const uint64_t& propose_strategy_id
     CHECKC( vote_strategy!= stg.end(), gov_err::STRATEGY_NOT_FOUND, "strategy not found");
     CHECKC( propose_strategy != stg.end(), gov_err::STRATEGY_NOT_FOUND, "strategy not found");
     CHECKC( vote_strategy->type == strategy_status::published && propose_strategy->type == strategy_status::published, 
-            gov_err::STRATEGY_TYPE_ERROR, "strateg·y type must be published" );
+            gov_err::STRATEGY_TYPE_ERROR, "strategy type must be published" );
     CHECKC( require_participation <= TEN_THOUSAND, gov_err::STRATEGY_NOT_FOUND, 
                 "participation no more than" + to_string(TEN_THOUSAND));
 
@@ -44,7 +44,7 @@ ACTION mdaogov::create(const name& dao_code, const uint64_t& propose_strategy_id
     governance.require_participation                                   = require_participation;
     governance.update_interval                                         = update_interval;
     governance.voting_period                                           = voting_period;
-    _db.set(governance, _self);
+    _db.set(governance, info->creator);
 }
 
 ACTION mdaogov::setvotestg(const name& dao_code, const uint64_t& vote_strategy_id, 
@@ -65,6 +65,8 @@ ACTION mdaogov::setvotestg(const name& dao_code, const uint64_t& vote_strategy_i
     strategy_t::idx_t stg(MDAO_STG, MDAO_STG.value);
     auto vote_strategy = stg.find(vote_strategy_id);
     CHECKC( vote_strategy != stg.end(), gov_err::STRATEGY_NOT_FOUND, "strategy not found" );
+    CHECKC( vote_strategy->type == strategy_status::published, 
+            gov_err::STRATEGY_TYPE_ERROR, "strategy type must be published" );
     CHECKC( require_participation <= TEN_THOUSAND, gov_err::PARAM_ERROR, 
                 "participation no more than" + to_string(TEN_THOUSAND));
 
