@@ -22,7 +22,7 @@ private:
    stg_singleton          _global;
    stg_global_t           _gstate;
 
-   int64_t _check_contract_and_sym( const name& contract, 
+   void _check_contract_and_sym( const name& contract, 
                                     const refsymbol& ref_symbol, 
                                     const name& type);
 public:

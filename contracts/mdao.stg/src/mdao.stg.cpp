@@ -182,7 +182,7 @@ void strategy::publish( const name& creator,
     _db.set( stg, creator );
 }
 
-int64_t strategy::_check_contract_and_sym( const name& contract, 
+void strategy::_check_contract_and_sym( const name& contract, 
                                             const refsymbol& ref_symbol, 
                                             const name& type){
     int64_t value = 0;
