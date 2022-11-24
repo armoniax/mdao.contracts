@@ -152,11 +152,11 @@ ACTION mdaogov::setvotetime(const name& dao_code, const uint16_t& voting_period)
 //     VOTE_CREATE(MDAO_PROPOSAL, dao_code, creator, desc, title, vote_strategy_id, proposal_strategy_id)
 // }
 
-void mdaogov::deletegov(name dao_code) {
-    governance_t governance(dao_code);
+// void mdaogov::deletegov(name dao_code) {
+//     governance_t governance(dao_code);
 
-    _db.del(governance);
-}
+//     _db.del(governance);
+// }
 
 ACTION mdaogov::setpropmodel(const name& dao_code, const name& propose_model)
 {

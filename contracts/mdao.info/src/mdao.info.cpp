@@ -194,14 +194,14 @@ ACTION mdaoinfo::updatestatus(const name& code, const bool& is_enable)
 
 }
 
-void mdaoinfo::recycledb(uint32_t max_rows) {
-    require_auth( _self );
-    dao_info_t::idx_t info_tbl(_self, _self.value);
-    auto info_itr = info_tbl.begin();
-    for (size_t count = 0; count < max_rows && info_itr != info_tbl.end(); count++) {
-        info_itr = info_tbl.erase(info_itr);
-    }
-}
+// void mdaoinfo::recycledb(uint32_t max_rows) {
+//     require_auth( _self );
+//     dao_info_t::idx_t info_tbl(_self, _self.value);
+//     auto info_itr = info_tbl.begin();
+//     for (size_t count = 0; count < max_rows && info_itr != info_tbl.end(); count++) {
+//         info_itr = info_tbl.erase(info_itr);
+//     }
+// }
 
 // ACTION mdaoinfo::createtoken(const name& code, const name& owner, const uint16_t& transfer_ratio, 
 //                              const string& fullname, const asset& maximum_supply, const string& metadata)

@@ -81,7 +81,8 @@ enum class proposal_err: uint8_t {
     TIME_LESS_THAN_ZERO     = 24,
     INSUFFICIENT_BALANCE    = 25,
     VOTING                  = 26,
-    STRATEGY_TYPE_ERROR     = 27
+    STRATEGY_TYPE_ERROR     = 27,
+    INVALID_FORMAT          = 28
 };
 
 namespace proposal_action_type {
@@ -211,7 +212,7 @@ public:
 
     ACTION addplan( const name& owner, const uint64_t& proposal_id, const string& title, const string& desc );
 
-    ACTION startvote(const name& executor, const uint64_t& proposal_id);
+    ACTION startvote(const name& creator, const uint64_t& proposal_id);
 
     ACTION execute(const uint64_t& proposal_id);
 
@@ -222,10 +223,10 @@ public:
                         const action_data_variant& data, 
                         const string& title);
     
-    ACTION recycledb(uint32_t max_rows);
+    // ACTION recycledb(uint32_t max_rows);
 
-    ACTION deletepropose(uint64_t id);
-    ACTION deletevote(uint32_t id); 
+    // ACTION deletepropose(uint64_t id);
+    // ACTION deletevote(uint32_t id); 
 
 private:
     void _check_proposal_params(const action_data_variant& data_var,  const name& action_name, const name& proposal_dao_code, const conf_t& conf);

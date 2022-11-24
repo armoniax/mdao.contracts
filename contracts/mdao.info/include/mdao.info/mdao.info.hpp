@@ -95,7 +95,7 @@ public:
     [[eosio::action]]
     void updatestatus(const name& code, const bool& isenable);
 
-    ACTION recycledb(uint32_t max_rows);
+    // ACTION recycledb(uint32_t max_rows);
 
     // [[eosio::action]]
     // void createtoken(const name& code, const name& owner, const uint16_t& transfer_ratio, 

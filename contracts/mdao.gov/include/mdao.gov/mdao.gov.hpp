@@ -80,13 +80,13 @@ public:
     ACTION setproposestg(const name& dao_code, const uint64_t& propose_strategy_id);
 
     [[eosio::action]]
-    ACTION setlocktime(const name& dao_code, const uint16_t& lock_time);
+    ACTION setlocktime(const name& dao_code, const uint16_t& update_interval);
 
     [[eosio::action]]
-    ACTION setvotetime(const name& dao_code, const uint16_t& vote_time);
+    ACTION setvotetime(const name& dao_code, const uint16_t& voting_period);
     
-    [[eosio::action]]
-    void deletegov(name dao_code);
+    // [[eosio::action]]
+    // void deletegov(name dao_code);
 
     [[eosio::action]]
     ACTION setpropmodel(const name& dao_code, const name& propose_model);

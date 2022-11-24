@@ -11,6 +11,8 @@ ACTION mdaoproposal::create(const name& creator, const name& dao_code, const str
     require_auth( creator );
     auto conf = _conf();
     CHECKC( conf.status != conf_status::PENDING, gov_err::NOT_AVAILABLE, "under maintenance" );
+    CHECKC( title.size() <= 32, proposal_err::INVALID_FORMAT, "title length is more than 32 bytes");
+    CHECKC( desc.size() <= 224, proposal_err::INVALID_FORMAT, "desc length is more than 224 bytes");
 
     governance_t::idx_t governance(MDAO_GOV, MDAO_GOV.value);
     auto gov = governance.find(dao_code.value);
@@ -64,8 +66,10 @@ ACTION mdaoproposal::addplan( const name& owner, const uint64_t& proposal_id,
 
     auto conf = _conf();
     CHECKC( conf.status != conf_status::PENDING, proposal_err::NOT_AVAILABLE, "under maintenance" );
+    CHECKC( title.size() <= 32, proposal_err::INVALID_FORMAT, "title length is more than 32 bytes");
+    CHECKC( desc.size() <= 224, proposal_err::INVALID_FORMAT, "desc length is more than 224 bytes");
 
-    proposal_t proposal(proposal_id);
+    proposal_t proposal(proposal_idvoting_period);
     CHECKC( _db.get(proposal) ,proposal_err::RECORD_NOT_FOUND, "record not found" );
     CHECKC( owner == proposal.creator, proposal_err::PERMISSION_DENIED, "only the creator can operate" );
     CHECKC( proposal_status::CREATED == proposal.status, proposal_err::STATUS_ERROR, "can only operate if the state is created" );
@@ -220,15 +224,15 @@ ACTION mdaoproposal::votefor(const name& voter, const uint64_t& proposal_id,
     _db.set(proposal, _self);
 }
 
-void mdaoproposal::deletepropose(uint64_t id) {
-    proposal_t proposal(id);
-    _db.del(proposal);
-}
-void mdaoproposal::deletevote(uint32_t id) {
-    vote_t vote(id);
-    vote.id = id;
-    _db.del(vote);
-}
+// void mdaoproposal::deletepropose(uint64_t id) {
+//     proposal_t proposal(id);
+//     _db.del(proposal);
+// }
+// void mdaoproposal::deletevote(uint32_t id) {
+//     vote_t vote(id);
+//     vote.id = id;
+//     _db.del(vote);
+// }
 
 ACTION mdaoproposal::setaction(const name& owner, const uint64_t& proposal_id,
                                 const name& action_name, 
@@ -501,16 +505,16 @@ void mdaoproposal::_check_proposal_params(const action_data_variant& data_var,  
     }
 }
 
-void mdaoproposal::recycledb(uint32_t id) {
-    // require_auth( _self );
-    // proposal_t::idx_t proposal_tbl(_self, _self.value);
-    // auto proposal_itr = proposal_tbl.begin();
-    // for (size_t count = 0; count < max_rows && proposal_itr != proposal_tbl.end(); count++) {
-    //     proposal_itr = proposal_tbl.erase(proposal_itr);
-    // }
-    proposal_t proposal(id);
-    _db.del(proposal);
-}
+// void mdaoproposal::recycledb(uint32_t id) {
+//     // require_auth( _self );
+//     // proposal_t::idx_t proposal_tbl(_self, _self.value);
+//     // auto proposal_itr = proposal_tbl.begin();
+//     // for (size_t count = 0; count < max_rows && proposal_itr != proposal_tbl.end(); count++) {
+//     //     proposal_itr = proposal_tbl.erase(proposal_itr);
+//     // }
+//     proposal_t proposal(id);
+//     _db.del(proposal);
+// }
 
 void mdaoproposal::_cal_votes(const name dao_code, const strategy_t& vote_strategy, const name voter, int64_t& value, const uint32_t& lock_time) {
     switch(vote_strategy.type.value){
