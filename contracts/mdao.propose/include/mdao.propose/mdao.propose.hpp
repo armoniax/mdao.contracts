@@ -81,7 +81,7 @@ enum class proposal_err: uint8_t {
     TIME_LESS_THAN_ZERO     = 24,
     INSUFFICIENT_BALANCE    = 25,
     VOTING                  = 26,
-    STRATEGY_TYPE_ERROR     = 27,
+    STRATEGY_STATUS_ERROR   = 27,
     INVALID_FORMAT          = 28
 };
 

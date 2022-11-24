@@ -200,7 +200,7 @@ int64_t strategy::_check_contract_and_sym( const name& contract,
         case strategy_type::TOKEN_SUM.value: 
         case strategy_type::TOKEN_STAKE.value: {
             symbol sym = std::get<symbol>(ref_symbol);
-            value = amax::token::get_supply(contract, sym.code()).amount;
+            value = aplink::token::get_supply(contract, sym.code()).amount;
             break;
         }
         default:

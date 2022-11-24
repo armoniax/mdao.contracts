@@ -427,8 +427,8 @@ void mdaoproposal::_check_proposal_params(const action_data_variant& data_var,  
             strategy_t::idx_t stg(MDAO_STG, MDAO_STG.value);
             auto vote_strategy = stg.find(data.vote_strategy_id);
             CHECKC( vote_strategy != stg.end(), proposal_err::STRATEGY_NOT_FOUND, "strategy not found" );
-            CHECKC( vote_strategy->type == strategy_status::published, 
-                        proposal_err::STRATEGY_TYPE_ERROR, "strategy type must be published" );
+            CHECKC( vote_strategy->status == strategy_status::published, 
+                        proposal_err::STRATEGY_STATUS_ERROR, "strategy type must be published" );
             CHECKC( data.require_participation <= TEN_THOUSAND, proposal_err::STRATEGY_NOT_FOUND, 
                         "participation no more than" + to_string(TEN_THOUSAND));
             break;
@@ -440,8 +440,8 @@ void mdaoproposal::_check_proposal_params(const action_data_variant& data_var,  
             strategy_t::idx_t stg(MDAO_STG, MDAO_STG.value);
             auto propose_strategy = stg.find(data.proposal_strategy_id);
             CHECKC( propose_strategy != stg.end(), proposal_err::STRATEGY_NOT_FOUND, "strategy not found:"+to_string(data.proposal_strategy_id) );
-            CHECKC( propose_strategy->type == strategy_status::published, 
-                    proposal_err::STRATEGY_TYPE_ERROR, "strategy type must be published" );
+            CHECKC( propose_strategy->status == strategy_status::published, 
+                    proposal_err::STRATEGY_STATUS_ERROR, "strategy type must be published" );
             
             governance_t::idx_t governance(MDAO_GOV, MDAO_GOV.value);
             auto gov = governance.find(data.dao_code.value);
