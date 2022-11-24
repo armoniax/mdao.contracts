@@ -69,7 +69,7 @@ ACTION mdaoproposal::addplan( const name& owner, const uint64_t& proposal_id,
     CHECKC( title.size() <= 32, proposal_err::INVALID_FORMAT, "title length is more than 32 bytes");
     CHECKC( desc.size() <= 224, proposal_err::INVALID_FORMAT, "desc length is more than 224 bytes");
 
-    proposal_t proposal(proposal_idvoting_period);
+    proposal_t proposal(proposal_id);
     CHECKC( _db.get(proposal) ,proposal_err::RECORD_NOT_FOUND, "record not found" );
     CHECKC( owner == proposal.creator, proposal_err::PERMISSION_DENIED, "only the creator can operate" );
     CHECKC( proposal_status::CREATED == proposal.status, proposal_err::STATUS_ERROR, "can only operate if the state is created" );
