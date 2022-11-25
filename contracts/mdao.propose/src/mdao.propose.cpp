@@ -429,8 +429,18 @@ void mdaoproposal::_check_proposal_params(const action_data_variant& data_var,  
             CHECKC( vote_strategy != stg.end(), proposal_err::STRATEGY_NOT_FOUND, "strategy not found" );
             CHECKC( vote_strategy->status == strategy_status::published, 
                         proposal_err::STRATEGY_STATUS_ERROR, "strategy type must be published" );
-            CHECKC( data.require_participation <= TEN_THOUSAND, proposal_err::STRATEGY_NOT_FOUND, 
-                        "participation no more than" + to_string(TEN_THOUSAND));
+
+            switch (vote_strategy->type.value)
+            {
+                case strategy_type::NFT_PARENT_STAKE.value:
+                case strategy_type::NFT_STAKE.value:
+                case strategy_type::TOKEN_STAKE.value:{
+                    CHECKC( data.require_participation > 0 && data.require_participation <= TEN_THOUSAND, gov_err::STRATEGY_NOT_FOUND, 
+                                "participation no more than" + to_string(TEN_THOUSAND) + "and participation less than zero");
+                }
+                default:
+                    CHECKC( data.require_pass > 0, gov_err::PARAM_ERROR, "require_pass less than zero");
+            }
             break;
         }
         case proposal_action_type::setproposestg.value:{

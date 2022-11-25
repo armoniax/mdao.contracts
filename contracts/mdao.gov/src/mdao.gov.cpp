@@ -22,11 +22,7 @@ ACTION mdaogov::create(const name& dao_code, const uint64_t& propose_strategy_id
     governance_t governance(dao_code);
     CHECKC( !_db.get(governance), gov_err::CODE_REPEAT, "governance already existing!" );
     CHECKC( update_interval >= voting_period , gov_err::TIME_LESS_THAN_ZERO, "lock time less than vote time" );
-    CHECKC( require_participation <= TEN_THOUSAND, gov_err::PARAM_ERROR, 
-                "participation no more than" + to_string(TEN_THOUSAND));
-    CHECKC( require_participation > 0 && require_pass > 0, gov_err::PARAM_ERROR, 
-                "participation and require_pass less than zero");
-                
+
     dao_info_t::idx_t info_tbl(MDAO_INFO, MDAO_INFO.value);
     const auto info = info_tbl.find(dao_code.value);
     CHECKC( info != info_tbl.end(), gov_err::NOT_AVAILABLE, "dao not exists");
@@ -39,6 +35,18 @@ ACTION mdaogov::create(const name& dao_code, const uint64_t& propose_strategy_id
     CHECKC( propose_strategy != stg.end(), gov_err::STRATEGY_NOT_FOUND, "strategy not found");
     CHECKC( vote_strategy->status == strategy_status::published && propose_strategy->status == strategy_status::published, 
             gov_err::STRATEGY_STATUS_ERROR, "strategy type must be published" );
+
+    switch (vote_strategy->type.value)
+    {
+        case strategy_type::NFT_PARENT_STAKE.value:
+        case strategy_type::NFT_STAKE.value:
+        case strategy_type::TOKEN_STAKE.value:{
+            CHECKC( require_participation > 0 && require_participation <= TEN_THOUSAND, gov_err::STRATEGY_NOT_FOUND, 
+                        "participation no more than" + to_string(TEN_THOUSAND) + "and participation less than zero");
+        }
+        default:
+            CHECKC( require_pass > 0, gov_err::PARAM_ERROR, "require_pass less than zero");
+    }
 
     governance.dao_code                                                = dao_code;
     governance.strategies[strategy_action_type::PROPOSAL]              = propose_strategy_id;
@@ -60,11 +68,7 @@ ACTION mdaogov::setvotestg(const name& dao_code, const uint64_t& vote_strategy_i
     governance_t governance(dao_code);
     CHECKC( _db.get(governance), gov_err::RECORD_NOT_FOUND, "governance not exist!" );
     CHECKC( (governance.updated_at + (governance.update_interval * seconds_per_hour)) <= current_time_point(), gov_err::NOT_MODIFY, "cannot be modified for now" );
-    CHECKC( require_participation <= TEN_THOUSAND, gov_err::PARAM_ERROR, 
-            "participation no more than" + to_string(TEN_THOUSAND));
-    CHECKC( require_participation > 0 && require_pass > 0, gov_err::PARAM_ERROR, 
-                "participation and require_pass less than zero");
-                
+    
     dao_info_t::idx_t info_tbl(MDAO_INFO, MDAO_INFO.value);
     const auto info = info_tbl.find(dao_code.value);
     mdaogov:: _check_auth(governance, conf, *info);
@@ -75,6 +79,17 @@ ACTION mdaogov::setvotestg(const name& dao_code, const uint64_t& vote_strategy_i
     CHECKC( vote_strategy->status == strategy_status::published, 
             gov_err::STRATEGY_STATUS_ERROR, "strategy type must be published" );
 
+    switch (vote_strategy->type.value)
+    {
+        case strategy_type::NFT_PARENT_STAKE.value:
+        case strategy_type::NFT_STAKE.value:
+        case strategy_type::TOKEN_STAKE.value:{
+            CHECKC( require_participation > 0 && require_participation <= TEN_THOUSAND, gov_err::STRATEGY_NOT_FOUND, 
+                        "participation no more than" + to_string(TEN_THOUSAND) + "and participation less than zero");
+        }
+        default:
+            CHECKC( require_pass > 0, gov_err::PARAM_ERROR, "require_pass less than zero");
+    }
 
     governance.updated_at                                                 = current_time_point();
     governance.strategies[strategy_action_type::VOTE]                     = vote_strategy_id;
