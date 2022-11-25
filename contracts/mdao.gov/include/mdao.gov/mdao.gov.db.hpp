@@ -34,7 +34,7 @@ struct GOV_TG_TBL governance_t {
     uint32_t                    require_pass;         // stake -> ratio(100% = 10000), token -> votes
     uint16_t                    update_interval    = LOCK_HOURS;
     uint16_t                    voting_period      = VOTING_HOURS;
-    time_point_sec              updated_at         = current_time_point();
+    time_point_sec              updated_at;
     name                        proposal_model     = propose_model_type::MIX;
     uint64_t    primary_key()const { return dao_code.value; }
     uint64_t    scope() const { return 0; }
