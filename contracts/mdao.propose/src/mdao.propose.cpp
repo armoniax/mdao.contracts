@@ -55,6 +55,10 @@ ACTION mdaoproposal::cancel(const name& owner, const uint64_t& proposal_id)
     CHECKC( _db.get(proposal) ,proposal_err::RECORD_NOT_FOUND, "record not found" );
     CHECKC( owner == proposal.creator, proposal_err::PERMISSION_DENIED, "only the creator can operate" );
     CHECKC( proposal_status::CREATED == proposal.status || proposal_status::VOTING == proposal.status, proposal_err::STATUS_ERROR, "can only operate if the state is created and voting" );
+    
+    governance_t::idx_t governance_tbl(MDAO_GOV, MDAO_GOV.value);
+    const auto governance = governance_tbl.find(proposal.dao_code.value);
+    CHECKC( (proposal.started_at + (governance->voting_period * seconds_per_hour)) >= current_time_point(), proposal_err::ALREADY_EXPIRED, "the voting cycle is over. it can't be canceled" );
 
     _db.del(proposal);
 }
@@ -171,6 +175,7 @@ ACTION mdaoproposal::votefor(const name& voter, const uint64_t& proposal_id,
     proposal_t proposal(proposal_id);
     CHECKC( _db.get(proposal) ,proposal_err::RECORD_NOT_FOUND, "proposal not found" );
     CHECKC( proposal.status == proposal_status::VOTING, proposal_err::STATUS_ERROR, "proposal status must be running" );
+    CHECKC( proposal.options.count(title), proposal_err::PARAM_ERROR, "param error" );
 
     governance_t::idx_t governance_tbl(MDAO_GOV, MDAO_GOV.value);
     const auto governance = governance_tbl.find(proposal.dao_code.value);
@@ -481,6 +486,7 @@ void mdaoproposal::_check_proposal_params(const action_data_variant& data_var,  
             auto gov = governance.find(data.dao_code.value);
             CHECKC( gov != governance.end(), proposal_err::RECORD_NOT_FOUND, "governance not found" );
             CHECKC( data.voting_period != gov->voting_period, proposal_err::PARAM_ERROR, "modified value is the same as the original one" );
+            CHECKC( data.voting_period <= gov->update_interval , proposal_err::PARAM_ERROR, "lock time less than vote time" );
 
             break;     
         }
