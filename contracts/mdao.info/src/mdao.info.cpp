@@ -286,9 +286,9 @@ const mdaoinfo::conf_t& mdaoinfo::_conf() {
 }
 
 void mdaoinfo::_check_auth(const governance_t& governance, const conf_t& conf, const dao_info_t& info) {
-    if(governance.proposal_model == propose_model_type::MIX ){
-        CHECKC(has_auth(conf.managers.at(manager_type::PROPOSAL)) || has_auth(info.creator), info_err::PERMISSION_DENIED, "permission denied");
-    }else{
+    // if(governance.proposal_model == propose_model_type::MIX ){
+    //     CHECKC(has_auth(conf.managers.at(manager_type::PROPOSAL)) || has_auth(info.creator), info_err::PERMISSION_DENIED, "permission denied");
+    // }else{
         CHECKC( has_auth(conf.managers.at(manager_type::PROPOSAL)), info_err::PERMISSION_DENIED, "permission denied" );
-    }   
+    // }   
 }
