@@ -58,7 +58,8 @@ ACTION mdaoproposal::cancel(const name& owner, const uint64_t& proposal_id)
     
     governance_t::idx_t governance_tbl(MDAO_GOV, MDAO_GOV.value);
     const auto governance = governance_tbl.find(proposal.dao_code.value);
-    CHECKC( (proposal.started_at + (governance->voting_period * seconds_per_hour)) >= current_time_point(), proposal_err::ALREADY_EXPIRED, "the voting cycle is over. it can't be canceled" );
+    CHECKC( (proposal.started_at == time_point_sec() || (proposal.started_at + (governance->voting_period * seconds_per_hour)) >= current_time_point()), 
+                proposal_err::ALREADY_EXPIRED, "the voting cycle is over. it can't be canceled" );
 
     _db.del(proposal);
 }
