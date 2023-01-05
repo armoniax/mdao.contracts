@@ -24,20 +24,21 @@ namespace mdao {
 #define INFO_TG_TBL [[eosio::table, eosio::contract("mdao.info")]]
 
 struct INFO_TG_TBL dao_info_t {
-    name                    dao_code;
-    string                  title;
-    string                  logo;
-    string                  desc;
-    set<string>             tags;
-    map<name, string>       resource_links;
-    set<app_info>           dapps;
-    string                  group_id;
-    extended_symbol         token;
-    extended_nsymbol        ntoken;
-    name                    status;
-    name                    creator;
-    time_point_sec          created_at;
-    string                  memo;
+    name                        dao_code;
+    string                      title;
+    string                      logo;
+    string                      desc;
+    // set<string>             tags;
+    map<name, string>    tags;
+    map<name, string>           resource_links;
+    set<app_info>               dapps;
+    string                      group_id;
+    extended_symbol             token;
+    extended_nsymbol            ntoken;
+    name                        status;
+    name                        creator;
+    time_point_sec              created_at;
+    string                      memo;
     
     dao_info_t() {}
     dao_info_t(const name& c): dao_code(c) {}

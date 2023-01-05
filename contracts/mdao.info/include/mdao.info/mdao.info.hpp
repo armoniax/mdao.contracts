@@ -28,6 +28,13 @@ namespace info_status {
 
 };
 
+namespace tags_code {
+    static constexpr name OFFICIAL       = "a"_n;
+    static constexpr name OPTIONAL       = "t"_n;
+    static constexpr name LANGUAGE       = "l"_n;
+
+};
+
 enum class info_err: uint8_t {
     INVALID_FORMAT      = 1,
     INCORRECT_FEE       = 2,
@@ -94,6 +101,12 @@ public:
 
     [[eosio::action]]
     void updatestatus(const name& code, const bool& isenable);
+    
+    [[eosio::action]]
+    void settag(const name& code, const string& tag);
+
+    [[eosio::action]]
+    void deltag(const name& code, const string& tag);
 
     // ACTION recycledb(uint32_t max_rows);
 

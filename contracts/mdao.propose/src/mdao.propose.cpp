@@ -443,6 +443,7 @@ void mdaoproposal::_check_proposal_params(const action_data_variant& data_var,  
                 case strategy_type::TOKEN_STAKE.value:{
                     CHECKC( data.require_participation > 0 && data.require_participation <= TEN_THOUSAND, gov_err::STRATEGY_NOT_FOUND, 
                                 "participation no more than" + to_string(TEN_THOUSAND) + "and participation less than zero");
+                    break;
                 }
                 default:
                     CHECKC( data.require_pass > 0, gov_err::PARAM_ERROR, "require_pass less than zero");

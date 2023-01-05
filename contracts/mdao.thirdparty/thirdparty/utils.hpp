@@ -112,6 +112,15 @@ string_view trim(string_view sv) {
     return sv;
 }
 
+string erase_string(string source, string target) {
+    int pos =source.find(target);
+    CHECK(pos != -1, "target is not exists");
+    int size = target.size();
+    CHECK(size != 0, "target is empty");
+    source =source.erase(pos,size);
+    return source;
+}
+
 vector<string_view> split(string_view str, string_view delims = " ")
 {
     vector<string_view> res;

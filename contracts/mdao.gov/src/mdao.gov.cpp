@@ -3,6 +3,7 @@
 #include "mdao.gov/mdao.gov.hpp"
 #include <mdao.info/mdao.info.db.hpp>
 #include <mdao.stake/mdao.stake.db.hpp>
+#include "mdao.gov/contract_function.hpp"
 #include <set>
 
 #define VOTE_CREATE(bank, dao_code, creator, desc, title, vote_strategy_id, proposal_strategy_id) \
@@ -43,6 +44,7 @@ ACTION mdaogov::create(const name& dao_code, const uint64_t& propose_strategy_id
         case strategy_type::TOKEN_STAKE.value:{
             CHECKC( require_participation > 0 && require_participation <= TEN_THOUSAND, gov_err::STRATEGY_NOT_FOUND, 
                         "participation no more than" + to_string(TEN_THOUSAND) + "and participation less than zero");
+            break;
         }
         default:
             CHECKC( require_pass > 0, gov_err::PARAM_ERROR, "require_pass less than zero");
@@ -86,6 +88,7 @@ ACTION mdaogov::setvotestg(const name& dao_code, const uint64_t& vote_strategy_i
         case strategy_type::TOKEN_STAKE.value:{
             CHECKC( require_participation > 0 && require_participation <= TEN_THOUSAND, gov_err::STRATEGY_NOT_FOUND, 
                         "participation no more than" + to_string(TEN_THOUSAND) + "and participation less than zero");
+            break;
         }
         default:
             CHECKC( require_pass > 0, gov_err::PARAM_ERROR, "require_pass less than zero");

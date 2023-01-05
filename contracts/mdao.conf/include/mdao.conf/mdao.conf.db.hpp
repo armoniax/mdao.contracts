@@ -116,10 +116,17 @@ struct CONF_TABLE_NAME("global") conf_global_t {
         symbol_code("MBUSD"), symbol_code("MUSDC"), symbol_code("METH"),
         symbol_code("METC"), symbol_code("AMAX"), symbol_code("APLINK")
     };
+    set<string>  available_tags {
+        "a.recommend","a.hot","a.vip",
+        "t.defi","t.socialfi","t.gamefi","t.nft","t.token",
+        "t.tech","t.tour","t.sport","t.charity","t.film",
+        "l.cn","l.en","l.vi","l.th","l.id","l.ko","l.ja","l.ru"
+    };
+
     bool      enable_metaverse  = false;
     EOSLIB_SERIALIZE( conf_global_t,    (appinfo)(status)(fee_taker)(upgrade_fee)(dapp_seats_max)
                                         (admin)(token_create_fee)(managers)(token_contracts)(ntoken_contracts)
-                                        (stake_period_days)(black_symbols)(enable_metaverse) )
+                                        (stake_period_days)(black_symbols)(available_tags)(enable_metaverse) )
 };
 
 typedef eosio::singleton< "global"_n, conf_global_t > conf_global_singleton;

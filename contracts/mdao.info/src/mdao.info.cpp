@@ -194,6 +194,76 @@ ACTION mdaoinfo::updatestatus(const name& code, const bool& is_enable)
 
 }
 
+void mdaoinfo::settag(const name& code, const string& tag) {
+    auto conf = _conf();
+    CHECKC( conf.available_tags.count(tag) > 0, info_err::PARAM_ERROR, "tag error" );
+
+    auto parts = split( tag, "." );
+    CHECKC( parts.size() == 2, info_err::INVALID_FORMAT, "invalid format" );
+
+    dao_info_t info(code);
+    CHECKC( _db.get(info) ,info_err::RECORD_NOT_FOUND, "record not found");
+
+    name tag_code = name(parts[0]);
+    string string_info_tags =info.tags.at(tag_code);
+    CHECKC( find_substr(string_info_tags, tag) == -1, info_err::PARAM_ERROR, "tag is exists" );
+    vector<string_view> info_tags = split(info.tags.at(tag_code), ",");
+
+    switch (tag_code.value)
+    {
+        case tags_code::OFFICIAL.value:{
+            CHECKC( has_auth(conf.managers[manager_type::INFO]), info_err::PERMISSION_DENIED, "permission denied" );
+            break;
+        }
+        case tags_code::OPTIONAL.value:{
+            CHECKC( has_auth(info.creator), info_err::PERMISSION_DENIED, "permission denied");
+            CHECKC( info_tags.size() < 3, info_err::PARAM_ERROR, "tags count over limit" );
+            break;  
+        }
+        case tags_code::LANGUAGE.value:{
+            CHECKC( has_auth(info.creator), info_err::PERMISSION_DENIED, "permission denied3" );
+            CHECKC( info_tags.size() < 1, info_err::PARAM_ERROR, "tag is exists" );
+            break;  
+        }
+        default:
+            CHECKC( false, info_err::PARAM_ERROR, "tag code error");
+    }
+
+    info.tags[tag_code] = string_info_tags.append(tag).append(",");
+    _db.set(info, _self);
+}
+
+void mdaoinfo::deltag(const name& code, const string& tag) {
+    auto parts = split( tag, "." );
+    CHECKC( parts.size() == 2, info_err::INVALID_FORMAT, "invalid format" );
+
+    dao_info_t info(code);
+    CHECKC( _db.get(info) ,info_err::RECORD_NOT_FOUND, "record not found");
+
+    name tag_code = name(parts[0]);
+    string string_info_tags =info.tags.at(tag_code);
+    vector<string_view> info_tags = split(info.tags.at(tag_code), ",");
+
+    switch (tag_code.value)
+    {
+        case tags_code::OFFICIAL.value:{
+            auto conf = _conf();
+            CHECKC( has_auth(conf.managers[manager_type::INFO]), info_err::PERMISSION_DENIED, "permission denied" );
+            break;
+        }
+        case tags_code::OPTIONAL.value:
+        case tags_code::LANGUAGE.value:{
+            CHECKC( has_auth(info.creator), info_err::PERMISSION_DENIED, "permission denied3" );
+            break;  
+        }
+        default:
+            CHECKC( false, info_err::PARAM_ERROR, "tag code error");
+    }
+    string target = tag;
+    info.tags[tag_code] = erase_string(string_info_tags, target.append(","));
+    _db.set(info, _self);
+}
+
 // void mdaoinfo::recycledb(uint32_t max_rows) {
 //     require_auth( _self );
 //     dao_info_t::idx_t info_tbl(_self, _self.value);

@@ -50,3 +50,15 @@ ACTION mdaoconf::settokenfee( const asset& quantity )
     require_auth( _self );
     _gstate.token_create_fee = quantity;
 }
+
+ACTION mdaoconf::settag( const string& tag )
+{    
+    require_auth( _self );
+    _gstate.available_tags.insert(tag);
+}
+
+ACTION mdaoconf::deltag( const string& tag )
+{    
+    require_auth( _self );
+    _gstate.available_tags.erase(tag);
+}
