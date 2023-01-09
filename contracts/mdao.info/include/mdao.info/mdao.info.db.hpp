@@ -29,7 +29,7 @@ struct INFO_TG_TBL dao_info_t {
     string                      logo;
     string                      desc;
     // set<string>             tags;
-    map<name, string>    tags;
+    map<name, string>           tags;
     map<name, string>           resource_links;
     set<app_info>               dapps;
     string                      group_id;
@@ -39,7 +39,7 @@ struct INFO_TG_TBL dao_info_t {
     name                        creator;
     time_point_sec              created_at;
     string                      memo;
-    
+
     dao_info_t() {}
     dao_info_t(const name& c): dao_code(c) {}
 
