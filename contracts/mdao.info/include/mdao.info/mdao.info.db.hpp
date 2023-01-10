@@ -21,6 +21,11 @@ static constexpr string_view     meta_limit            = "meta";
 
 namespace mdao {
 
+struct tag_info {
+    vector<string> tags;
+    EOSLIB_SERIALIZE(tag_info, (tags) )
+};
+
 #define INFO_TG_TBL [[eosio::table, eosio::contract("mdao.info")]]
 
 struct INFO_TG_TBL dao_info_t {

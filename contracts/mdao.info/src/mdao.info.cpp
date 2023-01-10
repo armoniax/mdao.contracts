@@ -194,18 +194,18 @@ ACTION mdaoinfo::updatestatus(const name& code, const bool& is_enable)
 
 }
 
-void mdaoinfo::settags(const name& code, map<name, vector<string>>& tags) {
+void mdaoinfo::settags(const name& code, map<name, tag_info>& tags) {
     auto conf = _conf();
 
     dao_info_t info(code);
     CHECKC( _db.get(info) ,info_err::RECORD_NOT_FOUND, "record not found");
     
-    map<name, vector<string>>::iterator iter;
+    map<name, tag_info>::iterator iter;
     for(iter = tags.begin(); iter != tags.end(); iter++){
         name tag_code = iter->first;
-        vector<string> tag_list  = iter->second;
-
-        string string_info_tags =info.tags.at(tag_code);
+        tag_info tags_info = iter->second;
+        vector<string> tag_list = tags_info.tags;
+        string string_info_tags = info.tags.at(tag_code);
         vector<string_view> info_tags = split(string_info_tags, ",");
 
         switch (tag_code.value)
@@ -217,7 +217,6 @@ void mdaoinfo::settags(const name& code, map<name, vector<string>>& tags) {
             case tags_code::OPTIONAL.value:{
                 CHECKC( has_auth(info.creator), info_err::PERMISSION_DENIED, "permission denied");
                 CHECKC( (string_info_tags.empty() && tag_list.size() < 4) || (!string_info_tags.empty() && info_tags.size() + tag_list.size() < 4), info_err::PARAM_ERROR, "tags count over limit" );
-
                 break;  
             }
             case tags_code::LANGUAGE.value:{
