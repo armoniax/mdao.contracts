@@ -196,6 +196,7 @@ ACTION mdaoinfo::updatestatus(const name& code, const bool& is_enable)
 
 void mdaoinfo::settags(const name& code, map<name, tags_info>& tags) {
     auto conf = _conf();
+    auto conf2 = _conf2();
 
     dao_info_t info(code);
     CHECKC( _db.get(info) ,info_err::RECORD_NOT_FOUND, "record not found");
@@ -229,7 +230,7 @@ void mdaoinfo::settags(const name& code, map<name, tags_info>& tags) {
         }
 
         for( vector<string>::iterator tag_iter = tag_list.begin(); tag_iter!=tag_list.end(); tag_iter++ ){
-            CHECKC( conf.available_tags.count(*tag_iter) > 0, info_err::PARAM_ERROR, "unsupport tag" );
+            CHECKC( conf2.available_tags.count(*tag_iter) > 0, info_err::PARAM_ERROR, "unsupport tag" );
             
             if( count(info_tags.begin(), info_tags.end(), *tag_iter) > 0 ){
                 continue;
@@ -370,6 +371,15 @@ const mdaoinfo::conf_t& mdaoinfo::_conf() {
         _conf_ptr = make_unique<conf_t>(_conf_tbl_ptr->get());
     }
     return *_conf_ptr;
+}
+
+const mdaoinfo::conf_t2& mdaoinfo::_conf2() {
+    if (!_conf_ptr) {
+        _conf_tbl_ptr2 = make_unique<conf_table_t2>(MDAO_CONF, MDAO_CONF.value);
+        CHECKC(_conf_tbl_ptr2->exists(), info_err::SYSTEM_ERROR, "conf table2 not existed in contract" );
+        _conf_ptr2 = make_unique<conf_t2>(_conf_tbl_ptr2->get());
+    }
+    return *_conf_ptr2;
 }
 
 void mdaoinfo::_check_auth(const governance_t& governance, const conf_t& conf, const dao_info_t& info) {

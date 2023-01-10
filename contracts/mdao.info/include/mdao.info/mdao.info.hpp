@@ -65,12 +65,19 @@ class [[eosio::contract("mdao.info")]] mdaoinfo : public contract {
 using conf_t = mdao::conf_global_t;
 using conf_table_t = mdao::conf_global_singleton;
 
+using conf_t2 = mdao::conf_global_t2;
+using conf_table_t2 = mdao::conf_global_singleton2;
+
 private:
     dbc                 _db;
     std::unique_ptr<conf_table_t> _conf_tbl_ptr;
-    std::unique_ptr<conf_t> _conf_ptr;
+    std::unique_ptr<conf_t> _conf_ptr;    
+
+    std::unique_ptr<conf_table_t2> _conf_tbl_ptr2;
+    std::unique_ptr<conf_t2> _conf_ptr2;
 
     const conf_t& _conf();
+    const conf_t2& _conf2();
     void _check_auth( const governance_t& governance, const conf_t& conf, const dao_info_t& info);
 
 public:

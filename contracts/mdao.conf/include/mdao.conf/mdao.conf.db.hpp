@@ -118,7 +118,6 @@ struct CONF_TABLE_NAME("global") conf_global_t {
                                         (stake_period_days)(black_symbols)(enable_metaverse) )
 };
 
-
 struct CONF_TABLE_NAME("global2") conf_global_t2 {
     set<string>  available_tags {
         "a.recommend","a.hot","a.vip",
