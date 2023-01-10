@@ -374,7 +374,7 @@ const mdaoinfo::conf_t& mdaoinfo::_conf() {
 }
 
 const mdaoinfo::conf_t2& mdaoinfo::_conf2() {
-    if (!_conf_ptr) {
+    if (!_conf_ptr2) {
         _conf_tbl_ptr2 = make_unique<conf_table_t2>(MDAO_CONF, MDAO_CONF.value);
         CHECKC(_conf_tbl_ptr2->exists(), info_err::SYSTEM_ERROR, "conf table2 not existed in contract" );
         _conf_ptr2 = make_unique<conf_t2>(_conf_tbl_ptr2->get());
