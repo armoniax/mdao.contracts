@@ -194,18 +194,18 @@ ACTION mdaoinfo::updatestatus(const name& code, const bool& is_enable)
 
 }
 
-void mdaoinfo::settags(const name& code, map<name, tag_info>& tags) {
+void mdaoinfo::settags(const name& code, map<name, tags_info>& tags) {
     auto conf = _conf();
 
     dao_info_t info(code);
     CHECKC( _db.get(info) ,info_err::RECORD_NOT_FOUND, "record not found");
     
-    map<name, tag_info>::iterator iter;
+    map<name, tags_info>::iterator iter;
     for(iter = tags.begin(); iter != tags.end(); iter++){
         name tag_code = iter->first;
-        tag_info tags_info = iter->second;
+        tags_info tags_i = iter->second;
 
-        vector<string> tag_list = tags_info.tags;
+        vector<string> tag_list = tags_i.tags;
         vector<string> info_tags = info.tags.at(tag_code).tags;
 
         switch (tag_code.value)
