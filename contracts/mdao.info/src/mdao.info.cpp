@@ -194,20 +194,19 @@ ACTION mdaoinfo::updatestatus(const name& code, const bool& is_enable)
 
 }
 
-void mdaoinfo::settags(const name& code, map<name, string>& tags) {
+void mdaoinfo::settags(const name& code, map<name, vector<string>>& tags) {
     auto conf = _conf();
 
     dao_info_t info(code);
     CHECKC( _db.get(info) ,info_err::RECORD_NOT_FOUND, "record not found");
     
-    map<name, string>::iterator iter;
+    map<name, vector<string>>::iterator iter;
     for(iter = tags.begin(); iter != tags.end(); iter++){
         name tag_code = iter->first;
-        string string_tags = iter->second;
+        vector<string> tag_list  = iter->second;
 
         string string_info_tags =info.tags.at(tag_code);
         vector<string_view> info_tags = split(string_info_tags, ",");
-        vector<string_view> tag_list = split(string_tags, ",");
 
         switch (tag_code.value)
         {
@@ -230,10 +229,10 @@ void mdaoinfo::settags(const name& code, map<name, string>& tags) {
                 CHECKC( false, info_err::PARAM_ERROR, "tag code error");
         }
 
-        for( vector<string_view>::iterator tag_iter = tag_list.begin(); tag_iter!=tag_list.end(); tag_iter++ ){
-            CHECKC( conf.available_tags.count(string(*tag_iter)) > 0, info_err::PARAM_ERROR, "tag error" );
+        for( vector<string>::iterator tag_iter = tag_list.begin(); tag_iter!=tag_list.end(); tag_iter++ ){
+            CHECKC( conf.available_tags.count(*tag_iter) > 0, info_err::PARAM_ERROR, "tag error" );
             
-            if( find_substr(string_info_tags, string(*tag_iter)) != -1 ){
+            if( find_substr(string_info_tags, *tag_iter) != -1 ){
                 continue;
             }
             string_info_tags = string_info_tags.append(*tag_iter).append(",");

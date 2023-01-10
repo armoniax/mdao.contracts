@@ -103,7 +103,7 @@ public:
     void updatestatus(const name& code, const bool& isenable);
     
     [[eosio::action]]
-    void settags(const name& code, map<name,string>& tags);
+    void settags(const name& code, map<name, vector<string>>& tags);
 
     [[eosio::action]]
     void deltag(const name& code, const string& tag);
