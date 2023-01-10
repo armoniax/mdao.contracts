@@ -105,8 +105,8 @@ public:
     [[eosio::action]]
     void settags(const name& code, map<name, tag_info>& tags);
 
-    [[eosio::action]]
-    void deltag(const name& code, const string& tag);
+    // [[eosio::action]]
+    // void deltag(const name& code, const string& tag);
 
     // ACTION recycledb(uint32_t max_rows);
 

@@ -34,7 +34,7 @@ struct INFO_TG_TBL dao_info_t {
     string                      logo;
     string                      desc;
     // set<string>             tags;
-    map<name, string>           tags;
+    map<name, tag_info>         tags;
     map<name, string>           resource_links;
     set<app_info>               dapps;
     string                      group_id;
