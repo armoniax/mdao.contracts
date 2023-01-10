@@ -229,7 +229,7 @@ void mdaoinfo::settags(const name& code, map<name, tags_info>& tags) {
         }
 
         for( vector<string>::iterator tag_iter = tag_list.begin(); tag_iter!=tag_list.end(); tag_iter++ ){
-            CHECKC( conf.available_tags.count(*tag_iter) > 0, info_err::PARAM_ERROR, "tag error" );
+            CHECKC( conf.available_tags.count(*tag_iter) > 0, info_err::PARAM_ERROR, "unsupport tag" );
             
             if( count(info_tags.begin(), info_tags.end(), *tag_iter) > 0 ){
                 continue;

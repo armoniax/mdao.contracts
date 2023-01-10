@@ -14,22 +14,32 @@ class [[eosio::contract("mdao.conf")]] mdaoconf : public contract {
 private:
     conf_global_t            _gstate;
     conf_global_singleton    _global;
+    conf_global_t2           _gstate2;
+    conf_global_singleton2   _global2;
 
 public:
     using contract::contract;
 
     mdaoconf(name receiver, name code, datastream<const char*> ds):
-        contract(receiver, code, ds), _global(_self, _self.value) {
+        contract(receiver, code, ds), _global(_self, _self.value), _global2(_self, _self.value) {
         if (_global.exists()) {
             _gstate = _global.get();
 
         } else {
             _gstate = conf_global_t{};
         }
+
+        if (_global2.exists()) {
+            _gstate2 = _global2.get();
+
+        } else {
+            _gstate2 = conf_global_t2{};
+        }
     }
 
     ~mdaoconf() {
         _global.set( _gstate, get_self() );
+        _global2.set( _gstate2, get_self() );
         // _global.remove();
 
     }

@@ -54,11 +54,11 @@ ACTION mdaoconf::settokenfee( const asset& quantity )
 ACTION mdaoconf::settag( const string& tag )
 {    
     require_auth( _self );
-    _gstate.available_tags.insert(tag);
+    _gstate2.available_tags.insert(tag);
 }
 
 ACTION mdaoconf::deltag( const string& tag )
 {    
     require_auth( _self );
-    _gstate.available_tags.erase(tag);
+    _gstate2.available_tags.erase(tag);
 }

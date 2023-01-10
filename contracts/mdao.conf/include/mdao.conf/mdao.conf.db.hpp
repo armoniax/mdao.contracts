@@ -78,11 +78,6 @@ struct CONF_TABLE_NAME("global") conf_global_t {
     asset token_create_fee = asset(1'0000'0000, AMAX_SYMBOL);
     map<name, name>   managers {
         { manager_type::INFO, MDAO_INFO }
-        // { manager_type::STRATEGY, MDAO_STG },
-        // { manager_type::TOKEN, MDAO_TOKEN },
-        // { manager_type::PROPOSAL, MDAO_PROPOSAL },
-        // { manager_type::GOV, MDAO_GOV },
-        // { manager_type::STAKE, MDAO_STAKE },
     };
     set<name> token_contracts;
     set<name> ntoken_contracts;
@@ -116,6 +111,15 @@ struct CONF_TABLE_NAME("global") conf_global_t {
         symbol_code("MBUSD"), symbol_code("MUSDC"), symbol_code("METH"),
         symbol_code("METC"), symbol_code("AMAX"), symbol_code("APLINK")
     };
+
+    bool      enable_metaverse  = false;
+    EOSLIB_SERIALIZE( conf_global_t,    (appinfo)(status)(fee_taker)(upgrade_fee)(dapp_seats_max)
+                                        (admin)(token_create_fee)(managers)(token_contracts)(ntoken_contracts)
+                                        (stake_period_days)(black_symbols)(enable_metaverse) )
+};
+
+
+struct CONF_TABLE_NAME("global2") conf_global_t2 {
     set<string>  available_tags {
         "a.recommend","a.hot","a.vip",
         "t.defi","t.socialfi","t.gamefi","t.nft","t.token",
@@ -123,12 +127,10 @@ struct CONF_TABLE_NAME("global") conf_global_t {
         "l.cn","l.en","l.vi","l.th","l.id","l.ko","l.ja","l.ru"
     };
 
-    bool      enable_metaverse  = false;
-    EOSLIB_SERIALIZE( conf_global_t,    (appinfo)(status)(fee_taker)(upgrade_fee)(dapp_seats_max)
-                                        (admin)(token_create_fee)(managers)(token_contracts)(ntoken_contracts)
-                                        (stake_period_days)(black_symbols)(available_tags)(enable_metaverse) )
+    EOSLIB_SERIALIZE( conf_global_t2,    (available_tags) )
 };
 
 typedef eosio::singleton< "global"_n, conf_global_t > conf_global_singleton;
+typedef eosio::singleton< "global2"_n, conf_global_t2 > conf_global_singleton2;
 
 } //amax
