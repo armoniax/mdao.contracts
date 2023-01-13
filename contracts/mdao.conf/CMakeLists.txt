@@ -4,6 +4,8 @@ target_include_directories(mdao.conf
    PUBLIC
    ${CMAKE_CURRENT_SOURCE_DIR}/include
    ${CMAKE_CURRENT_SOURCE_DIR}/include/mdao.conf
+   ${CMAKE_CURRENT_SOURCE_DIR}/../mdao.thirdparty
+
 )
 
 set_target_properties(mdao.conf

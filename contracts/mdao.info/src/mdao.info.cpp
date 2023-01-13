@@ -271,12 +271,15 @@ void mdaoinfo::deltag(const name& code, const string& tag) {
             CHECKC( false, info_err::PARAM_ERROR, "tag code error");
     }
 
+    bool is_exist = false;
     for (vector<string>::iterator iter = info_tags.begin(); iter!=info_tags.end(); iter++) {       
         if ( *iter == tag ){
             info_tags.erase(iter);
+            is_exist = true;
             break;
         }
     }
+    CHECKC( is_exist, info_err::PARAM_ERROR, "tag not found");
 
     info.tags[tag_code].tags = info_tags;
     _db.set(info, _self);

@@ -1,4 +1,5 @@
 #include <mdao.conf/mdao.conf.hpp>
+#include <thirdparty/utils.hpp>
 
 ACTION mdaoconf::init( const name& fee_taker, const app_info& app_info, const asset& dao_upg_fee, const name& admin, const name& status )
 {
@@ -50,15 +51,27 @@ ACTION mdaoconf::settokenfee( const asset& quantity )
     require_auth( _self );
     _gstate.token_create_fee = quantity;
 }
-
 ACTION mdaoconf::settag( const string& tag )
 {    
     require_auth( _self );
+    check( find_substr(tag, string(".")) != -1 && find_substr(tag, string(" ")) == -1, "expected format: 'code.tag'");
+
     _gstate2.available_tags.insert(tag);
 }
 
 ACTION mdaoconf::deltag( const string& tag )
 {    
     require_auth( _self );
+
+    bool is_exist = false;
+    for (set<string>::iterator iter = _gstate2.available_tags.begin(); iter!=_gstate2.available_tags.end(); iter++) {       
+        if ( *iter == tag ){
+            _gstate2.available_tags.erase(iter);
+            is_exist = true;
+            break;
+        }
+    }
+    check( is_exist, "tag not found");
+
     _gstate2.available_tags.erase(tag);
 }

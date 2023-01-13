@@ -13,7 +13,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} $CACHE{CMAKE_CXX_FLAGS}")
 set(ICON_BASE_URL "http://127.0.0.1/ricardian_assets/amax.contracts/icons")
 
 # add_subdirectory(algoex.token.factory)
-# add_subdirectory(mdao.conf)
+add_subdirectory(mdao.conf)
 # add_subdirectory(mdao.info)
 # add_subdirectory(algoex.token)
 # add_subdirectory(mdao.stg)
