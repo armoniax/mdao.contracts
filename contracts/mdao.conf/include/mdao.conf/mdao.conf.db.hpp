@@ -119,14 +119,11 @@ struct CONF_TABLE_NAME("global") conf_global_t {
 };
 
 struct CONF_TABLE_NAME("global2") conf_global_t2 {
-    map<string, string>  available_tags {
-        {"a.recommend","推荐"}, {"a.hot","热门"}, {"a.vip","认证"},
-        {"t.defi","DeFi"}, {"t.socialfi","SocialFi"}, {"t.gamefi","GameFi"},
-        {"t.nft","数藏"}, {"t.token","代币"}, {"t.tech","科研"},
-        {"t.tour","旅游"}, {"t.sport","运动"}, {"t.charity","慈善"},
-        {"t.film","影视"}, {"l.cn","中文"}, {"l.en","English"},
-        {"l.vi","Tiếng Việt"}, {"l.th","ภาษาไทย"}, {"l.id","Bahasa Indonesia"},
-        {"l.ko","한국어"}, {"l.ja","日本語"}, {"l.ru","Русский язык"},
+    set<string>  available_tags {
+        "a.recommend","a.hot","a.vip",
+        "t.defi","t.socialfi","t.gamefi","t.nft","t.token",
+        "t.tech","t.tour","t.sport","t.charity","t.film",
+        "l.cn","l.en","l.vi","l.th","l.id","l.ko","l.ja","l.ru"
     };
 
     EOSLIB_SERIALIZE( conf_global_t2,    (available_tags) )
