@@ -25,6 +25,8 @@ static constexpr uint16_t TEN_THOUSAND         = 10000;
 static constexpr name AMAX_TOKEN{"amax.token"_n};
 static constexpr name MDAO_INFO{"mdao.info"_n};
 static constexpr name MDAO_CONF{"mdao.conf"_n};
+static constexpr name MDAO_TOKEN{"mdao.token"_n};
+static constexpr name MDAO_TREASURY{"mdao.trea"_n};
 static constexpr name MDAO_STG{"mdao.stg"_n};
 static constexpr name MDAO_GOV{"mdao.gov"_n};
 static constexpr name MDAO_PROPOSAL{"mdao.propose"_n};

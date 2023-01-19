@@ -247,7 +247,6 @@ void algoex::_create_market(const name& creator,
 
     _db.set(market, get_self());
 
-    XTOKEN_CREATE_TOKEN(arc, creator, base_supply, token_fee_ratio, "", name("11") ,"") 
     XTOKEN_TRANSFER(SYS_BANK, _gstate.admins.at(admin_type::feetaker), _gstate.token_crt_fee, base_code.to_string() + " market creation fee")
     XTOKEN_ISSUE(arc, get_self(), base_supply, "")
 }

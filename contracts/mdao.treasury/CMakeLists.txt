@@ -7,6 +7,7 @@ target_include_directories(mdao.treasury
    ${CMAKE_CURRENT_SOURCE_DIR}/../mdao.stg/include
    ${CMAKE_CURRENT_SOURCE_DIR}/../mdao.info/include
    ${CMAKE_CURRENT_SOURCE_DIR}/../mdao.gov/include
+   ${CMAKE_CURRENT_SOURCE_DIR}/../mdao.stake/include
    ${CMAKE_CURRENT_SOURCE_DIR}/../mdao.thirdparty
 
 
