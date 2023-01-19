@@ -3,7 +3,6 @@
 #include "mdao.gov/mdao.gov.hpp"
 #include <mdao.info/mdao.info.db.hpp>
 #include <mdao.stake/mdao.stake.db.hpp>
-#include "mdao.gov/contract_function.hpp"
 #include <set>
 
 #define VOTE_CREATE(bank, dao_code, creator, desc, title, vote_strategy_id, proposal_strategy_id) \
