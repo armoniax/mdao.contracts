@@ -114,6 +114,9 @@ public:
 
     [[eosio::action]]
     void deltag(const name& code, const string& tag);
+   
+    [[eosio::action]]
+    void replacetag(const name& code, map<name, tags_info>& tags);
 
     // ACTION recycledb(uint32_t max_rows);
 
@@ -124,7 +127,7 @@ public:
     // [[eosio::action]]
     // void issuetoken(const name& owner, const name& code, const name& to, 
     //                         const asset& quantity, const string& memo);
-   
+
     [[eosio::action]]
     void bindntoken(const name& owner, const name& code, const extended_nsymbol& ntoken);
 

@@ -193,7 +193,6 @@ ACTION mdaoinfo::updatestatus(const name& code, const bool& is_enable)
     _db.set(info, _self);
 
 }
-
 void mdaoinfo::settags(const name& code, map<name, tags_info>& tags) {
     auto conf = _conf();
     auto conf2 = _conf2();
@@ -282,6 +281,48 @@ void mdaoinfo::deltag(const name& code, const string& tag) {
     CHECKC( is_exist, info_err::PARAM_ERROR, "tag not found");
 
     info.tags[tag_code].tags = info_tags;
+    _db.set(info, _self);
+}
+
+void mdaoinfo::replacetag(const name& code, map<name, tags_info>& tags) {
+    auto conf = _conf();
+    auto conf2 = _conf2();
+
+    dao_info_t info(code);
+    CHECKC( _db.get(info) ,info_err::RECORD_NOT_FOUND, "record not found");
+    
+    map<name, tags_info>::iterator iter;
+    for(iter = tags.begin(); iter != tags.end(); iter++){
+        name tag_code = iter->first;
+        tags_info tags_i = iter->second;
+
+        vector<string> tag_list = tags_i.tags;
+
+        switch (tag_code.value)
+        {
+            case tags_code::OFFICIAL.value:{
+                CHECKC( has_auth(conf.managers[manager_type::INFO]), info_err::PERMISSION_DENIED, "permission denied" );
+                break;
+            }
+            case tags_code::OPTIONAL.value:{
+                CHECKC( has_auth(info.creator), info_err::PERMISSION_DENIED, "permission denied");
+                CHECKC( tag_list.size() < 4, info_err::PARAM_ERROR, "tags count over limit" );
+                break;  
+            }
+            case tags_code::LANGUAGE.value:{
+                CHECKC( has_auth(info.creator), info_err::PERMISSION_DENIED, "permission denied" );
+                CHECKC( tag_list.size() < 2, info_err::PARAM_ERROR, "tags count over limit" );
+                break;  
+            }
+            default:
+                CHECKC( false, info_err::PARAM_ERROR, "tag code error");
+        }
+        for( vector<string>::iterator tag_iter = tag_list.begin(); tag_iter!=tag_list.end(); tag_iter++ ){
+            CHECKC( conf2.available_tags.count(*tag_iter) > 0, info_err::PARAM_ERROR, "unsupport tag" );
+        }
+    }
+    info.tags.clear();
+    info.tags = tags;
     _db.set(info, _self);
 }
 
