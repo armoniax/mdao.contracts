@@ -14,13 +14,13 @@ ACTION mdaoinfo::onupgradedao(name from, name to, asset quantity, string memo)
 
     auto parts = split( memo, "|" );
     CHECKC( parts.size() == 4, info_err::INVALID_FORMAT, "expected format: 'code | title | desc | logo" );
-    
+
     string_view code = string_view(parts[0]);
     bool is_not_contain_amax    = find_substr(code, amax_limit)    == -1 ? true : false;
     bool is_not_contain_aplink  = find_substr(code, aplink_limit)  == -1 ? true : false;
     bool is_not_contain_armonia = find_substr(code, armonia_limit) == -1 ? true : false;
     bool is_not_contain_meta    = find_substr(code, meta_limit)    == -1 ? true : false;
-    CHECKC( (conf.admin == from) || (conf.admin != from && is_not_contain_amax && is_not_contain_aplink && is_not_contain_armonia && is_not_contain_meta), 
+    CHECKC( (conf.admin == from) || (conf.admin != from && is_not_contain_amax && is_not_contain_aplink && is_not_contain_armonia && is_not_contain_meta),
                      info_err::INVALID_FORMAT, "code cannot include aplink,amax,armonia,meta");
     CHECKC( (code.size() == 12) || (conf.admin == from && code.size() <= 12), info_err::INVALID_FORMAT, "code length is more than 12 bytes");
 
@@ -39,7 +39,7 @@ ACTION mdaoinfo::onupgradedao(name from, name to, asset quantity, string memo)
     //     if(did_acnts_iter->balance.amount > 0){
     //         is_auth = true;
     //         break;
-    //     } 
+    //     }
     // }
     // CHECKC( is_auth, info_err::DID_NOT_AUTH, "did is not authenticated" );
 
@@ -47,7 +47,7 @@ ACTION mdaoinfo::onupgradedao(name from, name to, asset quantity, string memo)
 
     dao_info_t::idx_t info_sec(_self, _self.value);
     auto info_index = info_sec.get_index<"bytitle"_n>();
-    checksum256 sec_index = HASH256(string(parts[1]));             
+    checksum256 sec_index = HASH256(string(parts[1]));
     CHECKC( info_index.find(sec_index) == info_index.end(), info_err::TITLE_REPEAT, "title already existing!" );
 
     dao_info_t info((name(code)));
@@ -63,13 +63,13 @@ ACTION mdaoinfo::onupgradedao(name from, name to, asset quantity, string memo)
     _db.set(info, _self);
 }
 
-ACTION mdaoinfo::updatedao(const name& owner, const name& code, const string& logo, 
+ACTION mdaoinfo::updatedao(const name& owner, const name& code, const string& logo,
                             const string& desc,const map<name, string>& links,
                             const string& sym_code, string sym_contract, const string& group_id)
-{   
-    auto conf = _conf();      
+{
+    auto conf = _conf();
     CHECKC( conf.status != conf_status::PENDING, info_err::NOT_AVAILABLE, "under maintenance" );
- 
+
     dao_info_t info(code);
     _check_permission(info, code, owner, conf);
 
@@ -79,7 +79,7 @@ ACTION mdaoinfo::updatedao(const name& owner, const name& code, const string& lo
     if(!desc.empty())                   info.desc   = desc;
     if(!links.empty())                  info.resource_links  = links;
     if(!group_id.empty())               info.group_id  = group_id;
-    
+
     if( !sym_code.empty() ){
 
         stats statstable(name(sym_contract), symbol_code(sym_code).raw());
@@ -88,9 +88,9 @@ ACTION mdaoinfo::updatedao(const name& owner, const name& code, const string& lo
         CHECKC(st->issuer == owner, info_err::PERMISSION_DENIED, "the owner is not a token creator");
 
         accounts accountstable(name(sym_contract), owner.value);
-        const auto ac = accountstable.find(symbol_code(sym_code).raw()); 
+        const auto ac = accountstable.find(symbol_code(sym_code).raw());
         CHECKC(ac != accountstable.end(), info_err::SYMBOL_ERROR, "symcode or symcontract not found");
-        
+
         extended_symbol token(ac->balance.symbol, name(sym_contract));
 
         info.token = token;
@@ -100,22 +100,22 @@ ACTION mdaoinfo::updatedao(const name& owner, const name& code, const string& lo
 }
 
 ACTION mdaoinfo::deldao(const name& admin, const name& code)
-{   
+{
     require_auth( admin );
-    auto conf = _conf();      
+    auto conf = _conf();
     CHECKC( conf.status != conf_status::PENDING, info_err::NOT_AVAILABLE, "under maintenance" );
     CHECKC( conf.admin == admin, info_err::PERMISSION_DENIED, "only the admin can operate" );
 
     dao_info_t info(code);
-    CHECKC( _db.get(info) ,info_err::RECORD_NOT_FOUND, "record not found" ); 
+    CHECKC( _db.get(info) ,info_err::RECORD_NOT_FOUND, "record not found" );
 
     _db.del(info);
 }
 
 ACTION mdaoinfo::transferdao(const name& owner, const name& code, const name& receiver)
-{   
+{
     require_auth( owner );
-    auto conf = _conf();      
+    auto conf = _conf();
     CHECKC( conf.status != conf_status::PENDING, info_err::NOT_AVAILABLE, "under maintenance" );
     CHECKC( is_account(receiver), info_err::ACCOUNT_NOT_EXITS, "receiver does not exist" );
 
@@ -123,15 +123,15 @@ ACTION mdaoinfo::transferdao(const name& owner, const name& code, const name& re
     CHECKC( _db.get(info) ,info_err::RECORD_NOT_FOUND, "record not found" );
     CHECKC( info.creator == owner, info_err::PERMISSION_DENIED, "only the creator can operate" );
     CHECKC( info.status == info_status::RUNNING, info_err::NOT_AVAILABLE, "under maintenance" );
-    
+
     info.creator = receiver;
     _db.set(info, _self);
 }
 
 ACTION mdaoinfo::updatecode(const name& admin, const name& code, const name& new_code)
-{   
+{
     require_auth( admin );
-    auto conf = _conf();      
+    auto conf = _conf();
     CHECKC( conf.status != conf_status::PENDING, info_err::NOT_AVAILABLE, "under maintenance" );
     CHECKC( conf.admin == admin, info_err::PERMISSION_DENIED, "only the admin can operate" );
 
@@ -176,8 +176,8 @@ ACTION mdaoinfo::bindtoken(const name& owner, const name& code, const extended_s
 
     dao_info_t info(code);
     _check_permission(info, code, owner, conf);
-    
-    info.token = token; 
+
+    info.token = token;
     _db.set(info, _self);
 }
 
@@ -199,7 +199,7 @@ void mdaoinfo::settags(const name& code, map<name, tags_info>& tags) {
 
     dao_info_t info(code);
     CHECKC( _db.get(info) ,info_err::RECORD_NOT_FOUND, "record not found");
-    
+
     map<name, tags_info>::iterator iter;
     for(iter = tags.begin(); iter != tags.end(); iter++){
         name tag_code = iter->first;
@@ -217,20 +217,23 @@ void mdaoinfo::settags(const name& code, map<name, tags_info>& tags) {
             case tags_code::OPTIONAL.value:{
                 CHECKC( has_auth(info.creator), info_err::PERMISSION_DENIED, "permission denied");
                 CHECKC( info_tags.size() + tag_list.size() < 4, info_err::PARAM_ERROR, "tags count over limit" );
-                break;  
+                break;
             }
             case tags_code::LANGUAGE.value:{
                 CHECKC( has_auth(info.creator), info_err::PERMISSION_DENIED, "permission denied" );
                 CHECKC( info_tags.size() + tag_list.size() < 2, info_err::PARAM_ERROR, "tags count over limit" );
-                break;  
+                break;
             }
             default:
                 CHECKC( false, info_err::PARAM_ERROR, "tag code error");
         }
 
         for( vector<string>::iterator tag_iter = tag_list.begin(); tag_iter!=tag_list.end(); tag_iter++ ){
+            auto iter_parts = split( *tag_iter, "." );
+            name tag_iter_code = name(iter_parts[0]);
+            CHECKC( tag_iter_code == tag_code, info_err::PARAM_ERROR, "unsupport tag" );
             CHECKC( conf2.available_tags.count(*tag_iter) > 0, info_err::PARAM_ERROR, "unsupport tag" );
-            
+
             if( count(info_tags.begin(), info_tags.end(), *tag_iter) > 0 ){
                 continue;
             }
@@ -239,7 +242,7 @@ void mdaoinfo::settags(const name& code, map<name, tags_info>& tags) {
         }
 
         info.tags[tag_code].tags = info_tags;
-        _db.set(info, _self);   
+        _db.set(info, _self);
     }
 
 }
@@ -264,14 +267,14 @@ void mdaoinfo::deltag(const name& code, const string& tag) {
         case tags_code::OPTIONAL.value:
         case tags_code::LANGUAGE.value:{
             CHECKC( has_auth(info.creator), info_err::PERMISSION_DENIED, "permission denied3" );
-            break;  
+            break;
         }
         default:
             CHECKC( false, info_err::PARAM_ERROR, "tag code error");
     }
 
     bool is_exist = false;
-    for (vector<string>::iterator iter = info_tags.begin(); iter!=info_tags.end(); iter++) {       
+    for (vector<string>::iterator iter = info_tags.begin(); iter!=info_tags.end(); iter++) {
         if ( *iter == tag ){
             info_tags.erase(iter);
             is_exist = true;
@@ -290,7 +293,7 @@ void mdaoinfo::replacetag(const name& code, map<name, tags_info>& tags) {
 
     dao_info_t info(code);
     CHECKC( _db.get(info) ,info_err::RECORD_NOT_FOUND, "record not found");
-    
+
     map<name, tags_info>::iterator iter;
     for(iter = tags.begin(); iter != tags.end(); iter++){
         name tag_code = iter->first;
@@ -307,18 +310,24 @@ void mdaoinfo::replacetag(const name& code, map<name, tags_info>& tags) {
             case tags_code::OPTIONAL.value:{
                 CHECKC( has_auth(info.creator), info_err::PERMISSION_DENIED, "permission denied");
                 CHECKC( tag_list.size() < 4, info_err::PARAM_ERROR, "tags count over limit" );
-                break;  
+                break;
             }
             case tags_code::LANGUAGE.value:{
                 CHECKC( has_auth(info.creator), info_err::PERMISSION_DENIED, "permission denied" );
                 CHECKC( tag_list.size() < 2, info_err::PARAM_ERROR, "tags count over limit" );
-                break;  
+                break;
             }
             default:
                 CHECKC( false, info_err::PARAM_ERROR, "tag code error");
         }
+
         for( vector<string>::iterator tag_iter = tag_list.begin(); tag_iter!=tag_list.end(); tag_iter++ ){
+            auto iter_parts = split( *tag_iter, "." );
+            name tag_iter_code = name(iter_parts[0]);
+            CHECKC( tag_iter_code == tag_code, info_err::PARAM_ERROR, "unsupport tag" )
             CHECKC( conf2.available_tags.count(*tag_iter) > 0, info_err::PARAM_ERROR, "unsupport tag" );
+            CHECKC( count(tag_list.begin(), tag_list.end(), *tag_iter) > 1 , info_err::PARAM_ERROR, "parameter has duplicate tag" );
+
         }
     }
     info.tags.clear();
@@ -335,7 +344,7 @@ void mdaoinfo::replacetag(const name& code, map<name, tags_info>& tags) {
 //     }
 // }
 
-// ACTION mdaoinfo::createtoken(const name& code, const name& owner, const uint16_t& transfer_ratio, 
+// ACTION mdaoinfo::createtoken(const name& code, const name& owner, const uint16_t& transfer_ratio,
 //                              const string& fullname, const asset& maximum_supply, const string& metadata)
 // {
 //     CHECKC( false, info_err::NOT_AVAILABLE, "under maintenance" );
@@ -354,15 +363,15 @@ void mdaoinfo::replacetag(const name& code, map<name, tags_info>& tags) {
 
 //      dao_info_t info(code);
 //      _check_permission(info, code, owner, conf);
-        
+
 //     XTOKEN_CREATE_TOKEN(MDAO_TOKEN, owner, maximum_supply, transfer_ratio, fullname, code, metadata)
 
-//     info.token = extended_symbol(maximum_supply.symbol, MDAO_TOKEN); 
+//     info.token = extended_symbol(maximum_supply.symbol, MDAO_TOKEN);
 //     _db.set(info, _self);
 
 // }
 
-// ACTION mdaoinfo::issuetoken(const name& owner, const name& code, const name& to, 
+// ACTION mdaoinfo::issuetoken(const name& owner, const name& code, const name& to,
 //                             const asset& quantity, const string& memo)
 // {
 //     CHECKC( false, info_err::NOT_AVAILABLE, "under maintenance" );
@@ -375,7 +384,7 @@ void mdaoinfo::replacetag(const name& code, map<name, tags_info>& tags) {
 
 //      dao_info_t info(code);
 //      _check_permission(info, code, owner, conf);
-        
+
 //     XTOKEN_ISSUE(MDAO_TOKEN, to, quantity, memo)
 
 // }
@@ -388,18 +397,18 @@ ACTION mdaoinfo::bindntoken(const name& owner, const name& code, const extended_
 
     dao_info_t info(code);
     _check_permission(info, code, owner, conf);
-    
-    info.ntoken = ntoken; 
+
+    info.ntoken = ntoken;
 }
 
 void mdaoinfo::_check_permission( dao_info_t& info, const name& code, const name& owner,  const conf_t& conf ) {
     CHECKC( _db.get(info) ,info_err::RECORD_NOT_FOUND, "record not found");
     CHECKC( info.creator == owner, info_err::PERMISSION_DENIED, "only the creator can operate" );
     CHECKC( info.status == info_status::RUNNING, info_err::NOT_AVAILABLE, "under maintenance" );
-    
+
     governance_t::idx_t governance_tbl(MDAO_GOV, MDAO_GOV.value);
     const auto governance = governance_tbl.find(code.value);
-   
+
     if(governance == governance_tbl.end()){
         CHECKC( has_auth(info.creator), info_err::PERMISSION_DENIED, "permission denied" );
     }else{
@@ -431,5 +440,5 @@ void mdaoinfo::_check_auth(const governance_t& governance, const conf_t& conf, c
          CHECKC(has_auth(conf.managers.at(manager_type::PROPOSAL)) || has_auth(info.creator), info_err::PERMISSION_DENIED, "permission denied");
     }else{
         CHECKC( has_auth(conf.managers.at(manager_type::PROPOSAL)), info_err::PERMISSION_DENIED, "permission denied" );
-    }   
+    }
 }
