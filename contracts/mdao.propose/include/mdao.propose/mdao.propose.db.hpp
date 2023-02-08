@@ -36,12 +36,12 @@ struct TG_TBL proposal_t {
     string          title;
     string          desc;
     name            type;
-    uint32_t        approve_votes; //同意总票数
-    uint32_t        deny_votes; //不同意总票数
-    uint32_t        waive_votes; //弃权总票数
-    uint32_t        users_count; //参与人数
-    uint32_t        deny_users_count; //拒绝人数
-    uint32_t        waive_users_count; //弃权总人数
+    uint32_t        approve_votes; //agree total vote
+    uint32_t        deny_votes; //deny total vote
+    uint32_t        waive_votes; //waive total vote
+    uint32_t        users_count; //total users
+    uint32_t        deny_users_count; //deny total users
+    uint32_t        waive_users_count; //waive total user
     time_point_sec  created_at = current_time_point();
     time_point_sec  started_at;
     time_point_sec  executed_at;
@@ -51,7 +51,7 @@ struct TG_TBL proposal_t {
     uint64_t    scope() const { return 0; }
     uint64_t    by_creator()const {
         return creator.value;
-    }    
+    }
     uint64_t    by_daocode()const {
         return dao_code.value;
     }
@@ -64,7 +64,7 @@ struct TG_TBL proposal_t {
     EOSLIB_SERIALIZE( proposal_t, (id)(dao_code)(proposal_strategy_id)(vote_strategy_id)(status)(creator)(title)(desc)(type)
                 (approve_votes)(deny_votes)(waive_votes)(users_count)(deny_users_count)(waive_users_count)(created_at)(started_at)(executed_at)(options) )
 
-    typedef eosio::multi_index <"proposals"_n, proposal_t,        
+    typedef eosio::multi_index <"proposals"_n, proposal_t,
         indexed_by<"creator"_n,  const_mem_fun<proposal_t, uint64_t, &proposal_t::by_creator> >,
         indexed_by<"daocode"_n,  const_mem_fun<proposal_t, uint64_t, &proposal_t::by_daocode> >,
         indexed_by<"unionid"_n,  const_mem_fun<proposal_t, uint128_t, &proposal_t::by_union_id> >

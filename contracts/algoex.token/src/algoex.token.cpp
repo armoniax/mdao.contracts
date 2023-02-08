@@ -35,9 +35,9 @@ namespace mdaotoken {
                         const std::string &meta_data)
     {
         auto conf = _conf();
-        check(has_auth(conf.managers[manager_type::FACTORY]) || has_auth(conf.managers[manager_type::ALGOEX]), "insufficient permissions");
+        check(has_auth(conf.managers[manager_type::FACTORY]), "insufficient permissions");
         check(is_account(issuer), "issuer account does not exist");
-        
+
         const auto &sym = maximum_supply.symbol;
         auto sym_code_raw = sym.code().raw();
         check(sym.is_valid(), "invalid symbol name");
@@ -62,6 +62,7 @@ namespace mdaotoken {
     void token::issue(const name &to, const asset &quantity, const string &memo)
     {
         auto conf = _conf();
+        check(has_auth(conf.managers[manager_type::FACTORY]), "insufficient permissions");
 
         const auto& sym = quantity.symbol;
         auto sym_code_raw = sym.code().raw();
@@ -72,7 +73,7 @@ namespace mdaotoken {
         auto existing = statstable.find(sym_code_raw);
         check(existing != statstable.end(), "token with symbol does not exist, create token before issue");
         const auto &st = *existing;
-        check( has_auth(conf.managers[manager_type::FACTORY]) && (st.issuer == to), "insufficient permissions");
+        check( st.issuer == to, "insufficient permissions");
 
         check(quantity.is_valid(), "invalid quantity");
         check(quantity.amount > 0, "must issue positive quantity");
@@ -81,12 +82,12 @@ namespace mdaotoken {
         check(quantity.amount <= st.max_supply.amount - st.supply.amount, "quantity exceeds available supply");
 
         statstable.modify(st, same_payer, [&](auto &s)
-                          { 
-                            s.supply += quantity; 
+                          {
+                            s.supply += quantity;
                           });
 
         add_balance(st, to, quantity, get_self());
-        
+
         accounts accts(get_self(), to.value);
         const auto &acct = accts.get(sym_code_raw, "account of token does not exist");
         accts.modify(acct, get_self(), [&](auto &a) {
@@ -123,6 +124,8 @@ namespace mdaotoken {
 
     void token::burnfee(const name& account, const asset &quantity, const string &memo)
     {
+        require_auth(get_self());
+
         const auto& sym = quantity.symbol;
         auto sym_code_raw = sym.code().raw();
         check(sym.is_valid(), "invalid symbol name");
@@ -132,8 +135,6 @@ namespace mdaotoken {
         auto existing = statstable.find(sym_code_raw);
         check(existing != statstable.end(), "token with symbol does not exist");
         const auto &st = *existing;
-
-        require_auth(get_self());
 
         check(quantity.is_valid(), "invalid quantity");
         check(quantity.amount > 0, "must retire positive quantity");
@@ -146,15 +147,17 @@ namespace mdaotoken {
         sub_balance(st, account, quantity);
     }
 
-void token::transfer( const name&    from,
-                      const name&    to,
-                      const asset&   quantity,
-                      const string&  memo )
+    void token::transfer( const name& from,
+                            const name& to,
+                            const asset& quantity,
+                            const string&  memo )
     {
+        require_auth(from);
+
         auto conf = _conf();
         check(from != to, "cannot transfer to self");
-        require_auth(from);
         check(is_account(to), "to account does not exist");
+
         auto sym_code_raw = quantity.symbol.code().raw();
         stats statstable(get_self(), sym_code_raw);
         const auto &st = statstable.get(sym_code_raw, "token of symbol does not exist");
@@ -169,40 +172,10 @@ void token::transfer( const name&    from,
         check(quantity.symbol == st.supply.symbol, "symbol precision mismatch");
         check(memo.size() <= 256, "memo has more than 256 bytes");
 
-        CHECK(quantity > st.min_fee_quantity, "quantity must larger than min fee:" + st.min_fee_quantity.to_string());
-
-        asset actual_recv = quantity;
-        asset fee = asset(0, quantity.symbol);
-        if ( st.fee_ratio > 0 &&  to != st.issuer )
-        {
-            accounts to_accts(get_self(), to.value);
-            auto to_acct = to_accts.find(sym_code_raw);
- 
-            if ( (to_acct == to_accts.end() && 
-                 (to != conf.managers[manager_type::INFO]
-                    || to != conf.managers[manager_type::CONF] 
-                    || to != conf.managers[manager_type::STRATEGY] 
-                    || to != conf.managers[manager_type::GOV] 
-                    || to != conf.managers[manager_type::TREASURY] 
-                    || to != conf.managers[manager_type::PROPOSAL])
-                 ) 
-                || !to_acct->is_fee_exempt) {
-                fee.amount = std::max( st.min_fee_quantity.amount,
-                                (int64_t)multiply_decimal64(quantity.amount, st.fee_ratio, RATIO_BOOST) );
-                CHECK(fee < quantity, "the calculated fee must less than quantity");
-                actual_recv -= fee;
-            }
-        }
-
         auto payer = has_auth(to) ? to : from;
 
         sub_balance(st, from, quantity, true);
-        transfer_add_balance(st, to, actual_recv, payer, conf);
-
-        if (fee.amount > 0) {
-            add_balance(st, MDAO_TREASURY, fee, get_self());
-            TOKEN_TRANSFER(_self, MDAO_TREASURY, fee, "")
-        }
+        add_balance(st, to, quantity, payer, true);
     }
 
     /**
@@ -251,36 +224,6 @@ void token::transfer( const name&    from,
             if (is_check_frozen) {
                 check(!is_account_frozen(st, owner, *to), "to account is frozen");
             }
-            to_accts.modify(to, same_payer, [&](auto &a) {
-                a.balance += value;
-            });
-        }
-    }
-
-    void token::transfer_add_balance(const currency_stats &st, const name &owner, const asset &value,
-                             const name &ram_payer, const conf_t& conf )
-    {
-        accounts to_accts(get_self(), owner.value);
-        auto to = to_accts.find(value.symbol.code().raw());
-        if (to == to_accts.end())
-        {
-            to_accts.emplace(ram_payer, [&](auto &a) {
-                a.balance = value;
-
-                if(owner == conf.managers.at(manager_type::INFO) 
-                    || owner == conf.managers.at(manager_type::CONF) 
-                    || owner == conf.managers.at(manager_type::STRATEGY) 
-                    || owner == conf.managers.at(manager_type::GOV)
-                    || owner == conf.managers.at(manager_type::TREASURY) 
-                    || owner == conf.managers.at(manager_type::PROPOSAL)
-                ) 
-                    a.is_fee_exempt = true;
-            });
-        }
-        else
-        {
-            check(!is_account_frozen(st, owner, *to), "to account is frozen");
-            
             to_accts.modify(to, same_payer, [&](auto &a) {
                 a.balance += value;
             });

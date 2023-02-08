@@ -8,60 +8,75 @@
 namespace eosiosystem {
    class system_contract;
 }
+static constexpr name AMAX_CUSTODY{"amax.custody"_n};
 
 enum class factory_err: uint8_t {
-    INVALID_FORMAT      = 1,
-    DID_NOT_AUTH        = 2,
-    TITLE_REPEAT        = 3,
-    CODE_REPEAT         = 4,
-    RECORD_NOT_FOUND    = 5,
-    PERMISSION_DENIED   = 6,
-    NOT_AVAILABLE       = 7,
-    PARAM_ERROR         = 8,
-    SYMBOL_ERROR        = 9,
-    RECORD_EXITS        = 10,
-    SIZE_TOO_MUCH       = 11,
-    STRATEGY_NOT_FOUND  = 12,
-    CANNOT_ZERO         = 13,
-    GOVERNANCE_NOT_FOUND= 14,
-    SYSTEM_ERROR        = 15,
-    NO_AUTH             = 16,
-    NOT_POSITIVE        = 17,
-    NOT_ALLOW           = 18,
-    ACCOUNT_NOT_EXITS   = 19,
-    TOKEN_NOT_EXIST     = 20,
-    AMAX_NOT_ENOUGH     = 21
+    DID_NOT_AUTH        = 1,
+    CODE_REPEAT         = 2,
+    NOT_AVAILABLE       = 3,
+    NOT_ALLOW           = 4,
+    TOKEN_NOT_EXIST     = 5,
+    AMAX_NOT_ENOUGH     = 6,
+    STATE_MISMATCH      = 7
 };
+
+
 namespace algoextokenfactory
 {
     using std::string;
     using std::map;
     using namespace eosio;
 
+
+    struct memo_params {
+        string_view fullname;
+        asset       maximum_supply;
+        string_view metadata;
+        EOSLIB_SERIALIZE(memo_params, (fullname)(maximum_supply)(metadata) )
+    };
+
     class [[eosio::contract("tokenfactory")]] tokenfactory : public contract
     {
-        
+
     using conf_t = mdao::conf_global_t;
     using conf_table_t = mdao::conf_global_singleton;
+
+    using conf_t2 = mdao::conf_global_t2;
+    using conf_table_t2 = mdao::conf_global_singleton2;
 
     public:
         using contract::contract;
 
-        [[eosio::on_notify("amax.token::transfer")]] 
-        ACTION createtoken(const name& from, const name& to, const asset& quantity, const string& memo);
-        
-        [[eosio::action]]
-        ACTION issuetoken(const name& owner, const name& code, const name& to, 
-                            const asset& quantity, const string& memo);
-        void _check_permission( const name& dao_code, const name& owner, const conf_t& conf );
+    /**
+        * @brief user creat token
+        *
+        * @param from - token creator
+        * @param to - fee collector,
+        * @param quantity - creat token fee
+        * @param memo - format: fullname|asset|metadata|planid
+        */
+        [[eosio::on_notify("amax.token::transfer")]]
+        ACTION ontransfer(const name& from, const name& to, const asset& quantity, const string& memo);
 
-        using create_action = eosio::action_wrapper<"create"_n, &tokenfactory::createtoken>;
+        [[eosio::action]]
+        ACTION issuetoken(const name& owner,const name& to,
+                            const asset& quantity, const string& memo);
+
         using issue_action = eosio::action_wrapper<"issue"_n, &tokenfactory::issuetoken>;
 
     private:
         std::unique_ptr<conf_table_t> _conf_tbl_ptr;
         std::unique_ptr<conf_t> _conf_ptr;
+
+        std::unique_ptr<conf_table_t2> _conf_tbl_ptr2;
+        std::unique_ptr<conf_t2> _conf_ptr2;
+
         const conf_t& _conf();
+        const conf_t2& _conf2();
+
+        memo_params _memo_analysis(const string& memo,  const conf_t& conf );
+        void _did_auth_check( const name& from );
+        void _custody_check( const name& from, const conf_t2& conf);
 
         struct [[eosio::table]] account
         {
@@ -72,7 +87,7 @@ namespace algoextokenfactory
             uint64_t primary_key() const { return balance.symbol.code().raw(); }
         };
 
- 
+
         struct [[eosio::table]] currency_stats
         {
             asset supply;

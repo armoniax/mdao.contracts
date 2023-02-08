@@ -15,6 +15,31 @@ using namespace eosio;
 using namespace wasm::db;
 using namespace picomath;
 
+
+enum class stg_err: uint8_t {
+   NONE                 = 0,
+   RECORD_NOT_FOUND     = 1,
+   RECORD_EXISTING      = 2,
+   ASSET_MISMATCH       = 3,
+   SYMBOL_MISMATCH      = 4,
+   PARAM_ERROR          = 5,
+   PAUSED               = 6,
+   NO_AUTH              = 7,
+   NOT_POSITIVE         = 8,
+   NOT_STARTED          = 9,
+   OVERSIZED            = 10,
+   TIME_EXPIRED         = 11,
+   NOTIFY_UNRELATED     = 12,
+   ACTION_REDUNDANT     = 13,
+   ACCOUNT_INVALID      = 14,
+   UN_INITIALIZE        = 16,
+   HAS_INITIALIZE       = 17,
+   UNRESPECT_RESULT     = 18,
+   MAINTAINING          = 19,
+   STATUS_MISMATCH      = 20,
+   AMOUNT_TOO_SMALL     = 21
+};
+
 namespace mdao {
 class [[eosio::contract("mdao.stg")]] strategy : public contract {
 private:
@@ -22,8 +47,8 @@ private:
    stg_singleton          _global;
    stg_global_t           _gstate;
 
-   void _check_contract_and_sym( const name& contract, 
-                                    const refsymbol& ref_symbol, 
+   void _check_contract_and_sym( const name& contract,
+                                    const refsymbol& ref_symbol,
                                     const name& type);
 public:
     using contract::contract;
@@ -37,8 +62,8 @@ public:
     }
 
     [[eosio::action]]
-    void create(const name& creator, 
-                const string& stg_name, 
+    void create(const name& creator,
+                const string& stg_name,
                 const string& stg_algo,
                 const name& type,
                 const name& ref_contract,
@@ -55,8 +80,8 @@ public:
     * @param ref_sym - the symbol of token/nft, should format as nsymbol or symbol
     */
     [[eosio::action]]
-    void thresholdstg(const name& creator, 
-                const string& stg_name, 
+    void thresholdstg(const name& creator,
+                const string& stg_name,
                 const uint64_t& threshold_value,
                 const name& type,
                 const name& ref_contract,
@@ -73,30 +98,30 @@ public:
     * @param ref_sym - the symbol of token/nft, should format as nsymbol or symbol
     */
     [[eosio::action]]
-    void balancestg(const name& creator, 
-                const string& stg_name, 
+    void balancestg(const name& creator,
+                const string& stg_name,
                 const uint64_t& weight_value,
                 const name& type,
                 const name& ref_contract,
                 const refsymbol& ref_sym);
 
     [[eosio::action]]
-    void setalgo(const name& creator, 
-                const uint64_t& stg_id, 
+    void setalgo(const name& creator,
+                const uint64_t& stg_id,
                 const string& stg_algo);
 
     [[eosio::action]]
     void verify(const name& creator,
-                   const uint64_t& stg_id, 
+                   const uint64_t& stg_id,
                    const uint64_t& value,
-                   const uint64_t& expect_weight); 
+                   const uint64_t& expect_weight);
 
     [[eosio::action]]
-    void publish(const name& creator, 
+    void publish(const name& creator,
                 const uint64_t& stg_id);
 
     [[eosio::action]]
-    void remove(const name& creator, 
+    void remove(const name& creator,
                 const uint64_t& stg_id);
 
 
@@ -104,8 +129,8 @@ public:
     void testalgo(const name& account,
                  const uint64_t& stg_id);
 
-   static int32_t cal_weight(const name& stg_contract_account, 
-                  const uint64_t& value, 
+   static int32_t cal_weight(const name& stg_contract_account,
+                  const uint64_t& value,
                   const uint64_t& stg_id )
    {
          auto db = dbc(stg_contract_account);
@@ -117,7 +142,7 @@ public:
          return weight;
    }
 
-   static int32_t cal_balance_weight(const name& stg_contract_account,  
+   static int32_t cal_balance_weight(const name& stg_contract_account,
                              const uint64_t& stg_id,
                              const name& account )
    {
@@ -160,7 +185,7 @@ public:
          return weight;
    }
 
-   static int32_t cal_stake_weight(const name& stg_contract_account,  
+   static int32_t cal_stake_weight(const name& stg_contract_account,
                              const uint64_t& stg_id,
                              const name& dao_code,
                              const name& stake_contract,
@@ -188,7 +213,7 @@ public:
          case strategy_type::NFT_PARENT_STAKE.value:{
             set<extended_nsymbol> syms = amax::ntoken::get_syms_by_parent(stg.ref_contract,  std::get<nsymbol>(stg.ref_sym).parent_id );
             map<extended_nsymbol, int64_t> nfts = mdaostake::get_user_staked_nfts(stake_contract, account, dao_code);
-            for (auto itr = syms.begin() ; itr != syms.end(); itr++) { 
+            for (auto itr = syms.begin() ; itr != syms.end(); itr++) {
                if(nfts.count(*itr)) value += nfts.at(*itr);
             }
             break;
@@ -203,7 +228,7 @@ public:
          return weight;
    }
 
-   static int32_t cal_algo(const string& stg_algo,  
+   static int32_t cal_algo(const string& stg_algo,
                             const uint64_t& value)
    {
          PicoMath pm;

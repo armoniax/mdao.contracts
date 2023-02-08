@@ -30,30 +30,34 @@ using namespace std;
 #define CHECKC(exp, code, msg) \
    { if (!(exp)) eosio::check(false, string("$$$") + to_string((int)code) + string("$$$ ") + msg); }
 
-enum class err: uint8_t {
+enum class err: uint32_t {
    NONE                 = 0,
-   RECORD_NOT_FOUND     = 1,
-   RECORD_EXISTING      = 2,
-   ASSET_MISMATCH       = 3,
-   SYMBOL_MISMATCH      = 4,
-   PARAM_ERROR          = 5,
-   PAUSED               = 6,
-   NO_AUTH              = 7,
-   NOT_POSITIVE         = 8,
-   NOT_STARTED          = 9,
-   OVERSIZED            = 10,
-   TIME_EXPIRED         = 11,
-   NOTIFY_UNRELATED     = 12,
-   ACTION_REDUNDANT     = 13,
-   ACCOUNT_INVALID      = 14,
-   UN_INITIALIZE        = 16,
-   HAS_INITIALIZE       = 17,
-   UNRESPECT_RESULT     = 18,
-   MAINTAINING          = 19,
-   STATUS_MISMATCH      = 20,
-   AMOUNT_TOO_SMALL     = 21
-};
 
+   NO_AUTH              = 10001,
+   ACCOUNT_INVALID      = 10002,
+   OVERSIZED            = 10003,
+   NOT_POSITIVE         = 10004,
+
+   RECORD_FOUND         = 10008,
+   RECORD_NOT_FOUND     = 10009,
+
+   PARAM_ERROR          = 10101,
+   MEMO_FORMAT_ERROR    = 10102,
+
+   SYMBOL_MISMATCH      = 10201,
+   SYMBOL_UNSUPPORTED   = 10202,
+   FEE_INSUFFICIENT     = 10203,
+   RATE_EXCEEDED        = 10204,
+   QUANTITY_INVALID     = 10205,
+
+   NOT_STARTED          = 10300,
+   PAUSED               = 10301,
+   TIME_EXPIRED         = 10302,
+   TIME_NOT_EXPIRED     = 10303,
+   STATE_MISMATCH       = 10304,
+
+   SYSTEM_ERROR         = 20000
+};
 
 template<typename T>
 int128_t multiply(int128_t a, int128_t b) {
@@ -238,7 +242,7 @@ struct my_equal {
 template<typename T>
 int find_substr( const T& str1, const T& str2 )
 {
-    typename T::const_iterator it = std::search( str1.begin(), str1.end(), 
+    typename T::const_iterator it = std::search( str1.begin(), str1.end(),
         str2.begin(), str2.end(), my_equal<typename T::value_type>() );
     if ( it != str1.end() ) return it - str1.begin();
     else return -1; // not found
@@ -260,7 +264,7 @@ size_t from_hex( const string& hex_str, char* out_data, size_t out_data_len ) {
     uint8_t* out_pos = (uint8_t*)out_data;
     uint8_t* out_end = out_pos + out_data_len;
     while( i != hex_str.end() && out_end != out_pos ) {
-        *out_pos = from_hex( *i ) << 4;   
+        *out_pos = from_hex( *i ) << 4;
         ++i;
         if( i != hex_str.end() )  {
             *out_pos |= from_hex( *i );
