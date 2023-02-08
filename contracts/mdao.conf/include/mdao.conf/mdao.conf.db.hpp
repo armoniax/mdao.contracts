@@ -127,9 +127,10 @@ struct CONF_TABLE_NAME("global2") conf_global_t2 {
         "t.tech","t.tour","t.sport","t.charity","t.film",
         "l.cn","l.en","l.vi","l.th","l.id","l.ko","l.ja","l.ru"
     };
+    set<name>   token_creator_whitelist;
     asset crt_token_threshold;
     uint64_t custody_plan_id;
-    EOSLIB_SERIALIZE( conf_global_t2,    (available_tags)(crt_token_threshold)(custody_plan_id) )
+    EOSLIB_SERIALIZE( conf_global_t2,    (available_tags)(token_creator_whitelist)(crt_token_threshold)(custody_plan_id) )
 };
 
 typedef eosio::singleton< "global"_n, conf_global_t > conf_global_singleton;

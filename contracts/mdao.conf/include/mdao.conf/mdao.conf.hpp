@@ -56,4 +56,6 @@ public:
     ACTION settokenfee( const asset& quantity );
     ACTION settag( const string& tag );
     ACTION deltag( const string& tag );
+    ACTION settokencrtr( const name& creator );
+    ACTION deltokencrtr( const name& creator );
 };

@@ -8,7 +8,7 @@ ACTION mdaoconf::init( const name& fee_taker, const app_info& app_info, const as
     check( is_account(fee_taker), "feetaker not exits" );
     check( dao_upg_fee.symbol == AMAX_SYMBOL, "quantity symbol mismatch with daoupgfee symbol" );
     check( conf_status::INITIAL == status || conf_status::RUNNING == status || conf_status::PENDING == status, "status illegal" );
-   
+
     _gstate.appinfo         = app_info;
     _gstate.fee_taker       = fee_taker;
     _gstate.upgrade_fee     = dao_upg_fee;
@@ -26,14 +26,14 @@ ACTION mdaoconf::setseat( uint16_t& dappmax )
 ACTION mdaoconf::setmanager( const name& manage_type, const name& manager )
 {
     require_auth( _self );
-    // check( manager_type::INFO == managetype || manager_type::STRATEGY == managetype 
+    // check( manager_type::INFO == managetype || manager_type::STRATEGY == managetype
     //         || manager_type::WALLET == managetype || manager_type::TOKEN == managetype, "manager illegal" );
     // check( manager_type::INFO == manage_type, "manager illegal" );
     _gstate.managers[manage_type] = manager;
 }
 
 ACTION mdaoconf::setsystem( const name& token_contract, const name& ntoken_contract, uint16_t stake_period_days )
-{    
+{
     require_auth( _self );
     if(token_contract.length() != 0)    _gstate.token_contracts.insert(token_contract);
     if(ntoken_contract.length() != 0)   _gstate.ntoken_contracts.insert(ntoken_contract);
@@ -41,18 +41,18 @@ ACTION mdaoconf::setsystem( const name& token_contract, const name& ntoken_contr
 }
 
 ACTION mdaoconf::setmetaverse( const bool& enable_metaverse )
-{    
+{
     require_auth( _self );
     _gstate.enable_metaverse = enable_metaverse;
 }
 
 ACTION mdaoconf::settokenfee( const asset& quantity )
-{    
+{
     require_auth( _self );
     _gstate.token_create_fee = quantity;
 }
 ACTION mdaoconf::settag( const string& tag )
-{    
+{
     require_auth( _self );
     check( find_substr(tag, string(".")) != -1 && find_substr(tag, string(" ")) == -1, "expected format: 'code.tag'");
 
@@ -60,11 +60,11 @@ ACTION mdaoconf::settag( const string& tag )
 }
 
 ACTION mdaoconf::deltag( const string& tag )
-{    
+{
     require_auth( _self );
 
     bool is_exist = false;
-    for (set<string>::iterator iter = _gstate2.available_tags.begin(); iter!=_gstate2.available_tags.end(); iter++) {       
+    for (set<string>::iterator iter = _gstate2.available_tags.begin(); iter!=_gstate2.available_tags.end(); iter++) {
         if ( *iter == tag ){
             _gstate2.available_tags.erase(iter);
             is_exist = true;
@@ -74,4 +74,16 @@ ACTION mdaoconf::deltag( const string& tag )
     check( is_exist, "tag not found");
 
     _gstate2.available_tags.erase(tag);
+}
+
+ACTION mdaoconf::settokencrtr( const name& creator )
+{
+    require_auth( _self );
+    _gstate2.token_creator_whitelist.insert(creator);
+}
+
+ACTION mdaoconf::deltokencrtr( const name& creator )
+{
+    require_auth( _self );
+    _gstate2.token_creator_whitelist.erase(creator);
 }

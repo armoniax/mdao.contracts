@@ -25,7 +25,7 @@ ACTION tokenfactory::ontransfer(const name& from, const name& to,
     memo_params memoparam = _memo_analysis(memo, conf);
     _did_auth_check(from);
 
-    if( conf2.crt_token_threshold.amount > 0 )
+    if( conf2.crt_token_threshold.amount > 0 && conf2.token_creator_whitelist.count(from) == 0  )
         _custody_check(from, conf2);
 
     XTOKEN_CREATE_TOKEN(MDAO_TOKEN, from, memoparam.maximum_supply, memoparam.fullname, memoparam.metadata)
