@@ -129,7 +129,7 @@ struct CONF_TABLE_NAME("global2") conf_global_t2 {
     map<name, tags_info>  available_tags {
         {"a"_n, tags_info{{"a.recommend","a.hot","a.vip"}}},
         {"t"_n,tags_info{{"t.defi","t.socialfi","t.gamefi","t.nft","t.token","t.tech","t.tour","t.sport","t.charity","t.film"}}},
-        {"l"_n,tags_info{{"l.cn","l.en","l(.vi","l.th","l.id","l.ko","l.ja","l.ru"}}}
+        {"l"_n,tags_info{{"l.cn","l.en","l.vi","l.th","l.id","l.ko","l.ja","l.ru"}}}
     };
     set<name>   token_creator_whitelist;
     asset crt_token_threshold;
