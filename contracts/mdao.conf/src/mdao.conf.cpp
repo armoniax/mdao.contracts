@@ -62,6 +62,8 @@ ACTION mdaoconf::settag( const string& tag )
     name tag_code = name(parts[0]);
 
     vector<string> _tags = _gstate2.available_tags.at(tag_code).tags;
+    check( count(_tags.begin(), _tags.end(), tag) == 0, "tag already exists" );
+
     _tags.push_back(tag);
     _gstate2.available_tags[tag_code].tags = _tags;
 }
