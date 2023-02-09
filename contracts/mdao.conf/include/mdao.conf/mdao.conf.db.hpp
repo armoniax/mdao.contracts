@@ -54,6 +54,11 @@ namespace manager_type {
 
 };
 
+struct tags_info {
+    vector<string> tags;
+    EOSLIB_SERIALIZE(tags_info, (tags) )
+};
+
 struct app_info {
     name app_name;
     string app_version;
@@ -121,11 +126,10 @@ struct CONF_TABLE_NAME("global") conf_global_t {
 };
 
 struct CONF_TABLE_NAME("global2") conf_global_t2 {
-    set<string>  available_tags {
-        "a.recommend","a.hot","a.vip",
-        "t.defi","t.socialfi","t.gamefi","t.nft","t.token",
-        "t.tech","t.tour","t.sport","t.charity","t.film",
-        "l.cn","l.en","l.vi","l.th","l.id","l.ko","l.ja","l.ru"
+    map<name, tags_info>  available_tags {
+        {"a"_n, tags_info{{"a.recommend","a.hot","a.vip"}}},
+        {"t"_n,tags_info{{"t.defi","t.socialfi","t.gamefi","t.nft","t.token","t.tech","t.tour","t.sport","t.charity","t.film"}}},
+        {"l"_n,tags_info{{"l.cn","l.en","l(.vi","l.th","l.id","l.ko","l.ja","l.ru"}}}
     };
     set<name>   token_creator_whitelist;
     asset crt_token_threshold;

@@ -21,11 +21,6 @@ static constexpr string_view     meta_limit            = "meta";
 
 namespace mdao {
 
-struct tags_info {
-    vector<string> tags;
-    EOSLIB_SERIALIZE(tags_info, (tags) )
-};
-
 #define INFO_TG_TBL [[eosio::table, eosio::contract("mdao.info")]]
 
 struct INFO_TG_TBL dao_info_t {
@@ -76,7 +71,7 @@ struct [[eosio::table]] currency_stats
     asset supply;
     asset max_supply;
     name issuer;
-    
+
     uint64_t primary_key() const { return supply.symbol.code().raw(); }
 };
 

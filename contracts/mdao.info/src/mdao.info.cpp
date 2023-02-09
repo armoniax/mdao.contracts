@@ -229,10 +229,8 @@ void mdaoinfo::settags(const name& code, map<name, tags_info>& tags) {
         }
 
         for( vector<string>::iterator tag_iter = tag_list.begin(); tag_iter!=tag_list.end(); tag_iter++ ){
-            auto iter_parts = split( *tag_iter, "." );
-            name tag_iter_code = name(iter_parts[0]);
-            CHECKC( tag_iter_code == tag_code, info_err::PARAM_ERROR, "unsupport tag" );
-            CHECKC( conf2.available_tags.count(*tag_iter) > 0, info_err::PARAM_ERROR, "unsupport tag" );
+            vector<string> conf_tags = conf2.available_tags.at(tag_code).tags;
+            CHECKC( count(conf_tags.begin(), conf_tags.end(), *tag_iter) > 0, info_err::PARAM_ERROR, "unsupport tag" );
 
             if( count(info_tags.begin(), info_tags.end(), *tag_iter) > 0 ){
                 continue;
@@ -322,12 +320,9 @@ void mdaoinfo::replacetag(const name& code, map<name, tags_info>& tags) {
         }
 
         for( vector<string>::iterator tag_iter = tag_list.begin(); tag_iter!=tag_list.end(); tag_iter++ ){
-            auto iter_parts = split( *tag_iter, "." );
-            name tag_iter_code = name(iter_parts[0]);
-            CHECKC( tag_iter_code == tag_code, info_err::PARAM_ERROR, "unsupport tag" )
-            CHECKC( conf2.available_tags.count(*tag_iter) > 0, info_err::PARAM_ERROR, "unsupport tag" );
-            CHECKC( count(tag_list.begin(), tag_list.end(), *tag_iter) > 1 , info_err::PARAM_ERROR, "parameter has duplicate tag" );
-
+            vector<string> conf_tags = conf2.available_tags.at(tag_code).tags;
+            CHECKC( count(conf_tags.begin(), conf_tags.end(), *tag_iter) > 0, info_err::PARAM_ERROR, "unsupport tag" );
+            CHECKC( count(tag_list.begin(), tag_list.end(), *tag_iter) == 1 , info_err::PARAM_ERROR, "parameter has duplicate tag" );
         }
     }
     info.tags.clear();

@@ -51,29 +51,40 @@ ACTION mdaoconf::settokenfee( const asset& quantity )
     require_auth( _self );
     _gstate.token_create_fee = quantity;
 }
+
 ACTION mdaoconf::settag( const string& tag )
 {
     require_auth( _self );
     check( find_substr(tag, string(".")) != -1 && find_substr(tag, string(" ")) == -1, "expected format: 'code.tag'");
 
-    _gstate2.available_tags.insert(tag);
+    auto parts = split( tag, "." );
+    check( parts.size() == 2, "invalid format" );
+    name tag_code = name(parts[0]);
+
+    vector<string> _tags = _gstate2.available_tags.at(tag_code).tags;
+    _tags.push_back(tag);
+    _gstate2.available_tags[tag_code].tags = _tags;
 }
 
 ACTION mdaoconf::deltag( const string& tag )
 {
     require_auth( _self );
 
+    auto parts = split( tag, "." );
+    check( parts.size() == 2, "invalid format" );
+    name tag_code = name(parts[0]);
+
+    vector<string> _tags = _gstate2.available_tags.at(tag_code).tags;
     bool is_exist = false;
-    for (set<string>::iterator iter = _gstate2.available_tags.begin(); iter!=_gstate2.available_tags.end(); iter++) {
+    for (vector<string>::iterator iter = _tags.begin(); iter!=_tags.end(); iter++) {
         if ( *iter == tag ){
-            _gstate2.available_tags.erase(iter);
+            _tags.erase(iter);
             is_exist = true;
             break;
         }
     }
     check( is_exist, "tag not found");
-
-    _gstate2.available_tags.erase(tag);
+    _gstate2.available_tags[tag_code].tags = _tags;
 }
 
 ACTION mdaoconf::settokencrtr( const name& creator )

@@ -71,7 +71,7 @@ using conf_table_t2 = mdao::conf_global_singleton2;
 private:
     dbc                 _db;
     std::unique_ptr<conf_table_t> _conf_tbl_ptr;
-    std::unique_ptr<conf_t> _conf_ptr;    
+    std::unique_ptr<conf_t> _conf_ptr;
 
     std::unique_ptr<conf_table_t2> _conf_tbl_ptr2;
     std::unique_ptr<conf_t2> _conf_ptr2;
@@ -88,7 +88,7 @@ public:
     void onupgradedao(name from, name to, asset quantity, string memo);
 
     [[eosio::action]]
-    void updatedao(const name& owner, const name& code, const string& logo, 
+    void updatedao(const name& owner, const name& code, const string& logo,
                             const string& desc,const map<name, string>& links,
                             const string& symcode, string symcontract, const string& groupid);
     [[eosio::action]]
@@ -108,24 +108,24 @@ public:
 
     [[eosio::action]]
     void updatestatus(const name& code, const bool& isenable);
-    
+
     [[eosio::action]]
     void settags(const name& code, map<name, tags_info>& tags);
 
     [[eosio::action]]
     void deltag(const name& code, const string& tag);
-   
+
     [[eosio::action]]
     void replacetag(const name& code, map<name, tags_info>& tags);
 
     // ACTION recycledb(uint32_t max_rows);
 
     // [[eosio::action]]
-    // void createtoken(const name& code, const name& owner, const uint16_t& transfer_ratio, 
+    // void createtoken(const name& code, const name& owner, const uint16_t& transfer_ratio,
     //                  const string& fullname, const asset& maximum_supply, const string& metadata);
 
     // [[eosio::action]]
-    // void issuetoken(const name& owner, const name& code, const name& to, 
+    // void issuetoken(const name& owner, const name& code, const name& to,
     //                         const asset& quantity, const string& memo);
 
     [[eosio::action]]
