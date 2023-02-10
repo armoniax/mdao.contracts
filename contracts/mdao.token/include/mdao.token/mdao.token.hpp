@@ -42,9 +42,9 @@ namespace mdaotoken
      * Similarly, the `stats` multi-index table, holds instances of `currency_stats` objects for each row, which contains information about current supply, maximum supply, and the creator account for a symbol token. The `stats` table is scoped to the token symbol.  Therefore, when one queries the `stats` table for a token symbol the result is one single entry/row corresponding to the queried symbol token if it was previously created, or nothing, otherwise.
      * The `hoptpottoken` is base on `amax.token`, support fee of transfer
      */
-    class [[eosio::contract("mdaotoken111")]] token : public contract
+    class [[eosio::contract("mdao.token")]] token : public contract
     {
-        
+
     using conf_t = mdao::conf_global_t;
     using conf_table_t = mdao::conf_global_singleton;
 
@@ -89,7 +89,7 @@ namespace mdaotoken
         /**
          * The opposite for create action, if all validations succeed,
          * it debits the statstable.supply amount.
-         * @param account - the account to burn 
+         * @param account - the account to burn
          * @param quantity - the quantity of tokens to retire,
          * @param memo - the memo string to accompany the transaction.
          */
@@ -200,12 +200,12 @@ namespace mdaotoken
             return ac.balance;
         }
 
-         static bool account_exist( const name& token_contract_account, const name& owner, const symbol_code& sym_code )
-         {
-            accounts accountstable( token_contract_account, owner.value );
-            return accountstable.find( sym_code.raw() ) != accountstable.end();
-         }
-         
+        static bool account_exist( const name& token_contract_account, const name& owner, const symbol_code& sym_code )
+        {
+        accounts accountstable( token_contract_account, owner.value );
+        return accountstable.find( sym_code.raw() ) != accountstable.end();
+        }
+
         using create_action = eosio::action_wrapper<"create"_n, &token::create>;
         using issue_action = eosio::action_wrapper<"issue"_n, &token::issue>;
         using retire_action = eosio::action_wrapper<"retire"_n, &token::retire>;
@@ -235,7 +235,7 @@ namespace mdaotoken
             uint64_t primary_key() const { return balance.symbol.code().raw(); }
         };
 
- 
+
         struct [[eosio::table]] currency_stats
         {
             asset supply;

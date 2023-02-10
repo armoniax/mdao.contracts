@@ -1,4 +1,4 @@
-#include "algoex.token/algoex.token.hpp"
+#include "mdao.token/mdao.token.hpp"
 #include <thirdparty/utils.hpp>
 
 using namespace std;
@@ -35,7 +35,7 @@ namespace mdaotoken {
                         const std::string &meta_data)
     {
         auto conf = _conf();
-        check(has_auth(conf.managers[manager_type::FACTORY]), "insufficient permissions");
+        check(has_auth(conf.managers[manager_type::TOKEN_FACTORY]), "insufficient permissions");
         check(is_account(issuer), "issuer account does not exist");
 
         const auto &sym = maximum_supply.symbol;
@@ -62,7 +62,7 @@ namespace mdaotoken {
     void token::issue(const name &to, const asset &quantity, const string &memo)
     {
         auto conf = _conf();
-        check(has_auth(conf.managers[manager_type::FACTORY]), "insufficient permissions");
+        check(has_auth(conf.managers[manager_type::TOKEN_FACTORY]), "insufficient permissions");
 
         const auto& sym = quantity.symbol;
         auto sym_code_raw = sym.code().raw();

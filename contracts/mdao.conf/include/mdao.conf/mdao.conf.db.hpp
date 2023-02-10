@@ -50,7 +50,7 @@ namespace manager_type {
     static constexpr name CONF       = "conf"_n;
     static constexpr name ALGOEX     = "algoex"_n;
     static constexpr name STAKE      = "stake"_n;
-    static constexpr name FACTORY    = "factory"_n;
+    static constexpr name TOKEN_FACTORY    = "factory"_n;
 
 };
 

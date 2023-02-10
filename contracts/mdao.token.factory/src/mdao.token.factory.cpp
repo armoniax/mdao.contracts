@@ -1,15 +1,15 @@
-#include "algoex.token.factory/algoex.token.factory.hpp"
+#include "mdao.token.factory/mdao.token.factory.hpp"
 #include <thirdparty/utils.hpp>
 #include <amax.custody/custodydb.hpp>
 #include <amax.ntoken/did.ntoken_db.hpp>
-#include <algoex.token/algoex.token.hpp>
+#include <mdao.token/mdao.token.hpp>
 #include <mdao.info/mdao.info.db.hpp>
 #include <mdao.stake/mdao.stake.db.hpp>
 
 using namespace std;
 using namespace wasm::db;
 
-namespace algoextokenfactory {
+namespace mdaotokenfactory {
 
 
 ACTION tokenfactory::ontransfer(const name& from, const name& to,

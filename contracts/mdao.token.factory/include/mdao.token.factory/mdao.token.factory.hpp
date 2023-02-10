@@ -21,7 +21,7 @@ enum class factory_err: uint8_t {
 };
 
 
-namespace algoextokenfactory
+namespace mdaotokenfactory
 {
     using std::string;
     using std::map;
