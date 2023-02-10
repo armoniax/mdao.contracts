@@ -37,9 +37,15 @@ ACTION tokenfactory::issuetoken(const name& owner, const name& to,
     auto conf = _conf();
     check( has_auth(owner), "insufficient permissions");
 
-    symbol_code supply_code = quantity.symbol.code();
-    stats statstable( MDAO_TOKEN, supply_code.raw() );
-    auto existing = statstable.find(supply_code.raw());
+    const auto& sym = quantity.symbol;
+    auto sym_code_raw = sym.code().raw();
+
+    check(sym.is_valid(), "invalid symbol name");
+    check(memo.size() <= 256, "memo has more than 256 bytes");
+
+    stats statstable( MDAO_TOKEN, sym_code_raw );
+    auto existing = statstable.find(sym_code_raw);
+
     CHECKC( existing != statstable.end(), factory_err::TOKEN_NOT_EXIST, "token not exist")
     const auto &st = *existing;
     check( st.issuer == to, "insufficient permissions");
