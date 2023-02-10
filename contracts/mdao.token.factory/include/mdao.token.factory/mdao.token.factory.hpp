@@ -56,10 +56,10 @@ namespace mdaotokenfactory
         * @param memo - format: fullname|asset|metadata|planid
         */
         [[eosio::on_notify("amax.token::transfer")]]
-        ACTION ontransfer(const name& from, const name& to, const asset& quantity, const string& memo);
+        void ontransfer(const name& from, const name& to, const asset& quantity, const string& memo);
 
         [[eosio::action]]
-        ACTION issuetoken(const name& owner,const name& to,
+        void issuetoken(const name& owner,const name& to,
                             const asset& quantity, const string& memo);
 
         using issue_action = eosio::action_wrapper<"issue"_n, &tokenfactory::issuetoken>;
