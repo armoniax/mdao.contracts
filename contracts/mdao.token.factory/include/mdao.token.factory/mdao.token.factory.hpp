@@ -87,14 +87,12 @@ namespace mdaotokenfactory
             uint64_t primary_key() const { return balance.symbol.code().raw(); }
         };
 
-
         struct [[eosio::table]] currency_stats
         {
             asset supply;
             asset max_supply;
             name issuer;
             bool is_paused = false;
-            name dao_code;
             uint16_t fee_ratio = 0;         // fee ratio, boost 10000
             asset min_fee_quantity;         // min fee quantity
             std::string fullname;
@@ -102,6 +100,7 @@ namespace mdaotokenfactory
 
             uint64_t primary_key() const { return supply.symbol.code().raw(); }
         };
+
 
         typedef eosio::multi_index<"accounts"_n, account> accounts;
         typedef eosio::multi_index<"stat"_n, currency_stats> stats;
