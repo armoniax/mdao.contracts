@@ -100,3 +100,15 @@ ACTION mdaoconf::deltokencrtr( const name& creator )
     require_auth( _self );
     _gstate2.token_creator_whitelist.erase(creator);
 }
+
+ACTION mdaoconf::setplanid( const uint64_t& planid )
+{
+    require_auth( _self );
+    _gstate2.custody_plan_id = planid;
+}
+
+ACTION mdaoconf::setthreshold( const asset& threshold )
+{
+    require_auth( _self );
+    _gstate2.crt_token_threshold = threshold;
+}
