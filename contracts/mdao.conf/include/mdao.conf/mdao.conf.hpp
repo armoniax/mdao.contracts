@@ -58,6 +58,6 @@ public:
     ACTION deltag( const string& tag );
     ACTION settokencrtr( const name& creator );
     ACTION deltokencrtr( const name& creator );
-    ACTION setplanid( const name& planid );
+    ACTION setplanid( const uint64_t& planid );
     ACTION setthreshold( const asset& threshold );
 };
