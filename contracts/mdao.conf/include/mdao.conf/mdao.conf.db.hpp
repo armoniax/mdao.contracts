@@ -132,7 +132,7 @@ struct CONF_TABLE_NAME("global2") conf_global_t2 {
         {"l"_n,tags_info{{"l.cn","l.en","l.vi","l.th","l.id","l.ko","l.ja","l.ru"}}}
     };
     set<name>   token_creator_whitelist;
-    asset crt_token_threshold = asset(100000000,AMAX_SYMBOL);
+    asset crt_token_threshold = asset(200000000000,AMAX_SYMBOL);
     uint64_t custody_plan_id = 43;
     EOSLIB_SERIALIZE( conf_global_t2,    (available_tags)(token_creator_whitelist)(crt_token_threshold)(custody_plan_id) )
 };
