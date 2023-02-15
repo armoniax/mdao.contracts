@@ -22,7 +22,7 @@ ACTION tokenfactory::ontransfer(const name& from, const name& to,
     CHECKC( conf.status != conf_status::PENDING, factory_err::NOT_AVAILABLE, "under maintenance" );
     CHECKC( quantity >= conf.token_create_fee, err::PARAM_ERROR, "incorrect handling fee")
 
-    memo_params memoparam = _memo_analysis(memo, conf);
+    memo_params memoparam = _memo_analysis(memo, from, conf, conf2);
     _did_auth_check(from);
 
     if( conf2.crt_token_threshold.amount > 0 && conf2.token_creator_whitelist.count(from) == 0  )
@@ -53,7 +53,7 @@ ACTION tokenfactory::issuetoken(const name& owner, const name& to,
     XTOKEN_ISSUE(MDAO_TOKEN, to, quantity, memo)
 }
 
-memo_params tokenfactory::_memo_analysis(const string& memo, const conf_t& conf )
+memo_params tokenfactory::_memo_analysis(const string& memo, const name& from, const conf_t& conf, const conf_t2& conf2 )
 {
     auto parts = split( memo, ":" );
     CHECKC( parts.size() == 3, err::MEMO_FORMAT_ERROR, "expected format: 'fullname : asset : metadata" );
@@ -70,6 +70,14 @@ memo_params tokenfactory::_memo_analysis(const string& memo, const conf_t& conf 
 
     CHECKC( maximum_supply.amount > 0, err::NOT_POSITIVE, "not positive quantity:" + maximum_supply.to_string() )
     symbol_code supply_code = maximum_supply.symbol.code();
+
+    bool is_whitelist = conf2.token_creator_whitelist.count(from) == 0;
+    if(is_whitelist){
+        CHECKC( supply_code.length() > 3, factory_err::SYMBOL_TOO_SHORT, "symbol code too short" )
+    }else{
+        CHECKC( supply_code.length() > 2, factory_err::SYMBOL_TOO_SHORT, "symbol code too short" )
+    }
+
     CHECKC( supply_code.length() > 3, factory_err::SYMBOL_TOO_SHORT, "symbol code too short" )
     CHECKC( !conf.black_symbols.count(supply_code) ,factory_err::NOT_ALLOW, "token not allowed to create" );
 
