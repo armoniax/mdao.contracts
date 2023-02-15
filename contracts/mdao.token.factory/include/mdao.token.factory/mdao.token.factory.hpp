@@ -17,7 +17,8 @@ enum class factory_err: uint8_t {
     NOT_ALLOW           = 4,
     TOKEN_NOT_EXIST     = 5,
     AMAX_NOT_ENOUGH     = 6,
-    STATE_MISMATCH      = 7
+    STATE_MISMATCH      = 7,
+    SYMBOL_TOO_SHORT    = 8
 };
 
 
