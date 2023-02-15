@@ -77,8 +77,6 @@ memo_params tokenfactory::_memo_analysis(const string& memo, const name& from, c
     }else{
         CHECKC( supply_code.length() > 2, factory_err::SYMBOL_TOO_SHORT, "symbol code too short" )
     }
-
-    CHECKC( supply_code.length() > 3, factory_err::SYMBOL_TOO_SHORT, "symbol code too short" )
     CHECKC( !conf.black_symbols.count(supply_code) ,factory_err::NOT_ALLOW, "token not allowed to create" );
 
     stats statstable( MDAO_TOKEN, supply_code.raw() );
