@@ -75,7 +75,7 @@ namespace mdaotokenfactory
         const conf_t& _conf();
         const conf_t2& _conf2();
 
-        memo_params _memo_analysis(const string& memo,  const conf_t& conf );
+        memo_params _memo_analysis(const string& memo, const name& from, const conf_t& conf, const conf_t2& conf2 );
         void _did_auth_check( const name& from );
         void _custody_check( const name& from, const conf_t2& conf);
 

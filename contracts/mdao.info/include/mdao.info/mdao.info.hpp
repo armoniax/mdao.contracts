@@ -92,6 +92,9 @@ public:
                             const string& desc,const map<name, string>& links,
                             const string& symcode, string symcontract, const string& groupid);
     [[eosio::action]]
+    void setlogo(const name& owner, const name& code, const string& logo);
+
+    [[eosio::action]]
     void deldao(const name& admin, const name& code);
 
     [[eosio::action]]

@@ -98,6 +98,21 @@ ACTION mdaoinfo::updatedao(const name& owner, const name& code, const string& lo
     _db.set(info, _self);
 }
 
+ACTION mdaoinfo::setlogo(const name& owner, const name& code, const string& logo)
+{
+    require_auth( owner );
+
+    auto conf = _conf();
+    CHECKC( conf.status != conf_status::PENDING, info_err::NOT_AVAILABLE, "under maintenance" );
+
+    dao_info_t info(code);
+    CHECKC( _db.get(info) ,info_err::RECORD_NOT_FOUND, "record not found" );
+    CHECKC( info.creator == owner, info_err::PERMISSION_DENIED, "only the creator can operate" );
+    CHECKC( info.status == info_status::RUNNING, info_err::NOT_AVAILABLE, "under maintenance" );
+    info.logo = logo;
+    _db.set(info, _self);
+}
+
 ACTION mdaoinfo::deldao(const name& admin, const name& code)
 {
     require_auth( admin );
