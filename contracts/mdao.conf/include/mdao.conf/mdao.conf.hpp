@@ -60,4 +60,6 @@ public:
     ACTION deltokencrtr( const name& creator );
     ACTION setplanid( const uint64_t& planid );
     ACTION setthreshold( const asset& threshold );
+    ACTION setblacksym( const symbol_code& sym );
+
 };

@@ -112,3 +112,9 @@ ACTION mdaoconf::setthreshold( const asset& threshold )
     require_auth( _self );
     _gstate2.crt_token_threshold = threshold;
 }
+
+ACTION mdaoconf::setblacksym( const symbol_code& sym )
+{
+    require_auth( _self );
+    _gstate.black_symbols.insert(sym);
+}
