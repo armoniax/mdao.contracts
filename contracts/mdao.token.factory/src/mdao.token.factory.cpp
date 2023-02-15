@@ -70,7 +70,7 @@ memo_params tokenfactory::_memo_analysis(const string& memo, const conf_t& conf 
 
     CHECKC( maximum_supply.amount > 0, err::NOT_POSITIVE, "not positive quantity:" + maximum_supply.to_string() )
     symbol_code supply_code = maximum_supply.symbol.code();
-    CHECKC( supply_code.length() > 2, err::NO_AUTH, "cannot create limited token" )
+    CHECKC( supply_code.length() > 2, factory_err::SYMBOL_TOO_SHORT, "symbol code too short" )
     CHECKC( !conf.black_symbols.count(supply_code) ,factory_err::NOT_ALLOW, "token not allowed to create" );
 
     stats statstable( MDAO_TOKEN, supply_code.raw() );
