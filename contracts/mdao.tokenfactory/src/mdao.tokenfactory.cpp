@@ -1,4 +1,4 @@
-#include "mdao.token.factory/mdao.token.factory.hpp"
+#include "mdao.token.factory/mdao.tokenfactory.hpp"
 #include <thirdparty/utils.hpp>
 #include <amax.custody/custodydb.hpp>
 #include <amax.ntoken/did.ntoken_db.hpp>
@@ -20,7 +20,7 @@ ACTION tokenfactory::ontransfer(const name& from, const name& to,
     auto conf = _conf();
     auto conf2 = _conf2();
     CHECKC( conf.status != conf_status::PENDING, factory_err::NOT_AVAILABLE, "under maintenance" );
-    CHECKC( quantity >= conf.token_create_fee, err::PARAM_ERROR, "incorrect handling fee")
+    CHECKC( quantity >= conf.token_create_fee, err::PARAM_ERROR, "insufficient handling fee")
 
     memo_params memoparam = _memo_analysis(memo, from, conf, conf2);
     _did_auth_check(from);
@@ -35,7 +35,7 @@ ACTION tokenfactory::issuetoken(const name& owner, const name& to,
                             const asset& quantity, const string& memo)
 {
     auto conf = _conf();
-    check( has_auth(owner), "insufficient permissions");
+    check( has_auth(owner), "not authorized");
 
     const auto& sym = quantity.symbol;
     auto sym_code_raw = sym.code().raw();
@@ -48,7 +48,7 @@ ACTION tokenfactory::issuetoken(const name& owner, const name& to,
 
     CHECKC( existing != statstable.end(), factory_err::TOKEN_NOT_EXIST, "token not exist")
     const auto &st = *existing;
-    check( st.issuer == to, "insufficient permissions");
+    check( st.issuer == to, "not authorized");
 
     XTOKEN_ISSUE(MDAO_TOKEN, to, quantity, memo)
 }
@@ -56,7 +56,7 @@ ACTION tokenfactory::issuetoken(const name& owner, const name& to,
 memo_params tokenfactory::_memo_analysis(const string& memo, const name& from, const conf_t& conf, const conf_t2& conf2 )
 {
     auto parts = split( memo, ":" );
-    CHECKC( parts.size() == 3, err::MEMO_FORMAT_ERROR, "expected format: 'fullname : asset : metadata" );
+    CHECKC( parts.size() == 3, err::MEMO_FORMAT_ERROR, "expected format: '$fullname:$asset:$metadata" );
 
     string_view fullname = parts[0];
     CHECKC( fullname.size() <= 24, err::MEMO_FORMAT_ERROR, "fullname length is more than 24 bytes");
@@ -72,15 +72,18 @@ memo_params tokenfactory::_memo_analysis(const string& memo, const name& from, c
     symbol_code supply_code = maximum_supply.symbol.code();
 
     bool is_whitelist = conf2.token_creator_whitelist.count(from) == 0;
-    if(is_whitelist){
+
+    if( is_whitelist ) {
         CHECKC( supply_code.length() > 3, factory_err::SYMBOL_TOO_SHORT, "symbol code too short" )
-    }else{
+    
+    } else {
         CHECKC( supply_code.length() > 2, factory_err::SYMBOL_TOO_SHORT, "symbol code too short" )
     }
+
     CHECKC( !conf.black_symbols.count(supply_code) ,factory_err::NOT_ALLOW, "token not allowed to create" );
 
     stats statstable( MDAO_TOKEN, supply_code.raw() );
-    CHECKC( statstable.find(supply_code.raw()) == statstable.end(), factory_err::CODE_REPEAT, "token already exist")
+    CHECKC( statstable.find(supply_code.raw()) == statstable.end(), factory_err::CODE_REPEAT, "token already exist" )
 
     memo_params memoparam;
     memoparam.maximum_supply = maximum_supply;
@@ -93,8 +96,8 @@ void tokenfactory::_did_auth_check( const name& from )
 {
     auto did_acnts = amax::account_t::idx_t( did::DID_NTOKEN, from.value );
     bool is_auth = false;
-    for( auto did_acnts_iter = did_acnts.begin(); did_acnts_iter!=did_acnts.end(); did_acnts_iter++ ){
-        if(did_acnts_iter->balance.amount > 0){
+    for( auto did_acnts_iter = did_acnts.begin(); did_acnts_iter!=did_acnts.end(); did_acnts_iter++ ) {
+        if( did_acnts_iter->balance.amount > 0 ) {
             is_auth = true;
             break;
         }
@@ -133,6 +136,7 @@ const tokenfactory::conf_t2& tokenfactory::_conf2() {
         CHECKC(_conf_tbl_ptr2->exists(), err::SYSTEM_ERROR, "conf table2 not existed in contract" );
         _conf_ptr2 = make_unique<conf_t2>(_conf_tbl_ptr2->get());
     }
+    
     return *_conf_ptr2;
 }
 
