@@ -6,6 +6,7 @@
 
 void mdaogroupthr::ontransfer()
 {
+
     auto contract = get_first_receiver();
     if (token_contracts.count(contract) > 0) {
         execute_function(&mdaogroupthr::_on_token_transfer);
@@ -17,6 +18,8 @@ void mdaogroupthr::ontransfer()
 
 void mdaogroupthr::addbybalance( const name &mermber, const uint64_t &groupthr_id )
 {
+    require_auth(mermber);
+
     groupthr_t groupthr(groupthr_id);
     CHECKC( _db.get(groupthr), err::RECORD_NOT_FOUND, "group threshold config not exists" );
     CHECKC( groupthr.expired_time >= current_time_point(), groupthr_err::ALREADY_EXPIRED, "group threshold expired" );
@@ -38,6 +41,7 @@ void mdaogroupthr::addbybalance( const name &mermber, const uint64_t &groupthr_i
 
 void mdaogroupthr::setthreshold( const uint64_t &groupthr_id, const refasset &threshold, const name &type )
 {
+
     groupthr_t groupthr(groupthr_id);
     CHECKC( _db.get(groupthr), err::RECORD_NOT_FOUND, "group threshold config not exists" );
     CHECKC( groupthr.expired_time >= current_time_point(), groupthr_err::ALREADY_EXPIRED, "group threshold expired" );
@@ -64,6 +68,8 @@ void mdaogroupthr::setthreshold( const uint64_t &groupthr_id, const refasset &th
 
 void mdaogroupthr::delmermbers( vector<uint64_t> &mermbers )
 {
+    CHECKC( mermbers.size() > 0, err::PARAM_ERROR, "param error" );
+
     auto conf = _conf();
     CHECKC( conf.status != conf_status::PENDING, groupthr_err::NOT_AVAILABLE, "under maintenance" );
     CHECKC( has_auth(conf.admin), groupthr_err::PERMISSION_DENIED, "only the admin can operate" );
@@ -78,6 +84,7 @@ void mdaogroupthr::delmermbers( vector<uint64_t> &mermbers )
     }
 
 }
+
 //memo format : 'target : asset : group_id : dao_code : type :  contract'
 //memo format : 'target : id : pid : amount : group_id : dao_code : type : contract'
 //memo format : 'target : groupthr_id'
@@ -86,6 +93,7 @@ void mdaogroupthr::_on_token_transfer( const name &from,
                                         const asset &quantity,
                                         const string &memo)
 {
+
     if (from == _self || to != _self) return;
 
     auto parts = split( memo, ":" );
@@ -149,6 +157,7 @@ void mdaogroupthr::_on_ntoken_transfer( const name& from,
                                         const std::vector<nasset>& assets,
                                         const string& memo )
 {
+
     if (from == _self || to != _self) return;
 
     auto parts = split( memo, ":" );
@@ -181,6 +190,7 @@ void mdaogroupthr::_create_groupthr( const name& dao_code,
     CHECKC( info != info_tbl.end(), err::RECORD_NOT_FOUND, "mdao not found" );
     CHECKC( info->creator == from, groupthr_err::PERMISSION_DENIED, "permission denied" );
 
+
     groupthr_t::idx_t groupthr_tbl(_self, _self.value);
     auto groupthr_index = groupthr_tbl.get_index<"bygroupid"_n>();
     auto groupthr_itr = groupthr_index.find(HASH256(string(group_id)));
@@ -200,10 +210,12 @@ void mdaogroupthr::_create_groupthr( const name& dao_code,
 
     _db.set(groupthr, _self);
 }
+//今天几号
 
 void mdaogroupthr::_create_mermber( const name& from,
                                     const uint64_t& groupthr_id )
 {
+
     mermber_t::idx_t mermber_tbl(_self, _self.value);
     auto mermber_index = mermber_tbl.get_index<"byidgroupid"_n>();
     uint128_t sec_index = (uint128_t)from.value << 64 | (uint128_t)groupthr_id;
