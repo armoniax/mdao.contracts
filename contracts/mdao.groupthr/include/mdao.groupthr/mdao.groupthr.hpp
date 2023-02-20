@@ -27,7 +27,8 @@ enum class groupthr_err: uint8_t {
     NOT_POSITIVE            = 4,
     QUANTITY_NOT_ENOUGH     = 5,
     SYMBOL_MISMATCH         = 6,
-    NOT_AVAILABLE           = 7
+    NOT_AVAILABLE           = 7,
+    TYPE_ERROR              = 8
 };
 
 namespace threshold_type {
@@ -39,8 +40,8 @@ namespace threshold_type {
 
 static set<name> token_contracts = { {"amax.token"_n}};
 static set<name> ntoken_contracts = { {"amax.ntoken"_n}};
-
-class [[eosio::contract("mdao.groupthr")]] mdaogroupthr : public contract {
+static asset crt_groupthr_fee = asset(100000000,AMAX_SYMBOL);
+class [[eosio::contract("mdaogroupthr")]] mdaogroupthr : public contract {
 
 using conf_t = mdao::conf_global_t;
 using conf_table_t = mdao::conf_global_singleton;
@@ -81,5 +82,7 @@ public:
 
     ACTION setthreshold( const uint64_t &groupthr_id, const refasset &threshold, const name &type );
 
-    ACTION delmermbers( vector<uint64_t> &mermbers );
+    ACTION delmermbers( map<uint64_t, name> &mermbers );
+
+    // ACTION delgroup( uint64_t gid );
 };

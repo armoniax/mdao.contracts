@@ -1,4 +1,4 @@
-add_contract(mdao.groupthr mdao.groupthr ${CMAKE_CURRENT_SOURCE_DIR}/src/mdao.groupthr.cpp)
+add_contract(mdaogroupthr mdao.groupthr ${CMAKE_CURRENT_SOURCE_DIR}/src/mdao.groupthr.cpp)
 
 target_include_directories(mdao.groupthr
    PUBLIC

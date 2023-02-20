@@ -26,16 +26,18 @@ void mdaogroupthr::addbybalance( const name &mermber, const uint64_t &groupthr_i
     CHECKC( groupthr.type == threshold_type::TOKEN_BALANCE || groupthr.type == threshold_type::NFT_BALANCE, err::PARAM_ERROR, "group threshold type error" );
     if (groupthr.type == threshold_type::TOKEN_BALANCE) {
         extended_asset threshold = std::get<extended_asset>(groupthr.threshold);
-        asset balance = aplink::token::get_balance(threshold.contract, mermber, threshold.quantity.symbol.code());
+        asset balance = amax::token::get_balance(threshold.contract, mermber, threshold.quantity.symbol.code());
         CHECKC( threshold.quantity <= balance, groupthr_err::QUANTITY_NOT_ENOUGH, "quantity not enough" );
 
         _create_mermber(mermber, groupthr.id);
-    } else {
+    } else if(groupthr.type == threshold_type::NFT_BALANCE) {
         extended_nasset threshold = std::get<extended_nasset>(groupthr.threshold);
         nasset balance = amax::ntoken::get_balance(threshold.contract, mermber, threshold.quantity.symbol);
         CHECKC( threshold.quantity <= balance, groupthr_err::QUANTITY_NOT_ENOUGH, "quantity not enough" );
 
         _create_mermber(mermber, groupthr.id);
+    } else {
+        CHECKC( false, err::PARAM_ERROR, "param error" );
     }
 }
 
@@ -66,7 +68,7 @@ void mdaogroupthr::setthreshold( const uint64_t &groupthr_id, const refasset &th
     _db.set(groupthr, _self);
 }
 
-void mdaogroupthr::delmermbers( vector<uint64_t> &mermbers )
+void mdaogroupthr::delmermbers( map<uint64_t, name> &mermbers )
 {
     CHECKC( mermbers.size() > 0, err::PARAM_ERROR, "param error" );
 
@@ -74,16 +76,30 @@ void mdaogroupthr::delmermbers( vector<uint64_t> &mermbers )
     CHECKC( conf.status != conf_status::PENDING, groupthr_err::NOT_AVAILABLE, "under maintenance" );
     CHECKC( has_auth(conf.admin), groupthr_err::PERMISSION_DENIED, "only the admin can operate" );
 
-    mermber_t mermber;
-    vector<uint64_t>::iterator mermber_iter;
-    for( mermber_iter = mermbers.begin(); mermber_iter != mermbers.end(); mermber_iter++ ){
-        mermber.id = *mermber_iter;
-        bool is_exists = _db.get(mermber);
-        if(!is_exists) continue;
-        _db.del(mermber);
-    }
+    map<uint64_t, name>::iterator iter;
+    for(iter = mermbers.begin(); iter != mermbers.end(); iter++){
+        uint64_t groupthr_id = iter->first;
+        name account = iter->second;
 
+        mermber_t::idx_t mermber_tbl(_self, _self.value);
+        auto mermber_index = mermber_tbl.get_index<"byidgroupid"_n>();
+        uint128_t sec_index = (uint128_t)account.value << 64 | (uint128_t)groupthr_id;
+        auto mermber_itr = mermber_index.find(sec_index);
+        if(mermber_itr == mermber_index.end()) continue;
+        _db.del(*mermber_itr);
+    }
 }
+
+// void mdaogroupthr::delgroup( uint64_t gid )
+// {
+
+//     groupthr_t groupthr(gid);
+//     bool is_exists = _db.get(groupthr);
+//     CHECKC( is_exists, err::RECORD_NOT_FOUND, "group threshold config not exists" );
+
+//     _db.del(groupthr);
+
+// }
 
 //memo format : 'target : asset : group_id : dao_code : type :  contract'
 //memo format : 'target : id : pid : amount : group_id : dao_code : type : contract'
@@ -100,6 +116,8 @@ void mdaogroupthr::_on_token_transfer( const name &from,
 
     if ( parts.size() == 6 && parts[0] == "createbytoken" ) {
 
+        CHECKC( quantity >= crt_groupthr_fee, err::PARAM_ERROR, "quantity not enough" );
+
         auto asset_threshold      = asset_from_string(parts[1]);
         CHECKC( asset_threshold.amount > 0, err::PARAM_ERROR, "threshold amount not positive" );
 
@@ -115,6 +133,8 @@ void mdaogroupthr::_on_token_transfer( const name &from,
 
         _create_groupthr(dao_code, from, group_id, threshold, type);
     }else if (parts.size() == 8 && parts[0] == "createbyntoken") {
+
+        CHECKC( quantity >= crt_groupthr_fee, err::PARAM_ERROR, "quantity not enough" );
 
         auto id         = to_uint64(parts[1], "id parse uint error");
         auto parent_id  = to_uint64(parts[2], "parent_id parse uint error");
@@ -141,6 +161,7 @@ void mdaogroupthr::_on_token_transfer( const name &from,
         groupthr_t groupthr(groupthr_id);
         CHECKC( _db.get(groupthr), err::RECORD_NOT_FOUND, "group threshold config not exists" );
         CHECKC( groupthr.expired_time >= current_time_point(), groupthr_err::ALREADY_EXPIRED, "group threshold expired" );
+        CHECKC( groupthr.type == threshold_type::TOKEN_PAY, groupthr_err::TYPE_ERROR, "group threshold type mismatch" );
 
         extended_asset threshold = std::get<extended_asset>(groupthr.threshold);
         CHECKC( threshold.quantity <= quantity, groupthr_err::QUANTITY_NOT_ENOUGH, "quantity not enough" );
@@ -168,6 +189,7 @@ void mdaogroupthr::_on_ntoken_transfer( const name& from,
         groupthr_t groupthr(groupthr_id);
         CHECKC( _db.get(groupthr), err::RECORD_NOT_FOUND, "group threshold config not exists" );
         CHECKC( groupthr.expired_time >= current_time_point(), groupthr_err::ALREADY_EXPIRED, "group threshold expired" );
+        CHECKC( groupthr.type == threshold_type::NFT_PAY, groupthr_err::TYPE_ERROR, "group threshold type mismatch" );
 
         extended_nasset threshold = std::get<extended_nasset>(groupthr.threshold);
         nasset quantity = assets.at(0);
@@ -190,14 +212,13 @@ void mdaogroupthr::_create_groupthr( const name& dao_code,
     CHECKC( info != info_tbl.end(), err::RECORD_NOT_FOUND, "mdao not found" );
     CHECKC( info->creator == from, groupthr_err::PERMISSION_DENIED, "permission denied" );
 
-
     groupthr_t::idx_t groupthr_tbl(_self, _self.value);
     auto groupthr_index = groupthr_tbl.get_index<"bygroupid"_n>();
     auto groupthr_itr = groupthr_index.find(HASH256(string(group_id)));
 
     bool is_exists = groupthr_itr != groupthr_index.end();
-
-    groupthr_t groupthr;
+    auto gid = groupthr_tbl.available_primary_key();
+    groupthr_t groupthr(gid);
      if (is_exists && groupthr_itr->expired_time >= current_time_point()) {
         groupthr.expired_time = groupthr_itr->expired_time + (seconds_per_day * 30);
     } else {
@@ -210,7 +231,6 @@ void mdaogroupthr::_create_groupthr( const name& dao_code,
 
     _db.set(groupthr, _self);
 }
-//今天几号
 
 void mdaogroupthr::_create_mermber( const name& from,
                                     const uint64_t& groupthr_id )
@@ -222,7 +242,8 @@ void mdaogroupthr::_create_mermber( const name& from,
     auto mermber_itr = mermber_index.find(sec_index);
 
     bool is_exists = mermber_itr != mermber_index.end();
-    mermber_t mermber;
+    auto mid = mermber_tbl.available_primary_key();
+    mermber_t mermber(mid);
     if (is_exists && mermber_itr->expired_time >= current_time_point()) {
         mermber.expired_time = mermber_itr->expired_time + (seconds_per_day * 30);
     } else {
