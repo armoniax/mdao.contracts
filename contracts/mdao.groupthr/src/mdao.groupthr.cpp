@@ -30,6 +30,7 @@ void mdaogroupthr::join( const name &member, const uint64_t &groupthr_id )
     CHECKC( _db.get(groupthr), err::RECORD_NOT_FOUND, "group threshold config not exists" );
     CHECKC( groupthr.expired_time >= current_time_point(), groupthr_err::ALREADY_EXPIRED, "group threshold expired" );
     CHECKC( groupthr.threshold_type == threshold_type::TOKEN_BALANCE || groupthr.threshold_type == threshold_type::NFT_BALANCE, err::PARAM_ERROR, "group threshold type error" );
+    CHECKC( groupthr.enable_threshold, groupthr_err::CLOSED, "group threshold is closed" );
     if (groupthr.threshold_type == threshold_type::TOKEN_BALANCE) {
         extended_asset threshold = std::get<extended_asset>(groupthr.threshold_plan.at(threshold_plan_type::MONTH));
         asset balance = amax::token::get_balance(threshold.contract, member, threshold.quantity.symbol.code());
@@ -124,6 +125,16 @@ void mdaogroupthr::delmembers( vector<deleted_member> &deleted_members )
 //     _db.del(groupthr);
 
 // }
+// void mdaogroupthr::delmember( uint64_t mid )
+// {
+
+//     mermber_t mermber(mid);
+//     bool is_exists = _db.get(mermber);
+//     CHECKC( is_exists, err::RECORD_NOT_FOUND, "group threshold config not exists" );
+
+//     _db.del(mermber);
+
+// }
 
 //create by token memo format : 'target : type : asset : contract : group_id '
 //create by ntoken memo format : 'target : type : id : pid : amount : contract : group_id  '
@@ -178,7 +189,7 @@ void mdaogroupthr::_on_token_transfer( const name &from,
         CHECKC( value > 0, groupthr_err::SYMBOL_MISMATCH, "symbol mismatch" );
 
         _create_groupthr(from, group_id, threshold, type);
-    } else if (parts.size() == 3 && parts[0] == "joinfee") {
+    } else if (parts.size() == 2 && parts[0] == "joinfee") {
         auto groupthr_id  = to_uint64(parts[1], "groupthr_id parse uint error");
         groupthr_t groupthr(groupthr_id);
         CHECKC( _db.get(groupthr), err::RECORD_NOT_FOUND, "group threshold config not exists" );
@@ -187,18 +198,20 @@ void mdaogroupthr::_on_token_transfer( const name &from,
 
         _init_member(from, groupthr_id);
     } else if (parts.size() == 3 && parts[0] == "join") {
-        auto plan_type   = name(parts[2]);
 
         auto groupthr_id  = to_uint64(parts[1], "groupthr_id parse uint error");
+        auto plan_type   = name(parts[2]);
+
         groupthr_t groupthr(groupthr_id);
         CHECKC( _db.get(groupthr), err::RECORD_NOT_FOUND, "group threshold config not exists" );
         CHECKC( groupthr.expired_time >= current_time_point(), groupthr_err::ALREADY_EXPIRED, "group threshold expired" );
         CHECKC( groupthr.threshold_type == threshold_type::TOKEN_PAY, groupthr_err::TYPE_ERROR, "group threshold type mismatch" );
+        CHECKC( groupthr.enable_threshold, groupthr_err::CLOSED, "group threshold is closed" );
 
         extended_asset extended_quantity= extended_asset(quantity, get_first_receiver());
         _join_expense_member(from, groupthr, plan_type, extended_quantity);
 
-        TOKEN_TRANSFER( get_first_receiver(), groupthr.owner, quantity, "join group threshold" );
+        TOKEN_TRANSFER( get_first_receiver(), groupthr.owner, quantity, string("join group threshold") );
     } else {
         CHECKC( false, err::PARAM_ERROR, "param error" );
     }
@@ -222,11 +235,12 @@ void mdaogroupthr::_on_ntoken_transfer( const name& from,
         CHECKC( _db.get(groupthr), err::RECORD_NOT_FOUND, "group threshold config not exists" );
         CHECKC( groupthr.expired_time >= current_time_point(), groupthr_err::ALREADY_EXPIRED, "group threshold expired" );
         CHECKC( groupthr.threshold_type == threshold_type::NFT_PAY, groupthr_err::TYPE_ERROR, "group threshold type mismatch" );
+        CHECKC( groupthr.enable_threshold, groupthr_err::CLOSED, "group threshold is closed" );
         nasset quantity = assets.at(0);
 
         extended_nasset extended_quantity= extended_nasset(quantity, get_first_receiver());
         _join_expense_member(from, groupthr, plan_type, extended_quantity);
-        NTOKEN_TRANSFER( get_first_receiver(), groupthr.owner, assets, "join group threshold" );
+        NTOKEN_TRANSFER( get_first_receiver(), groupthr.owner, assets, string("join group threshold") );
 
     } else {
         CHECKC( false, err::PARAM_ERROR, "param error" );
@@ -243,15 +257,18 @@ void mdaogroupthr::_create_groupthr(    const name& from,
     auto groupthr_itr = groupthr_index.find(HASH256(string(group_id)));
 
     bool is_exists = groupthr_itr != groupthr_index.end();
-    bool unexpired = groupthr_itr->expired_time >= current_time_point();
-
+    if(is_exists)
+        CHECKC( groupthr_itr->threshold_type != threshold_type::NFT_BALANCE && groupthr_itr->threshold_type != threshold_type::TOKEN_BALANCE, err::RECORD_FOUND, "threshold is exists" );
     auto gid = is_exists ? groupthr_itr->id : groupthr_tbl.available_primary_key();
+
+
     groupthr_t groupthr(gid);
+    bool unexpired = groupthr_itr->expired_time >= current_time_point();
     groupthr.expired_time = EXTEND_PLAN( is_exists && unexpired, groupthr_itr->expired_time, time_point_sec(current_time_point()), month );
     groupthr.group_id     = group_id;
     groupthr.threshold_plan[threshold_plan_type::MONTH] = threshold;
-    groupthr.threshold_type = is_exists ? groupthr.threshold_type : type;
-
+    groupthr.threshold_type = is_exists ? groupthr_itr->threshold_type : type;
+    groupthr.owner = from;
     _db.set(groupthr, _self);
 }
 
@@ -260,6 +277,8 @@ void mdaogroupthr::_join_expense_member( const name& from,
                                     const name& plan_tpye,
                                     const refasset& quantity)
 {
+    auto threshold = groupthr.threshold_plan.find(plan_tpye);
+    CHECKC( threshold != groupthr.threshold_plan.end(), err::PARAM_ERROR, "param error" );
     CHECKC( groupthr.threshold_plan.at(plan_tpye) <= quantity, groupthr_err::QUANTITY_NOT_ENOUGH, "quantity not enough" );
 
     member_t::idx_t member_tbl(_self, _self.value);
@@ -268,7 +287,7 @@ void mdaogroupthr::_join_expense_member( const name& from,
     auto member_itr = member_index.find(sec_index);
 
     bool is_exists           = member_itr != member_index.end();
-    CHECKC( !is_exists && join_member_fee.amount == 0, groupthr_err::NOT_INITED, "please pay the handling charge " );
+    CHECKC( is_exists || (!is_exists && join_member_fee.amount == 0) , groupthr_err::NOT_INITED, "please pay the handling charge " );
 
     auto mid                 = is_exists ? member_itr->id : member_tbl.available_primary_key();
     bool unexpired           = member_itr->expired_time >= current_time_point();

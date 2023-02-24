@@ -31,7 +31,8 @@ enum class groupthr_err: uint8_t {
     SYMBOL_MISMATCH         = 6,
     NOT_AVAILABLE           = 7,
     TYPE_ERROR              = 8,
-    NOT_INITED              = 9
+    NOT_INITED              = 9,
+    CLOSED                  = 10
 };
 
 namespace threshold_type {
@@ -131,4 +132,6 @@ public:
 
 
     // ACTION delgroup( uint64_t gid );
+    // ACTION delmember( uint64_t mid )
+
 };

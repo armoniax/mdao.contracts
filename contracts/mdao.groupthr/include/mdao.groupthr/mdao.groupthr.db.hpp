@@ -31,7 +31,7 @@ struct GROUPTHR_TG_TBL groupthr_t {
     string              group_id;
     name                threshold_type;
     map<name, refasset> threshold_plan;
-    bool                enable_threshold;
+    bool                enable_threshold = true;
     time_point_sec      expired_time;
     uint64_t            primary_key()const { return id; }
     uint64_t            scope() const { return 0; }
