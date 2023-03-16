@@ -292,8 +292,6 @@ void mdaogroupthr::_join_expense_member( const name& from,
     CHECKC( is_exists || (!is_exists && join_member_fee.amount == 0) , groupthr_err::NOT_INITED, "please pay the handling charge " );
 
     auto mid                 = is_exists ? member_itr->id : member_tbl.available_primary_key();
-    
-    CHECKC( false , groupthr_err::NOT_INITED, to_string(member_itr->expired_time.utc_seconds) );
     bool unexpired           = member_itr->expired_time >= current_time_point();
     member_t member(mid);
     switch (plan_tpye.value)
