@@ -149,7 +149,6 @@ void mdaogroupthr::delmembers(vector<deleted_member> &deleted_members)
 //create by token memo format : 'target : type : asset : contract : group_id '
 //create by ntoken memo format : 'target : type : id : pid : amount : contract : group_id  '
 //group threshold renewal memo format : 'target  : group_id  '
-//member renewal memo format : 'target  : group_id  '
 //transfer join member handling charge memo format : 'target : groupthr_id '
 //join member  memo format : 'target : groupthr_id : plan_type'
 void mdaogroupthr::_on_token_transfer( const name &from,
@@ -204,13 +203,6 @@ void mdaogroupthr::_on_token_transfer( const name &from,
  
         _create_groupthr(from, group_id, threshold, type, months);
     } else if ( parts.size() == 4 && parts[0] == "renewgroupthr" ) {
-
-        int64_t months          = quantity / crt_groupthr_fee;
-        CHECKC( months > 0, err::PARAM_ERROR, "param error" );
-        
-        auto group_id           = parts[1];
-        _renewal_groupthr(group_id, months);
-    }else if ( parts.size() == 4 && parts[0] == "renewalmember" ) {
 
         int64_t months          = quantity / crt_groupthr_fee;
         CHECKC( months > 0, err::PARAM_ERROR, "param error" );
