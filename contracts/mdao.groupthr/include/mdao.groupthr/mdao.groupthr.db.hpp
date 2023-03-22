@@ -16,7 +16,6 @@ using namespace eosio;
 
 #define GROUPTHR_TG_TBL [[eosio::table, eosio::contract("mdaogroupthr")]]
 
-
 typedef std::variant<extended_nasset, extended_asset> refasset;
 
 struct deleted_member {

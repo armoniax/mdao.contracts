@@ -103,8 +103,12 @@ private:
     void _create_groupthr( const name& from,
                             const string_view& group_id,
                             const refasset& threshold,
-                            const name& type );
-
+                            const name& type ,
+                            const int64_t& months);
+                            
+    void _renewal_groupthr(   const string_view& group_id,
+                              const int64_t& months);
+                                        
     void _join_expense_member( const name& from,
                                         const groupthr_t& groupthr,
                                         const name& plan_tpye,
@@ -129,9 +133,7 @@ public:
     ACTION enablegthr( const uint64_t &groupthr_id, const bool &enable_threshold);
 
     ACTION delmembers( vector<deleted_member> &deleted_members );
-
-
-    // ACTION delgroup( uint64_t gid );
-    // ACTION delmember( uint64_t mid )
+    
+    ACTION delgroupthr( const uint64_t &groupthr_id);
 
 };
