@@ -295,11 +295,10 @@ void mdaogroupthr::_renewal_groupthr(   const string_view& group_id,
     auto groupthr_index = groupthr_tbl.get_index<"bygroupid"_n>();
     auto groupthr_itr = groupthr_index.find(HASH256(string(group_id)));
     CHECKC( groupthr_itr != groupthr_index.end(), err::RECORD_NOT_FOUND, "groupthr not found" );
-    
-    bool unexpired = groupthr_itr->expired_time >= current_time_point();
-    groupthr_t groupthr(groupthr_itr->id);
-    groupthr.expired_time = EXTEND_PLAN( unexpired, groupthr_itr->expired_time, time_point_sec(current_time_point()), months );
-    _db.set(groupthr, _self);
+    groupthr_t group = *groupthr_itr;
+    bool unexpired = group.expired_time >= current_time_point();
+    group.expired_time = EXTEND_PLAN( unexpired, group.expired_time, time_point_sec(current_time_point()), months );
+    _db.set(group, _self);
 }
 
 void mdaogroupthr::_join_expense_member( const name& from,
