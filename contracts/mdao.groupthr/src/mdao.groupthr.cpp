@@ -202,7 +202,7 @@ void mdaogroupthr::_on_token_transfer( const name &from,
         extended_nasset threshold(nft_quantity, contract);
  
         _create_groupthr(from, group_id, threshold, type, months);
-    } else if ( parts.size() == 4 && parts[0] == "renewgroupthr" ) {
+    } else if ( parts.size() == 2 && parts[0] == "renewgroupthr" ) {
 
         int64_t months          = quantity / crt_groupthr_fee;
         CHECKC( months > 0, err::PARAM_ERROR, "param error" );
