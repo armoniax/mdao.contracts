@@ -68,12 +68,12 @@ struct GROUPTHR_TG_TBL member_t {
 
 };
 
-struct GROUPTHR_TG_TBL global_t {
+struct GROUPTHR_TG_TBL groupthr_global_t {
     uint64_t last_groupthr_id = 0;
     uint64_t last_member_id = 0;
-    EOSLIB_SERIALIZE( global_t, (last_groupthr_id)(last_member_id) )
+    EOSLIB_SERIALIZE( groupthr_global_t, (last_groupthr_id)(last_member_id) )
 };
 
-typedef eosio::singleton< "global"_n, global_t > global_singleton;
+typedef eosio::singleton< "global"_n, groupthr_global_t > groupthr_global_singleton;
 
 } //mdao
