@@ -85,7 +85,7 @@ using conf_table_t = mdao::conf_global_singleton;
 
 private:
     dbc                           _db;
-    groupthr_global_t             _gstate;
+    thr_global_t                  _gstate;
     groupthr_global_singleton     _global;
     std::unique_ptr<conf_table_t> _conf_tbl_ptr;
     std::unique_ptr<conf_t>       _conf_ptr;
@@ -128,7 +128,7 @@ public:
             _gstate = _global.get();
 
         } else {
-            _gstate = groupthr_global_t{};
+            _gstate = thr_global_t{};
         }
     }
     
