@@ -85,6 +85,8 @@ using conf_table_t = mdao::conf_global_singleton;
 
 private:
     dbc                 _db;
+    global_t            _gstate;
+    global_singleton    _global;
     std::unique_ptr<conf_table_t> _conf_tbl_ptr;
     std::unique_ptr<conf_t> _conf_ptr;
 
@@ -121,8 +123,19 @@ private:
                         const uint64_t& groupthr_id);
 public:
     using contract::contract;
-    mdaogroupthr(name receiver, name code, datastream<const char*> ds):_db(_self),  contract(receiver, code, ds){}
+    mdaogroupthr(name receiver, name code, datastream<const char*> ds):_db(_self),  contract(receiver, code, ds), _global(_self, _self.value){
+        if (_global.exists()) {
+            _gstate = _global.get();
 
+        } else {
+            _gstate = global_t{};
+        }
+    }
+    
+    ~mdaogroupthr() {
+        _global.set( _gstate, get_self() );
+    }
+    
     [[eosio::on_notify("*::transfer")]]
     void ontransfer();
 

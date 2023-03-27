@@ -278,7 +278,7 @@ void mdaogroupthr::_create_groupthr(    const name& from,
     auto groupthr_itr = groupthr_index.find(HASH256(string(group_id)));
     CHECKC( groupthr_itr == groupthr_index.end(), err::RECORD_FOUND, "groupthr already exists" );
 
-    auto gid = groupthr_tbl.available_primary_key();
+    auto gid = _gstate.last_groupthr_id++;
     groupthr_t groupthr(gid);
     groupthr.expired_time   = time_point_sec(current_time_point()) + months * seconds_per_month;
     groupthr.group_id       = group_id;
@@ -318,7 +318,7 @@ void mdaogroupthr::_join_expense_member( const name& from,
     bool is_exists           = member_itr != member_index.end();
     CHECKC( is_exists || (!is_exists && join_member_fee.amount == 0) , groupthr_err::NOT_INITED, "please pay the handling charge " );
 
-    auto mid                 = is_exists ? member_itr->id : member_tbl.available_primary_key();
+    auto mid                 = is_exists ? member_itr->id : _gstate.last_member_id++;
     bool unexpired           = member_itr->expired_time >= current_time_point();
     member_t member(mid);
     switch (plan_tpye.value)
@@ -357,7 +357,7 @@ void mdaogroupthr::_join_balance_member( const name& from,
     auto member_itr = member_index.find(sec_index);
     CHECKC( member_itr == member_index.end(), err::RECORD_FOUND, "record is exists" );
 
-    auto mid = member_tbl.available_primary_key();
+    auto mid = _gstate.last_member_id++;
     member_t member(mid);
     member.groupthr_id      = groupthr_id;
     member.member           = from;
@@ -375,7 +375,7 @@ void mdaogroupthr::_init_member( const name& from,
     auto member_itr = member_index.find(sec_index);
     CHECKC( member_itr == member_index.end(), err::RECORD_FOUND, "record is exists" );
 
-    auto mid = member_tbl.available_primary_key();
+    auto mid = _gstate.last_member_id++;
     member_t member(mid);
     member.groupthr_id      = groupthr_id;
     member.member           = from;

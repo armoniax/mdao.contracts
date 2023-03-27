@@ -67,4 +67,13 @@ struct GROUPTHR_TG_TBL member_t {
     > idx_t;
 
 };
-} //amax
+
+struct GROUPTHR_TG_TBL global_t {
+    uint64_t last_groupthr_id = 0;
+    uint64_t last_member_id = 0;
+    EOSLIB_SERIALIZE( global_t, (last_groupthr_id)(last_member_id) )
+};
+
+typedef eosio::singleton< "global"_n, global_t > global_singleton;
+
+} //mdao
