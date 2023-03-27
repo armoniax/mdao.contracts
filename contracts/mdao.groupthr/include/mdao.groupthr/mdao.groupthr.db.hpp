@@ -15,6 +15,7 @@ using namespace amax;
 using namespace eosio;
 
 #define GROUPTHR_TG_TBL [[eosio::table, eosio::contract("mdaogroupthr")]]
+#define GROUPTHR_TABLE_NAME(name) [[eosio::table(name), eosio::contract("mdaogroupthr")]]
 
 typedef std::variant<extended_nasset, extended_asset> refasset;
 
@@ -68,7 +69,7 @@ struct GROUPTHR_TG_TBL member_t {
 
 };
 
-struct GROUPTHR_TG_TBL thr_global_t {
+struct GROUPTHR_TABLE_NAME("global") thr_global_t {
     uint64_t last_groupthr_id = 0;
     uint64_t last_member_id = 0;
     EOSLIB_SERIALIZE( thr_global_t, (last_groupthr_id)(last_member_id) )
