@@ -71,9 +71,9 @@ struct GROUPTHR_TG_TBL member_t {
 
 struct GROUPTHR_TABLE_NAME("global") thr_global_t {
     uint64_t last_groupthr_id = 0;
-    uint64_t last_member_id = 0;
-    asset crt_groupthr_fee = asset(100000000,AMAX_SYMBOL);
-    asset join_member_fee = asset(0,AMAX_SYMBOL);
+    uint64_t last_member_id   = 0;
+    asset crt_groupthr_fee    = asset(100000000,AMAX_SYMBOL);
+    asset join_member_fee     = asset(0,AMAX_SYMBOL);
 
     EOSLIB_SERIALIZE( thr_global_t, (last_groupthr_id)(last_member_id)(crt_groupthr_fee)(join_member_fee) )
 };

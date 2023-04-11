@@ -10,6 +10,21 @@
 { is_exists_and_unexpired ? expired + seconds_per_month * number : current + seconds_per_month * number }
 
 
+void mdaogroupthr::setglobal( asset crt_groupthr_fee, asset join_member_fee)
+{
+    require_auth(_self);
+    asset crt_groupthr_fee_supply = token::get_supply(AMAX_CONTRACT, crt_groupthr_fee.symbol.code());
+    asset join_member_fee_supply = token::get_supply(AMAX_CONTRACT, join_member_fee.symbol.code());
+
+    CHECKC( crt_groupthr_fee.amount >= 0, err::NOT_POSITIVE, "crt_groupthr_fee must be positive" );
+    CHECKC( join_member_fee.amount >= 0, err::NOT_POSITIVE, "join_member_fee must be positive" );
+    CHECKC( crt_groupthr_fee_supply.amount > 0, err::SYMBOL_MISMATCH, "symbol mismatch" );
+    CHECKC( crt_groupthr_fee_supply.amount > 0, err::SYMBOL_MISMATCH, "symbol mismatch" );
+
+    _gstate.crt_groupthr_fee = crt_groupthr_fee;
+    _gstate.join_member_fee = join_member_fee;
+}
+
 void mdaogroupthr::ontransfer()
 {
 
@@ -21,7 +36,6 @@ void mdaogroupthr::ontransfer()
         execute_function(&mdaogroupthr::_on_ntoken_transfer);
     }
 }
-
 
 void mdaogroupthr::join( const name &member, const uint64_t &groupthr_id )
 {
