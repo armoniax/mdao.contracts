@@ -146,11 +146,11 @@ void mdaogroupthr::delmembers(vector<deleted_member> &deleted_members)
   * @param to
   * @param quantity
   * @param memo: five formats:
-  *       1) createbytoken : $type : $asset : $contract : $group_id                       -- create group threshold by token
-  *       2) createbyntoken : $type : $id : $pid : $amount : $contract : $group_id        -- create group threshold by ntoken
-  *       3) renewgroupthr : $group_id                                                    -- group threshold renewal    
-  *       4) joinfee : $groupthr_id                                                       -- transfer to join the service charge                                             
-  *       5) join : $groupthr_id : plan_type                                              -- join member                                               
+  *       1) createbytoken : $type : $asset : $contract : $group_id : $plan_type                        -- create group threshold by token
+  *       2) createbyntoken : $type : $id : $pid : $amount : $contract : $group_id : $plan_type         -- create group threshold by ntoken
+  *       3) renewgroupthr : $group_id                                                                  -- group threshold renewal    
+  *       4) joinfee : $groupthr_id                                                                     -- transfer to join the service charge                                             
+  *       5) join : $groupthr_id : plan_type                                                            -- join member                                               
   *
   */
 void mdaogroupthr::_on_token_transfer( const name &from,
@@ -163,7 +163,7 @@ void mdaogroupthr::_on_token_transfer( const name &from,
 
     auto parts = split( memo, ":" );
 
-    if ( parts.size() == 5 && parts[0] == "createbytoken" ) {
+    if ( parts.size() == 6 && parts[0] == "createbytoken" ) {
 
         int64_t months          = quantity / _gstate.crt_groupthr_fee;
         CHECKC( months > 0, err::PARAM_ERROR, "param error" );
@@ -179,10 +179,16 @@ void mdaogroupthr::_on_token_transfer( const name &from,
         extended_asset threshold = extended_asset(asset_threshold, contract);
         int64_t value = amax::token::get_supply(contract, asset_threshold.symbol.code()).amount;
         CHECKC( value > 0, groupthr_err::SYMBOL_MISMATCH, "symbol mismatch" );
-
-        _create_groupthr(from, group_id, threshold, type, months);
         
-    } else if (parts.size() == 7 && parts[0] == "createbyntoken") {
+        auto plan_type           = name(parts[5]);
+        CHECKC( plan_type == threshold_plan_type::MONTH || 
+                plan_type == threshold_plan_type::QUARTER || 
+                plan_type == threshold_plan_type::YEAR, 
+                err::PARAM_ERROR, "param error" );
+
+        _create_groupthr(from, group_id, threshold, type, months, plan_type);
+        
+    } else if (parts.size() == 8 && parts[0] == "createbyntoken") {
 
         int64_t months  = quantity / _gstate.crt_groupthr_fee;
         CHECKC( months > 0, err::PARAM_ERROR, "param error" );
@@ -203,8 +209,14 @@ void mdaogroupthr::_on_token_transfer( const name &from,
         
         nasset nft_quantity(amount, nsym);
         extended_nasset threshold(nft_quantity, contract);
- 
-        _create_groupthr(from, group_id, threshold, type, months);
+        
+        auto plan_type           = name(parts[7]);
+        CHECKC( plan_type == threshold_plan_type::MONTH || 
+                plan_type == threshold_plan_type::QUARTER || 
+                plan_type == threshold_plan_type::YEAR, 
+                err::PARAM_ERROR, "param error" );
+                
+        _create_groupthr(from, group_id, threshold, type, months, plan_type);
         
     } else if ( parts.size() == 2 && parts[0] == "renewgroupthr" ) {
       
@@ -289,7 +301,8 @@ void mdaogroupthr::_create_groupthr(    const name& from,
                                         const string_view& group_id,
                                         const refasset& threshold,
                                         const name& type,
-                                        const int64_t& months)
+                                        const int64_t& months,
+                                        const name& plan_type)
 {
     groupthr_t::idx_t groupthr_tbl(_self, _self.value);
     auto groupthr_index = groupthr_tbl.get_index<"bygroupid"_n>();
@@ -300,7 +313,7 @@ void mdaogroupthr::_create_groupthr(    const name& from,
     groupthr_t groupthr(gid);
     groupthr.expired_time   = time_point_sec(current_time_point()) + months * seconds_per_month;
     groupthr.group_id       = group_id;
-    groupthr.threshold_plan[threshold_plan_type::MONTH] = threshold;
+    groupthr.threshold_plan[plan_type] = threshold;
     groupthr.threshold_type = type;
     groupthr.owner          = from;
     _db.set(groupthr, _self);
