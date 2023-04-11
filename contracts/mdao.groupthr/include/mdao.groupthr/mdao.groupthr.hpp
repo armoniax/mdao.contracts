@@ -107,7 +107,8 @@ private:
                             const string_view& group_id,
                             const refasset& threshold,
                             const name& type ,
-                            const int64_t& months);
+                            const int64_t& months,
+                            const name& plan_type);
                             
     void _renewal_groupthr(   const string_view& group_id,
                               const int64_t& months);
