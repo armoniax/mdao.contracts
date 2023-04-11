@@ -61,7 +61,7 @@ namespace plan_union_threshold_type {
     static constexpr uint128_t NFT_PAY_YEAR         = GET_UNION_TYPE_ID(NFT_PAY, YEAR);
 };
 
-namespace member_type {
+namespace member_status {
     static constexpr eosio::name INIT               = "init"_n;
     static constexpr eosio::name CREATED            = "created"_n;
 };
@@ -148,5 +148,4 @@ public:
     ACTION delmembers( vector<deleted_member> &deleted_members );
     
     ACTION delgroupthr( const uint64_t &groupthr_id);
-
 };

@@ -124,33 +124,21 @@ void mdaogroupthr::delmembers(vector<deleted_member> &deleted_members)
         _db.del(*member_itr);
     }
 }
-
-// void mdaogroupthr::delgroup( uint64_t gid )
-// {
-
-//     groupthr_t groupthr(gid);
-//     bool is_exists = _db.get(groupthr);
-//     CHECKC( is_exists, err::RECORD_NOT_FOUND, "group threshold config not exists" );
-
-//     _db.del(groupthr);
-
-// }
-// void mdaogroupthr::delmember( uint64_t mid )
-// {
-
-//     mermber_t mermber(mid);
-//     bool is_exists = _db.get(mermber);
-//     CHECKC( is_exists, err::RECORD_NOT_FOUND, "group threshold config not exists" );
-
-//     _db.del(mermber);
-
-// }
-
-//create by token memo format : 'target : type : asset : contract : group_id '
-//create by ntoken memo format : 'target : type : id : pid : amount : contract : group_id  '
-//group threshold renewal memo format : 'target  : group_id  '
-//transfer join member handling charge memo format : 'target : groupthr_id '
-//join member  memo format : 'target : groupthr_id : plan_type'
+  
+  /**
+  * @brief transfer token to this contract
+  *
+  * @param from
+  * @param to
+  * @param quantity
+  * @param memo: five formats:
+  *       1) createbytoken : $type : $asset : $contract : $group_id                       -- create group threshold by token
+  *       2) createbyntoken : $type : $id : $pid : $amount : $contract : $group_id        -- create group threshold by ntoken
+  *       3) renewgroupthr : $group_id                                                    -- group threshold renewal    
+  *       4) joinfee : $groupthr_id                                                       -- transfer to join the service charge                                             
+  *       5) join : $groupthr_id : plan_type                                              -- join member                                               
+  *
+  */
 void mdaogroupthr::_on_token_transfer( const name &from,
                                         const name &to,
                                         const asset &quantity,
@@ -163,7 +151,7 @@ void mdaogroupthr::_on_token_transfer( const name &from,
 
     if ( parts.size() == 5 && parts[0] == "createbytoken" ) {
 
-        int64_t months          = quantity / crt_groupthr_fee;
+        int64_t months          = quantity / _gstate.crt_groupthr_fee;
         CHECKC( months > 0, err::PARAM_ERROR, "param error" );
 
         auto type               = name(parts[1]);
@@ -179,9 +167,10 @@ void mdaogroupthr::_on_token_transfer( const name &from,
         CHECKC( value > 0, groupthr_err::SYMBOL_MISMATCH, "symbol mismatch" );
 
         _create_groupthr(from, group_id, threshold, type, months);
+        
     } else if (parts.size() == 7 && parts[0] == "createbyntoken") {
 
-        int64_t months  = quantity / crt_groupthr_fee;
+        int64_t months  = quantity / _gstate.crt_groupthr_fee;
         CHECKC( months > 0, err::PARAM_ERROR, "param error" );
 
         auto type       = name(parts[1]);
@@ -202,13 +191,15 @@ void mdaogroupthr::_on_token_transfer( const name &from,
         extended_nasset threshold(nft_quantity, contract);
  
         _create_groupthr(from, group_id, threshold, type, months);
+        
     } else if ( parts.size() == 2 && parts[0] == "renewgroupthr" ) {
-
-        int64_t months          = quantity / crt_groupthr_fee;
+      
+        int64_t months          = quantity / _gstate.crt_groupthr_fee;
         CHECKC( months > 0, err::PARAM_ERROR, "param error" );
         
         auto group_id           = parts[1];
         _renewal_groupthr(group_id, months);
+        
     } else if (parts.size() == 2 && parts[0] == "joinfee") {
       
         auto groupthr_id  = to_uint64(parts[1], "groupthr_id parse uint error");
@@ -216,9 +207,10 @@ void mdaogroupthr::_on_token_transfer( const name &from,
         CHECKC( _db.get(groupthr), err::RECORD_NOT_FOUND, "group threshold config not exists" );
         CHECKC( groupthr.expired_time >= current_time_point(), groupthr_err::ALREADY_EXPIRED, "group threshold expired" );
         CHECKC(groupthr.threshold_type == threshold_type::TOKEN_PAY || groupthr.threshold_type == threshold_type::NFT_PAY, groupthr_err::TYPE_ERROR, "group threshold type mismatch");
-        CHECKC(quantity >= join_member_fee, err::FEE_INSUFFICIENT, "fee insufficient");
+        CHECKC(quantity >= _gstate.join_member_fee, err::FEE_INSUFFICIENT, "fee insufficient");
 
         _init_member(from, groupthr_id);
+        
     } else if (parts.size() == 3 && parts[0] == "join") {
 
         auto groupthr_id  = to_uint64(parts[1], "groupthr_id parse uint error");
@@ -234,12 +226,21 @@ void mdaogroupthr::_on_token_transfer( const name &from,
         _join_expense_member(from, groupthr, plan_type, extended_quantity);
 
         TOKEN_TRANSFER( get_first_receiver(), groupthr.owner, quantity, string("join group threshold") );
+        
     } else {
         CHECKC( false, err::PARAM_ERROR, "param error" );
     }
 }
 
-//memo format : 'target : groupthr_id : plan_type'
+/**
+* @brief transfer token to this contract
+*
+* @param from
+* @param to
+* @param quantity
+* @param memo: one formats:
+*       1) join : $groupthr_id : $plan_type                     -- join member 
+*/
 void mdaogroupthr::_on_ntoken_transfer( const name& from,
                                         const name& to,
                                         const std::vector<nasset>& assets,
@@ -250,6 +251,7 @@ void mdaogroupthr::_on_ntoken_transfer( const name& from,
     auto parts = split( memo, ":" );
 
     if (parts.size() == 3 && parts[0] == "join") {
+      
         auto groupthr_id  = to_uint64(parts[1], "groupthr_id parse uint error");
         auto plan_type   = name(parts[2]);
 
@@ -261,7 +263,9 @@ void mdaogroupthr::_on_ntoken_transfer( const name& from,
         nasset quantity = assets.at(0);
         extended_nasset extended_quantity= extended_nasset(quantity, get_first_receiver());
         _join_expense_member(from, groupthr, plan_type, extended_quantity);
+        
         NTOKEN_TRANSFER( get_first_receiver(), groupthr.owner, assets, string("join group threshold") );
+        
     } else {
         CHECKC( false, err::PARAM_ERROR, "param error" );
     }
@@ -316,7 +320,7 @@ void mdaogroupthr::_join_expense_member( const name& from,
     auto member_itr = member_index.find(sec_index);
 
     bool is_exists           = member_itr != member_index.end();
-    CHECKC( is_exists || (!is_exists && join_member_fee.amount == 0) , groupthr_err::NOT_INITED, "please pay the handling charge " );
+    CHECKC( is_exists || (!is_exists && _gstate.join_member_fee.amount == 0) , groupthr_err::NOT_INITED, "please pay the handling charge " );
 
     auto mid                 = is_exists ? member_itr->id : _gstate.last_member_id++;
     bool unexpired           = member_itr->expired_time >= current_time_point();
@@ -342,7 +346,7 @@ void mdaogroupthr::_join_expense_member( const name& from,
     if(!is_exists){
         member.groupthr_id      = groupthr.id;
         member.member           = from;
-        member.type             = member_type::CREATED; 
+        member.type             = member_status::CREATED; 
     }
 
     _db.set(member, _self);
@@ -361,7 +365,7 @@ void mdaogroupthr::_join_balance_member( const name& from,
     member_t member(mid);
     member.groupthr_id      = groupthr_id;
     member.member           = from;
-    member.type             = member_type::CREATED;
+    member.type             = member_status::CREATED;
 
     _db.set(member, _self);
 }
@@ -379,7 +383,7 @@ void mdaogroupthr::_init_member( const name& from,
     member_t member(mid);
     member.groupthr_id      = groupthr_id;
     member.member           = from;
-    member.type             = member_type::INIT;
+    member.type             = member_status::INIT;
     _db.set(member, _self);
 }
 
