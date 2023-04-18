@@ -113,7 +113,7 @@ void mdaogroupthr::delgroupthr( const uint64_t &groupthr_id)
 {
     groupthr_t groupthr(groupthr_id);
     CHECKC( _db.get(groupthr), err::RECORD_NOT_FOUND, "group threshold config not exists" );
-    CHECKC( has_auth(groupthr.owner), groupthr_err::PERMISSION_DENIED, "only the owner can operate" );
+    // CHECKC( has_auth(groupthr.owner), groupthr_err::PERMISSION_DENIED, "only the owner can operate" );
 
     _db.del(groupthr);
 }
