@@ -348,22 +348,22 @@ void mdaogroupthr::_join_expense_member( const name& from,
 
     bool is_exists           = member_itr != member_index.end();
     CHECKC( is_exists || (!is_exists && _gstate.join_member_fee.amount == 0) , groupthr_err::NOT_INITED, "please pay the handling charge " );
+  
+    member_t member          = is_exists ? *member_itr : member_t(_gstate.last_member_id++);
+    bool unexpired           = member.expired_time >= current_time_point();
 
-    auto mid                 = is_exists ? member_itr->id : _gstate.last_member_id++;
-    bool unexpired           = member_itr->expired_time >= current_time_point();
-    member_t member(mid);
     switch (plan_tpye.value)
     {
         case threshold_plan_type::MONTH.value:{
-            member.expired_time = EXTEND_PLAN( is_exists && unexpired, member_itr->expired_time, time_point_sec(current_time_point()), month );
+            member.expired_time = EXTEND_PLAN( is_exists && unexpired, member.expired_time, time_point_sec(current_time_point()), month );
             break;
         }
         case threshold_plan_type::QUARTER.value:{
-            member.expired_time = EXTEND_PLAN( is_exists && unexpired, member_itr->expired_time, time_point_sec(current_time_point()), months_per_quarter );
+            member.expired_time = EXTEND_PLAN( is_exists && unexpired, member.expired_time, time_point_sec(current_time_point()), months_per_quarter );
             break;
         }
         case threshold_plan_type::YEAR.value:{
-            member.expired_time = EXTEND_PLAN( is_exists && unexpired, member_itr->expired_time, time_point_sec(current_time_point()), months_per_year );
+            member.expired_time = EXTEND_PLAN( is_exists && unexpired, member.expired_time, time_point_sec(current_time_point()), months_per_year );
             break;
         }
         default:
