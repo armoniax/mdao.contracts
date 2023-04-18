@@ -119,7 +119,8 @@ private:
                                         const refasset& quantity);
 
     void _join_balance_member( const name& from,
-                                const uint64_t& groupthr_id);
+                                const uint64_t& groupthr_id,
+                                const name& threshold_type);
 
     void _init_member( const name& from,
                         const uint64_t& groupthr_id);

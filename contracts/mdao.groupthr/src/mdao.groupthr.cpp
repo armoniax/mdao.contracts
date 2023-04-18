@@ -51,13 +51,13 @@ void mdaogroupthr::join( const name &member, const uint64_t &groupthr_id )
         asset balance = amax::token::get_balance(threshold.contract, member, threshold.quantity.symbol.code());
         CHECKC( threshold.quantity <= balance, groupthr_err::QUANTITY_NOT_ENOUGH, "quantity not enough" );
 
-        _join_balance_member(member, groupthr_id);
+        _join_balance_member(member, groupthr_id, groupthr.threshold_type);
     } else if(groupthr.threshold_type == threshold_type::NFT_BALANCE) {
         extended_nasset threshold = std::get<extended_nasset>(groupthr.threshold_plan.at(threshold_plan_type::MONTH));
         nasset balance = amax::ntoken::get_balance(threshold.contract, member, threshold.quantity.symbol);
         CHECKC( threshold.quantity <= balance, groupthr_err::QUANTITY_NOT_ENOUGH, "quantity not enough" );
 
-        _join_balance_member(member, groupthr_id);
+        _join_balance_member(member, groupthr_id, groupthr.threshold_type);
     } else {
         CHECKC( false, err::PARAM_ERROR, "param error" );
     }
@@ -373,14 +373,16 @@ void mdaogroupthr::_join_expense_member( const name& from,
     if(!is_exists){
         member.groupthr_id      = groupthr.id;
         member.member           = from;
-        member.type             = member_status::CREATED; 
+        member.status           = member_status::CREATED; 
+        member.type             = groupthr.threshold_type; 
     }
 
     _db.set(member, _self);
 }
 
 void mdaogroupthr::_join_balance_member( const name& from,
-                                        const uint64_t& groupthr_id)
+                                        const uint64_t& groupthr_id,
+                                        const name& threshold_type)
 {
     member_t::idx_t member_tbl(_self, _self.value);
     auto member_index = member_tbl.get_index<"byidgroupid"_n>();
@@ -392,7 +394,8 @@ void mdaogroupthr::_join_balance_member( const name& from,
     member_t member(mid);
     member.groupthr_id      = groupthr_id;
     member.member           = from;
-    member.type             = member_status::CREATED;
+    member.status           = member_status::CREATED;
+    member.type             = threshold_type; 
 
     _db.set(member, _self);
 }
@@ -410,7 +413,7 @@ void mdaogroupthr::_init_member( const name& from,
     member_t member(mid);
     member.groupthr_id      = groupthr_id;
     member.member           = from;
-    member.type             = member_status::INIT;
+    member.status           = member_status::INIT;
     _db.set(member, _self);
 }
 

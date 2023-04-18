@@ -52,6 +52,7 @@ struct GROUPTHR_TG_TBL member_t {
     uint64_t            groupthr_id;
     time_point_sec      expired_time;
     name                member;
+    name                status;
     name                type;
 
     uint64_t            primary_key()const { return id; }
@@ -61,7 +62,7 @@ struct GROUPTHR_TG_TBL member_t {
     member_t() {}
     member_t(const uint64_t& id): id(id) {}
 
-    EOSLIB_SERIALIZE( member_t, (id)(groupthr_id)(expired_time)(member)(type))
+    EOSLIB_SERIALIZE( member_t, (id)(groupthr_id)(expired_time)(member)(status)(type))
 
     typedef eosio::multi_index< "members"_n, member_t,
             indexed_by<"byidgroupid"_n, const_mem_fun<member_t, uint128_t, &member_t::by_id_groupthrid>>
