@@ -70,9 +70,12 @@ static constexpr uint8_t month                     = 1;
 static constexpr uint8_t months_per_quarter        = 3;
 static constexpr uint8_t months_per_year           = 12;
 
-static constexpr uint64_t seconds_per_month         = 24 * 3600 * 31;
-static constexpr uint64_t seconds_per_quarter       = 24 * 3600 * 31 * 3;
-static constexpr uint64_t seconds_per_year          = 24 * 3600 * 31 * 12;
+// static constexpr uint64_t seconds_per_month         = 24 * 3600 * 31;
+// static constexpr uint64_t seconds_per_quarter       = 24 * 3600 * 31 * 3;
+// static constexpr uint64_t seconds_per_year          = 24 * 3600 * 31 * 12;
+static constexpr uint64_t seconds_per_month         = 300;
+static constexpr uint64_t seconds_per_quarter       = 300 * 3;
+static constexpr uint64_t seconds_per_year          = 300 * 12;
 static name AMAX_CONTRACT                           = {"amax.token"_n};
 static set<name> token_contracts                    = { {"amax.token"_n}};
 static set<name> ntoken_contracts                   = { {"amax.ntoken"_n}};
