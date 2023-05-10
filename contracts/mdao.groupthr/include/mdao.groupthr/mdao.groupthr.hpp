@@ -152,5 +152,6 @@ public:
     ACTION enablegthr( const uint64_t &groupthr_id, const bool &enable_threshold);
 
     ACTION delmembers( vector<deleted_member> &deleted_members );
-
+    
+    ACTION delgroupthr(vector<uint64_t> &deleted_groupthrs);
 };

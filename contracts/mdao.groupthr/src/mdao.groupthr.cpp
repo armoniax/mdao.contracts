@@ -129,7 +129,25 @@ void mdaogroupthr::delmembers(vector<deleted_member> &deleted_members)
         _db.del(*member_itr);
     }
 }
-  
+ 
+void mdaogroupthr::delgroupthr(vector<uint64_t> &deleted_groupthrs)
+{
+    CHECKC( deleted_groupthrs.size() > 0, err::PARAM_ERROR, "param error" );
+
+    auto conf = _conf();
+    CHECKC( conf.status != conf_status::PENDING, groupthr_err::NOT_AVAILABLE, "under maintenance" );
+    CHECKC( has_auth(conf.admin), groupthr_err::PERMISSION_DENIED, "only the admin can operate" );
+
+    groupthr_t groupthr;
+    bool is_exist = false;
+    vector<uint64_t>::iterator groupthr_iter;
+    for( groupthr_iter = deleted_groupthrs.begin(); groupthr_iter != deleted_groupthrs.end(); groupthr_iter++ ){
+        groupthr = groupthr_t(*groupthr_iter);
+        is_exist = _db.get(groupthr);
+        if(!is_exist) continue;
+        _db.del(groupthr);
+    }
+} 
   /**
   * @brief transfer token to this contract
   *
@@ -223,8 +241,8 @@ void mdaogroupthr::_on_token_transfer( const name &from,
         groupthr_t groupthr(groupthr_id);
         CHECKC( _db.get(groupthr), err::RECORD_NOT_FOUND, "group threshold config not exists" );
         CHECKC( groupthr.expired_time >= current_time_point(), groupthr_err::ALREADY_EXPIRED, "group threshold expired" );
-        CHECKC(groupthr.threshold_type == threshold_type::TOKEN_PAY || groupthr.threshold_type == threshold_type::NFT_PAY, groupthr_err::TYPE_ERROR, "group threshold type mismatch");
-        CHECKC(quantity >= _gstate.join_member_fee, err::FEE_INSUFFICIENT, "fee insufficient");
+        CHECKC( groupthr.threshold_type == threshold_type::TOKEN_PAY || groupthr.threshold_type == threshold_type::NFT_PAY, groupthr_err::TYPE_ERROR, "group threshold type mismatch");
+        CHECKC( quantity >= _gstate.join_member_fee, err::FEE_INSUFFICIENT, "fee insufficient");
 
         _init_member(from, groupthr_id);
         
