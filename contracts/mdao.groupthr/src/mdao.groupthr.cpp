@@ -98,15 +98,13 @@ void mdaogroupthr::setthreshold(const uint64_t &groupthr_id, const refasset &thr
     _db.set(groupthr, _self);
 }
 
-void mdaogroupthr::enablegthr( const uint64_t &groupthr_id, const bool &enable_threshold)
+void mdaogroupthr::delgroupthr(const uint64_t &groupthr_id)
 {
     groupthr_t groupthr(groupthr_id);
     CHECKC( _db.get(groupthr), err::RECORD_NOT_FOUND, "group threshold config not exists" );
-    CHECKC( groupthr.expired_time >= current_time_point(), groupthr_err::ALREADY_EXPIRED, "group threshold expired" );
     CHECKC( has_auth(groupthr.owner), groupthr_err::PERMISSION_DENIED, "only the owner can operate" );
 
-    groupthr.enable_threshold = enable_threshold;
-    _db.set(groupthr, _self);
+    _db.del(groupthr);
 }
 
 void mdaogroupthr::delmembers(vector<deleted_member> &deleted_members)
@@ -130,7 +128,7 @@ void mdaogroupthr::delmembers(vector<deleted_member> &deleted_members)
     }
 }
  
-void mdaogroupthr::delgroupthr(vector<uint64_t> &deleted_groupthrs)
+void mdaogroupthr::delgroupthrs(vector<uint64_t> &deleted_groupthrs)
 {
     CHECKC( deleted_groupthrs.size() > 0, err::PARAM_ERROR, "param error" );
 
@@ -148,20 +146,21 @@ void mdaogroupthr::delgroupthr(vector<uint64_t> &deleted_groupthrs)
         _db.del(groupthr);
     }
 } 
-  /**
-  * @brief transfer token to this contract
-  *
-  * @param from
-  * @param to
-  * @param quantity
-  * @param memo: five formats:
-  *       1) createbytoken : $type : $asset : $contract : $group_id : $plan_type                        -- create group threshold by token
-  *       2) createbyntoken : $type : $id : $pid : $amount : $contract : $group_id : $plan_type         -- create group threshold by ntoken
-  *       3) renewgroupthr : $group_id                                                                  -- group threshold renewal    
-  *       4) joinfee : $groupthr_id                                                                     -- transfer to join the service charge                                             
-  *       5) join : $groupthr_id : plan_type                                                            -- join member                                               
-  *
-  */
+
+/**
+* @brief transfer token to this contract
+*
+* @param from
+* @param to
+* @param quantity
+* @param memo: five formats:
+*       1) createbytoken : $type : $asset : $contract : $group_id : $plan_type                        -- create group threshold by token
+*       2) createbyntoken : $type : $id : $pid : $amount : $contract : $group_id : $plan_type         -- create group threshold by ntoken
+*       3) renewgroupthr : $group_id                                                                  -- group threshold renewal    
+*       4) joinfee : $groupthr_id                                                                     -- transfer to join the service charge                                             
+*       5) join : $groupthr_id : plan_type                                                            -- join member                                               
+*
+*/
 void mdaogroupthr::_on_token_transfer( const name &from,
                                         const name &to,
                                         const asset &quantity,

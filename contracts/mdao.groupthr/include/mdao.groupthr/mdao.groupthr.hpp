@@ -149,9 +149,9 @@ public:
 
     ACTION setthreshold( const uint64_t &groupthr_id, const refasset &threshold,  const name &plan_type );
 
-    ACTION enablegthr( const uint64_t &groupthr_id, const bool &enable_threshold);
-
     ACTION delmembers( vector<deleted_member> &deleted_members );
     
-    ACTION delgroupthr(vector<uint64_t> &deleted_groupthrs);
+    ACTION delgroupthr(const uint64_t &groupthr_id);
+    
+    ACTION delgroupthrs(vector<uint64_t> &deleted_groupthrs);
 };
