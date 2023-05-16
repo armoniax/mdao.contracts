@@ -18,6 +18,7 @@ using namespace eosio;
 #define GROUPTHR_TABLE_NAME(name) [[eosio::table(name), eosio::contract("mdaogroupthr")]]
 
 typedef std::variant<extended_nasset, extended_asset> refasset;
+typedef std::variant<nasset, asset> refasset_param;
 
 struct deleted_member {
     uint64_t           groupthr_id;

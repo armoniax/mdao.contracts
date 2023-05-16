@@ -147,7 +147,7 @@ public:
 
     ACTION join(const name &member, const uint64_t &groupthr_id);
 
-    ACTION setthreshold( const uint64_t &groupthr_id, const refasset &threshold,  const name &plan_type );
+    ACTION setthreshold(const uint64_t &groupthr_id, const refasset_param &threshold, const name &contract, const name &plan_type);
 
     ACTION delmembers( vector<deleted_member> &deleted_members );
     

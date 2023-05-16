@@ -63,7 +63,7 @@ void mdaogroupthr::join( const name &member, const uint64_t &groupthr_id )
     }
 }
 
-void mdaogroupthr::setthreshold(const uint64_t &groupthr_id, const refasset &threshold, const name &plan_type)
+void mdaogroupthr::setthreshold(const uint64_t &groupthr_id, const refasset_param &threshold, const name &contract, const name &plan_type)
 {
 
     groupthr_t groupthr(groupthr_id);
@@ -78,23 +78,24 @@ void mdaogroupthr::setthreshold(const uint64_t &groupthr_id, const refasset &thr
         case plan_union_threshold_type::TOKEN_PAY_MONTH:
         case plan_union_threshold_type::TOKEN_PAY_QUARTER:
         case plan_union_threshold_type::TOKEN_PAY_YEAR:{
-            extended_asset asset_threshold = std::get<extended_asset>(threshold);
-            CHECKC( asset_threshold.quantity.amount > 0, groupthr_err::NOT_POSITIVE, "threshold can not be negative" );
+            asset asset_threshold = std::get<asset>(threshold);
+            CHECKC( asset_threshold.amount > 0, groupthr_err::NOT_POSITIVE, "threshold can not be negative" );
+            groupthr.threshold_plan[plan_type] = extended_asset(asset_threshold, contract);
             break;
         }
         case plan_union_threshold_type::NFT_BALANCE_MONTH:
         case plan_union_threshold_type::NFT_PAY_MONTH:
         case plan_union_threshold_type::NFT_PAY_QUARTER:
         case plan_union_threshold_type::NFT_PAY_YEAR:{
-            extended_nasset nasset_threshold = std::get<extended_nasset>(threshold);
-            CHECKC( nasset_threshold.quantity.amount > 0, groupthr_err::NOT_POSITIVE, "threshold can not be negative" );
+            nasset nasset_threshold = std::get<nasset>(threshold);
+            CHECKC( nasset_threshold.amount > 0, groupthr_err::NOT_POSITIVE, "threshold can not be negative" );
+            groupthr.threshold_plan[plan_type] = extended_nasset(nasset_threshold, contract);
             break;
         }
         default:
             CHECKC( false, err::PARAM_ERROR, "threshold plan type code error");
     }
 
-    groupthr.threshold_plan[plan_type] = threshold;
     _db.set(groupthr, _self);
 }
 
