@@ -75,8 +75,6 @@ static constexpr uint64_t seconds_per_quarter       = 24 * 3600 * 31 * 3;
 static constexpr uint64_t seconds_per_year          = 24 * 3600 * 31 * 12;
 
 static name AMAX_CONTRACT                           = {"amax.token"_n};
-static set<name> token_contracts                    = { {"amax.token"_n}};
-static set<name> ntoken_contracts                   = { {"amax.ntoken"_n}};
 
 class [[eosio::contract("mdaogroupthr")]] mdaogroupthr : public contract {
 
@@ -135,12 +133,10 @@ public:
     }
     
     ~mdaogroupthr() {
-        // _global.set( _gstate, get_self() );
-        _global.remove();
-
+        _global.set( _gstate, get_self() );
     }
     
-    ACTION setglobal( asset crt_groupthr_fee, asset join_member_fee);
+    ACTION setglobal( asset crt_groupthr_fee, asset join_member_fee, set<name> token_contracts, set<name> nft_contracts );
     
     [[eosio::on_notify("*::transfer")]]
     void ontransfer();

@@ -76,8 +76,10 @@ struct GROUPTHR_TABLE_NAME("global") thr_global_t {
     uint64_t last_member_id   = 0;
     asset crt_groupthr_fee    = asset(100000000,AMAX_SYMBOL);
     asset join_member_fee     = asset(0,AMAX_SYMBOL);
+    set<name> token_contracts = { {"amax.token"_n, "amax.mtoken"_n}};
+    set<name> nft_contracts   = { {"amax.ntoken"_n}};
 
-    EOSLIB_SERIALIZE( thr_global_t, (last_groupthr_id)(last_member_id)(crt_groupthr_fee)(join_member_fee) )
+    EOSLIB_SERIALIZE( thr_global_t, (last_groupthr_id)(last_member_id)(crt_groupthr_fee)(join_member_fee)(token_contracts)(nft_contracts) )
 };
 
 typedef eosio::singleton< "global"_n, thr_global_t > groupthr_global_singleton;
