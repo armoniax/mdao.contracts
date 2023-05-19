@@ -72,8 +72,9 @@ void mdaogroupthr::setthreshold(const uint64_t &groupthr_id, const refasset_para
     CHECKC( _db.get(groupthr), err::RECORD_NOT_FOUND, "group threshold config not exists" );
     CHECKC( groupthr.expired_time >= current_time_point(), groupthr_err::ALREADY_EXPIRED, "group threshold expired" );
     CHECKC( has_auth(groupthr.owner), groupthr_err::PERMISSION_DENIED, "only the owner can operate" );
-    CHECKC( groupthr.threshold_plan.count(plan_type) == 1, err::PARAM_ERROR, "plan_type is not exists" );
-
+    
+    if(groupthr.threshold_plan.count(plan_type) == 0) groupthr.threshold_plan.clear();
+    
     uint128_t plan_union_thr_type = GET_UNION_TYPE_ID(groupthr.threshold_type, plan_type);
     switch (plan_union_thr_type)
     {
