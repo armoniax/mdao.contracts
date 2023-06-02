@@ -76,7 +76,7 @@ static constexpr uint64_t seconds_per_year          = 24 * 3600 * 31 * 12;
 
 static name AMAX_CONTRACT                           = {"amax.token"_n};
 
-class [[eosio::contract("mdaogroupthr")]] mdaogroupthr : public contract {
+class [[eosio::contract("mdao.group")]] mdaogroupthr : public contract {
 
 using conf_t = mdao::conf_global_t;
 using conf_table_t = mdao::conf_global_singleton;

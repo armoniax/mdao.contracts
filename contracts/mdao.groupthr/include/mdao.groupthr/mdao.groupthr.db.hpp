@@ -14,8 +14,8 @@ using namespace std;
 using namespace amax;
 using namespace eosio;
 
-#define GROUPTHR_TG_TBL [[eosio::table, eosio::contract("mdaogroupthr")]]
-#define GROUPTHR_TABLE_NAME(name) [[eosio::table(name), eosio::contract("mdaogroupthr")]]
+#define GROUPTHR_TG_TBL [[eosio::table, eosio::contract("mdao.group")]]
+#define GROUPTHR_TABLE_NAME(name) [[eosio::table(name), eosio::contract("mdao.group")]]
 
 typedef std::variant<extended_nasset, extended_asset> refasset;
 typedef std::variant<nasset, asset> refasset_param;
