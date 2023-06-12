@@ -136,7 +136,9 @@ public:
         _global.set( _gstate, get_self() );
     }
     
-    ACTION setglobal( asset crt_groupthr_fee, asset join_member_fee, set<name> token_contracts, set<name> nft_contracts );
+    ACTION setglobal( asset crt_groupthr_fee, asset join_member_fee, 
+                              set<name> token_contracts, set<name> nft_contracts, 
+                              set<name> token_pay_contracts, set<name> nf_pay_contracts );
     
     [[eosio::on_notify("*::transfer")]]
     void ontransfer();

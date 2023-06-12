@@ -187,7 +187,7 @@ public:
          return weight_st;
    }
 
-   static int32_t cal_stake_weight(const name& stg_contract_account,
+   static weight_struct cal_stake_weight(const name& stg_contract_account,
                              const uint64_t& stg_id,
                              const name& dao_code,
                              const name& stake_contract,
@@ -196,19 +196,21 @@ public:
          auto db = dbc(stg_contract_account);
          auto stg = strategy_t(stg_id);
          check(db.get(stg), "cannot find strategy");
-
+         
+         weight_struct weight_st;
          uint64_t value = 0;
          switch (stg.type.value)
          {
          case strategy_type::TOKEN_STAKE.value: {
             symbol sym = std::get<symbol>(stg.ref_sym);
-            if(sym == symbol("AMAX",8)){
+            if (sym == symbol("AMAX",8)) {
                 voters_table voter_tbl(AMAX_SYSTEM, AMAX_SYSTEM.value);
                 auto voter_itr = voter_tbl.find(account.value);                
-                for(auto itr = voter_itr; itr != voter_tbl.end(); itr++){
+                for (auto itr = voter_itr; itr != voter_tbl.end(); itr++) {
                     value += itr->votes.amount;
                 }
-            }else{
+                weight_st.quantity = asset(value, sym); 
+            } else {
                 map<extended_symbol, int64_t> tokens = mdaostake::get_user_staked_tokens(stake_contract, account, dao_code);
                 asset supply = amax::token::get_supply(stg.ref_contract, sym.code());
                 value = tokens.at(extended_symbol(supply.symbol, stg.ref_contract));
@@ -224,7 +226,7 @@ public:
             set<extended_nsymbol> syms = amax::ntoken::get_syms_by_parent(stg.ref_contract,  std::get<nsymbol>(stg.ref_sym).parent_id );
             map<extended_nsymbol, int64_t> nfts = mdaostake::get_user_staked_nfts(stake_contract, account, dao_code);
             for (auto itr = syms.begin() ; itr != syms.end(); itr++) {
-               if(nfts.count(*itr)) value += nfts.at(*itr);
+               if (nfts.count(*itr)) value += nfts.at(*itr);
             }
             break;
          }
@@ -232,10 +234,10 @@ public:
             check(false, "unsupport calculating type");
             break;
          }
-         int32_t weight = cal_algo(stg.stg_algo, value);
+         weight_st.weight = cal_algo(stg.stg_algo, value);
 
          // check(false, " balance: " + to_string(value) + " | weight: "+ to_string(weight));
-         return weight;
+         return weight_st;
    }
 
    static int32_t cal_algo(const string& stg_algo,

@@ -537,10 +537,24 @@ void mdaoproposal::_check_proposal_params(const action_data_variant& data_var,  
 
 void mdaoproposal::_cal_votes(const name dao_code, const strategy_t& vote_strategy, const name voter, weight_struct& weight_str, const uint32_t& lock_time) {
     switch(vote_strategy.type.value){
-        case strategy_type::TOKEN_STAKE.value : 
+        case strategy_type::TOKEN_STAKE.value :{
+            weight_str = mdao::strategy::cal_stake_weight(MDAO_STG, vote_strategy.id, dao_code, MDAO_STAKE, voter);
+            
+            asset quantity = std::get<asset>(weight_str.quantity);
+            if(quantity.symbol != symbol("AMAX",8) && lock_time > 0 && weight_str.weight > 0){
+                user_stake_t::idx_t user_stake(MDAO_STAKE, MDAO_STAKE.value); 
+                auto user_stake_index = user_stake.get_index<"unionid"_n>(); 
+                auto user_stake_iter = user_stake_index.find(mdao::get_unionid(voter, dao_code)); 
+                CHECKC( user_stake_iter != user_stake_index.end(), proposal_err::RECORD_NOT_FOUND, "stake record not exist" );
+
+                EXTEND_LOCK(MDAO_STAKE, MDAO_GOV, user_stake_iter->id, lock_time);
+            }
+
+            break;
+        } 
         case strategy_type::NFT_STAKE.value : 
         case strategy_type::NFT_PARENT_STAKE.value:{
-            weight_str.weight = mdao::strategy::cal_stake_weight(MDAO_STG, vote_strategy.id, dao_code, MDAO_STAKE, voter);
+            weight_str = mdao::strategy::cal_stake_weight(MDAO_STG, vote_strategy.id, dao_code, MDAO_STAKE, voter);
             
             if(lock_time > 0 && weight_str.weight > 0){
                 user_stake_t::idx_t user_stake(MDAO_STAKE, MDAO_STAKE.value); 

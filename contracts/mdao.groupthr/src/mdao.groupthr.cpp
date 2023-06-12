@@ -10,7 +10,9 @@
 { is_exists_and_unexpired ? expired + seconds_per_month * number : current + seconds_per_month * number }
 
 
-void mdaogroupthr::setglobal( asset crt_groupthr_fee, asset join_member_fee, set<name> token_contracts, set<name> nft_contracts )
+void mdaogroupthr::setglobal( asset crt_groupthr_fee, asset join_member_fee, 
+                              set<name> token_contracts, set<name> nft_contracts, 
+                              set<name> token_pay_contracts, set<name> nf_pay_contracts )
 {
     require_auth(_self);
     asset crt_groupthr_fee_supply = token::get_supply(AMAX_CONTRACT, crt_groupthr_fee.symbol.code());
@@ -21,20 +23,22 @@ void mdaogroupthr::setglobal( asset crt_groupthr_fee, asset join_member_fee, set
     CHECKC( crt_groupthr_fee_supply.amount > 0, err::SYMBOL_MISMATCH, "symbol mismatch" );
     CHECKC( crt_groupthr_fee_supply.amount > 0, err::SYMBOL_MISMATCH, "symbol mismatch" );
 
-    _gstate.crt_groupthr_fee  = crt_groupthr_fee;
-    _gstate.join_member_fee   = join_member_fee;
-    _gstate.token_contracts   = token_contracts;
-    _gstate.nft_contracts     = nft_contracts;
+    _gstate.crt_groupthr_fee      = crt_groupthr_fee;
+    _gstate.join_member_fee       = join_member_fee;
+    _gstate.token_contracts       = token_contracts;
+    _gstate.nft_contracts         = nft_contracts;    
+    _gstate.token_pay_contracts   = token_pay_contracts;   
+    _gstate.nft_pay_contracts     = nf_pay_contracts;
 }
 
 void mdaogroupthr::ontransfer()
 {
 
     auto contract = get_first_receiver();
-    if (_gstate.token_contracts.count(contract) > 0) {
+    if (_gstate.token_contracts.count(contract) > 0 || _gstate.token_pay_contracts.count(contract) > 0) {
         execute_function(&mdaogroupthr::_on_token_transfer);
 
-    } else if (_gstate.nft_contracts.count(contract)>0) {
+    } else if (_gstate.nft_contracts.count(contract)>0 || _gstate.nft_pay_contracts.count(contract)>0) {
         execute_function(&mdaogroupthr::_on_ntoken_transfer);
     }
 }
