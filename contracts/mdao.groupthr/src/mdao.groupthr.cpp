@@ -163,7 +163,7 @@ void mdaogroupthr::delgroupthrs(vector<uint64_t> &deleted_groupthrs)
 *       2) createbyntoken : $type : $id : $pid : $amount : $contract : $group_id : $plan_type         -- create group threshold by ntoken
 *       3) renewgroupthr : $group_id                                                                  -- group threshold renewal    
 *       4) joinfee : $groupthr_id                                                                     -- transfer to join the service charge                                             
-*       5) join : $groupthr_id : plan_type                                                            -- join member                                               
+*       5) join : $groupthr_id                                                                        -- join member                                               
 *
 */
 void mdaogroupthr::_on_token_transfer( const name &from,

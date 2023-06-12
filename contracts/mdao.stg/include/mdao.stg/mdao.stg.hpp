@@ -8,12 +8,14 @@
 #include <mdao.stake/mdao.stake.hpp>
 
 #include <thirdparty/utils.hpp>
+#include <amax.system/amax.system.hpp>
 #include "mdao.stgdb.hpp"
 
 using std::string;
 using namespace eosio;
 using namespace wasm::db;
 using namespace picomath;
+using namespace eosiosystem;
 
 
 enum class stg_err: uint8_t {
@@ -43,7 +45,7 @@ enum class stg_err: uint8_t {
 namespace mdao {
 class [[eosio::contract("mdao.stg")]] strategy : public contract {
 private:
-   dbc                 _db;
+   dbc                    _db;
    stg_singleton          _global;
    stg_global_t           _gstate;
 
@@ -142,7 +144,7 @@ public:
          return weight;
    }
 
-   static int32_t cal_balance_weight(const name& stg_contract_account,
+   static weight_struct cal_balance_weight(const name& stg_contract_account,
                              const uint64_t& stg_id,
                              const name& account )
    {
@@ -150,18 +152,20 @@ public:
          auto stg = strategy_t(stg_id);
          check(db.get(stg), "cannot find strategy");
 
-         uint64_t value = 0;
+         weight_struct weight_st;
+         uint64_t value;
          switch (stg.type.value)
          {
          case strategy_type::TOKEN_BALANCE.value: {
             symbol sym = std::get<symbol>(stg.ref_sym);
             value = eosio::token::get_balance(stg.ref_contract, account, sym.code()).amount;
-            // check(false, "111:"+to_string(value));
+            weight_st.quantity = asset(value, sym);
             break;
          }
          case strategy_type::NFT_BALANCE.value:{
             nsymbol sym = std::get<nsymbol>(stg.ref_sym);
             value = amax::ntoken::get_balance(stg.ref_contract, account, sym).amount;
+            weight_st.quantity = nasset(value, sym);
             break;
          }
          case strategy_type::NFT_PARENT_BALANCE.value:{
@@ -179,10 +183,8 @@ public:
             break;
          }
 
-         int32_t weight = cal_algo(stg.stg_algo, value);
-
-         // check(false, " balance: " + to_string(value) + " | weight: "+ to_string(weight));
-         return weight;
+         weight_st.weight  = cal_algo(stg.stg_algo, value);
+         return weight_st;
    }
 
    static int32_t cal_stake_weight(const name& stg_contract_account,
@@ -199,10 +201,18 @@ public:
          switch (stg.type.value)
          {
          case strategy_type::TOKEN_STAKE.value: {
-            map<extended_symbol, int64_t> tokens = mdaostake::get_user_staked_tokens(stake_contract, account, dao_code);
             symbol sym = std::get<symbol>(stg.ref_sym);
-            asset supply = amax::token::get_supply(stg.ref_contract, sym.code());
-            value = tokens.at(extended_symbol(supply.symbol, stg.ref_contract));
+            if(sym == symbol("AMAX",8)){
+                voters_table voter_tbl(AMAX_SYSTEM, AMAX_SYSTEM.value);
+                auto voter_itr = voter_tbl.find(account.value);                
+                for(auto itr = voter_itr; itr != voter_tbl.end(); itr++){
+                    value += itr->votes.amount;
+                }
+            }else{
+                map<extended_symbol, int64_t> tokens = mdaostake::get_user_staked_tokens(stake_contract, account, dao_code);
+                asset supply = amax::token::get_supply(stg.ref_contract, sym.code());
+                value = tokens.at(extended_symbol(supply.symbol, stg.ref_contract));
+            }
             break;
          }
          case strategy_type::NFT_STAKE.value:{

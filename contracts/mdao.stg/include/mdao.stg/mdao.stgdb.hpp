@@ -35,6 +35,7 @@ struct STG_TABLE_NAME("global") stg_global_t {
 typedef eosio::singleton< "global"_n, stg_global_t > stg_singleton;
 
 typedef std::variant<symbol_code, nsymbol, symbol> refsymbol;
+typedef std::variant<asset, nasset> refasset;
 
 namespace strategy_status {
     static constexpr eosio::name testing            = "testing"_n;
@@ -50,6 +51,13 @@ namespace strategy_type {
     static constexpr eosio::name NFT_STAKE             = "nftstake"_n;
     static constexpr eosio::name NFT_PARENT_STAKE      = "nparentstake"_n;
     static constexpr eosio::name NFT_PARENT_BALANCE    = "nparentbalanc"_n;
+};
+
+struct weight_struct {
+    refasset    quantity;
+    uint64_t    weight;
+
+    EOSLIB_SERIALIZE( weight_struct, (quantity)(weight) )
 };
 
 struct STG_TABLE strategy_t {

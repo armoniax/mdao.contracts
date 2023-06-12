@@ -24,9 +24,9 @@ ACTION mdaoproposal::create(const name& creator, const name& dao_code, const str
     auto propose_strategy = stg.find(proposal_strategy_id);
     CHECKC( propose_strategy != stg.end(), proposal_err::RECORD_NOT_FOUND, "strategy not found" );   
 
-    int64_t stg_weight = 0;
-    _cal_votes(dao_code, *propose_strategy, creator, stg_weight, 0);
-    CHECKC( stg_weight > 0, proposal_err::INSUFFICIENT_BALANCE, "insufficient strategy weight")
+    weight_struct weight_str;
+    _cal_votes(dao_code, *propose_strategy, creator, weight_str, 0);
+    CHECKC( weight_str.weight > 0, proposal_err::INSUFFICIENT_BALANCE, "insufficient strategy weight")
 
     proposal_t::idx_t proposal_tbl(_self, _self.value);
     auto id = _gstate.last_propose_id;
@@ -102,9 +102,9 @@ ACTION mdaoproposal::startvote(const name& creator, const uint64_t& proposal_id)
     strategy_t::idx_t stg(MDAO_STG, MDAO_STG.value);
     auto propose_strategy = stg.find(proposal.proposal_strategy_id);
 
-    int64_t stg_weight = 0;
-    _cal_votes(proposal.dao_code, *propose_strategy, creator, stg_weight, 0);
-    CHECKC( stg_weight > 0, proposal_err::VOTES_NOT_ENOUGH, "insufficient strategy weight")
+    weight_struct weight_str;
+    _cal_votes(proposal.dao_code, *propose_strategy, creator, weight_str, 0);
+    CHECKC( weight_str.weight > 0, proposal_err::VOTES_NOT_ENOUGH, "insufficient strategy weight")
 
     proposal.status  =  proposal_status::VOTING;
     proposal.started_at = current_time_point();
@@ -190,9 +190,9 @@ ACTION mdaoproposal::votefor(const name& voter, const uint64_t& proposal_id,
     strategy_t::idx_t stg(MDAO_STG, MDAO_STG.value);
     auto vote_strategy = stg.find(proposal.vote_strategy_id);
 
-    int64_t stg_weight = 0;
-    _cal_votes(proposal.dao_code, *vote_strategy, voter, stg_weight, conf.stake_period_days * seconds_per_day);
-    CHECKC( stg_weight > 0, proposal_err::INSUFFICIENT_VOTES, "insufficient votes" );
+    weight_struct weight_str;
+    _cal_votes(proposal.dao_code, *vote_strategy, voter, weight_str, conf.stake_period_days * seconds_per_day);
+    CHECKC( weight_str.weight > 0, proposal_err::INSUFFICIENT_VOTES, "insufficient votes" );
 
     auto id = vote_tbl.available_primary_key();
     vote_tbl.emplace( voter, [&]( auto& row ) {
@@ -200,27 +200,28 @@ ACTION mdaoproposal::votefor(const name& voter, const uint64_t& proposal_id,
         row.account     =   voter;
         row.proposal_id =   proposal_id;
         row.direction   =   vote;
-        row.vote_weight   =   stg_weight;
+        row.vote_weight   =   weight_str.weight;
+        row.quantity      =   weight_str.quantity;
         row.voted_at      =   current_time_point();
         row.title         =   title;
 
     });
 
-    proposal.options[title].recv_votes = vote == vote_direction::APPROVE ? proposal.options[title].recv_votes + stg_weight : proposal.options[title].recv_votes;
+    proposal.options[title].recv_votes = vote == vote_direction::APPROVE ? proposal.options[title].recv_votes + weight_str.weight : proposal.options[title].recv_votes;
 
     switch (vote.value)
     {
         case vote_direction::APPROVE.value:{
-            proposal.approve_votes += stg_weight;
+            proposal.approve_votes += weight_str.weight;
             break;
         }
         case vote_direction::DENY.value:{
-            proposal.deny_votes += stg_weight;
+            proposal.deny_votes += weight_str.weight;
             proposal.deny_users_count++;
             break;
         }
         case  vote_direction::WAIVE.value:{
-            proposal.waive_votes += stg_weight;
+            proposal.waive_votes += weight_str.weight;
             proposal.waive_users_count++;
             break;
         }
@@ -534,14 +535,14 @@ void mdaoproposal::_check_proposal_params(const action_data_variant& data_var,  
 //     _db.del(proposal);
 // }
 
-void mdaoproposal::_cal_votes(const name dao_code, const strategy_t& vote_strategy, const name voter, int64_t& value, const uint32_t& lock_time) {
+void mdaoproposal::_cal_votes(const name dao_code, const strategy_t& vote_strategy, const name voter, weight_struct& weight_str, const uint32_t& lock_time) {
     switch(vote_strategy.type.value){
         case strategy_type::TOKEN_STAKE.value : 
         case strategy_type::NFT_STAKE.value : 
         case strategy_type::NFT_PARENT_STAKE.value:{
-            value = mdao::strategy::cal_stake_weight(MDAO_STG, vote_strategy.id, dao_code, MDAO_STAKE, voter);
-
-            if(lock_time > 0 && value>0){
+            weight_str.weight = mdao::strategy::cal_stake_weight(MDAO_STG, vote_strategy.id, dao_code, MDAO_STAKE, voter);
+            
+            if(lock_time > 0 && weight_str.weight > 0){
                 user_stake_t::idx_t user_stake(MDAO_STAKE, MDAO_STAKE.value); 
                 auto user_stake_index = user_stake.get_index<"unionid"_n>(); 
                 auto user_stake_iter = user_stake_index.find(mdao::get_unionid(voter, dao_code)); 
@@ -556,8 +557,7 @@ void mdaoproposal::_cal_votes(const name dao_code, const strategy_t& vote_strate
         case strategy_type::NFT_BALANCE.value:
         case strategy_type::NFT_PARENT_BALANCE.value:
         case strategy_type::TOKEN_SUM.value: {
-
-            value = mdao::strategy::cal_balance_weight(MDAO_STG, vote_strategy.id, voter);
+            weight_str = mdao::strategy::cal_balance_weight(MDAO_STG, vote_strategy.id, voter);
             break;
          }
         default : {

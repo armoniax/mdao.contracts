@@ -6,14 +6,17 @@
 #include <eosio/name.hpp>
 #include <eosio/transaction.hpp>
 #include <map>
+#include <amax.ntoken/amax.ntoken.hpp>
 
 namespace mdao {
 
 using namespace std;
 using namespace eosio;
+using namespace amax;
 
 #define TG_TBL [[eosio::table, eosio::contract("mdao.propose")]]
 #define PROPOSE_TABLE_NAME(name) [[eosio::table(name), eosio::contract("mdao.propose")]]
+typedef std::variant<asset, nasset> refasset;
 
 static uint128_t get_union_id(const name& account, const uint64_t& proposal_id){
     return ( (uint128_t)account.value ) << 64 | proposal_id;
@@ -78,6 +81,7 @@ struct TG_TBL vote_t {
     uint64_t        proposal_id;
     string          title;
     uint32_t        vote_weight;
+    refasset        quantity;
     time_point_sec  voted_at;
 
     uint64_t    primary_key()const { return id; }
@@ -90,7 +94,7 @@ struct TG_TBL vote_t {
     uint128_t by_union_id()const {
         return get_union_id( account, proposal_id);
     }
-    EOSLIB_SERIALIZE( vote_t, (id)(account)(direction)(proposal_id)(title)(vote_weight)(voted_at) )
+    EOSLIB_SERIALIZE( vote_t, (id)(account)(direction)(proposal_id)(title)(vote_weight)(quantity)(voted_at) )
 
     typedef eosio::multi_index <"votes"_n, vote_t,
         indexed_by<"accountid"_n,  const_mem_fun<vote_t, uint64_t, &vote_t::by_account> >,

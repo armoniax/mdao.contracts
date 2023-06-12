@@ -152,9 +152,9 @@ void strategy::verify( const name& creator,
 void strategy::testalgo( const name& account, const uint64_t& stg_id ){
     strategy_t stg = strategy_t( stg_id );
     CHECKC( _db.get( stg ), stg_err::RECORD_NOT_FOUND, "strategy not found: " + to_string( stg_id ) )
-
-    auto weight = cal_balance_weight(get_self(), stg_id, account);
-    CHECKC(false, stg_err::NONE, "weight: "+ to_string(weight));
+    
+    weight_struct weight_str = cal_balance_weight(get_self(), stg_id, account);
+    CHECKC(false, stg_err::NONE, "weight: "+ to_string(weight_str.weight));
 }
 
 void strategy::remove( const name& creator,
