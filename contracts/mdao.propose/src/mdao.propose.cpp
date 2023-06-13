@@ -370,7 +370,7 @@ void mdaoproposal::withdraw(const name& voter, const uint64_t& proposal_id, cons
     {
         case vote_direction::APPROVE.value:{
             assert( proposal.approve_votes >= vote_itr->vote_weight );
-            proposal.approve_votes += vote_itr->vote_weight;
+            proposal.approve_votes -= vote_itr->vote_weight;
             break;
         }
         case vote_direction::DENY.value:{
