@@ -82,6 +82,7 @@ struct TG_TBL vote_t {
     string          title;
     uint32_t        vote_weight;
     refasset        quantity;
+    name            stg_type;
     time_point_sec  voted_at;
 
     uint64_t    primary_key()const { return id; }
@@ -94,7 +95,7 @@ struct TG_TBL vote_t {
     uint128_t by_union_id()const {
         return get_union_id( account, proposal_id);
     }
-    EOSLIB_SERIALIZE( vote_t, (id)(account)(direction)(proposal_id)(title)(vote_weight)(quantity)(voted_at) )
+    EOSLIB_SERIALIZE( vote_t, (id)(account)(direction)(proposal_id)(title)(vote_weight)(quantity)(stg_type)(voted_at) )
 
     typedef eosio::multi_index <"votes"_n, vote_t,
         indexed_by<"accountid"_n,  const_mem_fun<vote_t, uint64_t, &vote_t::by_account> >,

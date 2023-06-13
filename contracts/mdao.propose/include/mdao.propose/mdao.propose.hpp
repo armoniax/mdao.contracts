@@ -82,7 +82,9 @@ enum class proposal_err: uint8_t {
     INSUFFICIENT_BALANCE    = 25,
     VOTING                  = 26,
     STRATEGY_STATUS_ERROR   = 27,
-    INVALID_FORMAT          = 28
+    INVALID_FORMAT          = 28,
+    NOT_VOTED               = 29,
+    NO_SUPPORT              = 30
 };
 
 namespace proposal_action_type {
@@ -222,7 +224,8 @@ public:
                         const name& action_name,
                         const action_data_variant& data, 
                         const string& title);
-    
+                        
+    ACTION withdraw(const name& voter, const uint64_t& proposal_id, const string& title);
     // ACTION recycledb(uint32_t max_rows);
 
     // ACTION deletepropose(uint64_t id);
