@@ -85,6 +85,14 @@ struct GROUPTHR_TABLE_NAME("global") thr_global_t {
                                     (token_contracts)(nft_contracts)(token_pay_contracts)(nft_pay_contracts) )
 };
 
+struct GROUPTHR_TABLE_NAME("global2") thr_global_t2 {
+    set<name> token_pay_contracts;
+    set<name> nft_pay_contracts;
+
+    EOSLIB_SERIALIZE( thr_global_t2, (token_pay_contracts)(nft_pay_contracts) )
+};
+
 typedef eosio::singleton< "global"_n, thr_global_t > groupthr_global_singleton;
+typedef eosio::singleton< "global2"_n, thr_global_t2 > groupthr_global_singleton2;
 
 } //mdao
