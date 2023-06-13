@@ -55,7 +55,7 @@ namespace strategy_type {
 
 struct weight_struct {
     refasset    quantity;
-    uint64_t    weight;
+    int32_t     weight;
 
     EOSLIB_SERIALIZE( weight_struct, (quantity)(weight) )
 };

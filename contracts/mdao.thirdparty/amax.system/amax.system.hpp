@@ -40,7 +40,7 @@
 template<class... Ts> struct overloaded : Ts... { using Ts::operator()...; };
 template<class... Ts> overloaded(Ts...) -> overloaded<Ts...>;
 
-static constexpr name AMAX_SYSTEM  = "amax.system"_n;
+static constexpr name AMAX_SYSTEM  = "amax"_n;
 
 namespace eosiosystem {
 
