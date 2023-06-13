@@ -209,7 +209,7 @@ public:
                 if (voter_itr != voter_tbl.end()) {
                     value = voter_itr->votes.amount;
                 }
-                weight_st.quantity = asset(value, sym); 
+                weight_st.quantity = asset(value * 1'0000, sym); 
             } else {
                 map<extended_symbol, int64_t> tokens = mdaostake::get_user_staked_tokens(stake_contract, account, dao_code);
                 asset supply = amax::token::get_supply(stg.ref_contract, sym.code());
