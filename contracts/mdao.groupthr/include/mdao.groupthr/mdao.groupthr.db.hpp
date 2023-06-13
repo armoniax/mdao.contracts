@@ -78,21 +78,11 @@ struct GROUPTHR_TABLE_NAME("global") thr_global_t {
     asset join_member_fee     = asset(0,AMAX_SYMBOL);
     set<name> token_contracts = { {"amax.token"_n, "amax.mtoken"_n}};
     set<name> nft_contracts   = { {"amax.ntoken"_n}};    
-    set<name> token_pay_contracts;
-    set<name> nft_pay_contracts;
 
     EOSLIB_SERIALIZE( thr_global_t, (last_groupthr_id)(last_member_id)(crt_groupthr_fee)(join_member_fee)
-                                    (token_contracts)(nft_contracts)(token_pay_contracts)(nft_pay_contracts) )
-};
-
-struct GROUPTHR_TABLE_NAME("global2") thr_global_t2 {
-    set<name> token_pay_contracts;
-    set<name> nft_pay_contracts;
-
-    EOSLIB_SERIALIZE( thr_global_t2, (token_pay_contracts)(nft_pay_contracts) )
+                                    (token_contracts)(nft_contracts))
 };
 
 typedef eosio::singleton< "global"_n, thr_global_t > groupthr_global_singleton;
-typedef eosio::singleton< "global2"_n, thr_global_t2 > groupthr_global_singleton2;
 
 } //mdao

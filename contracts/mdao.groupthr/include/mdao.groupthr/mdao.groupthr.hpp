@@ -85,8 +85,6 @@ private:
     dbc                           _db;
     thr_global_t                  _gstate;
     groupthr_global_singleton     _global;    
-    thr_global_t2                 _gstate2;
-    groupthr_global_singleton2    _global2;
     std::unique_ptr<conf_table_t> _conf_tbl_ptr;
     std::unique_ptr<conf_t>       _conf_ptr;
 
@@ -125,30 +123,21 @@ private:
                         const uint64_t& groupthr_id);
 public:
     using contract::contract;
-    mdaogroupthr(name receiver, name code, datastream<const char*> ds):_db(_self),  contract(receiver, code, ds), _global(_self, _self.value), _global2(_self, _self.value){
+    mdaogroupthr(name receiver, name code, datastream<const char*> ds):_db(_self),  contract(receiver, code, ds), _global(_self, _self.value){
         if (_global.exists()) {
             _gstate = _global.get();
 
         } else {
             _gstate = thr_global_t{};
         }
-        
-        if (_global2.exists()) {
-            _gstate2 = _global2.get();
-
-        } else {
-            _gstate2 = thr_global_t2{};
-        }
     }
     
     ~mdaogroupthr() {
         _global.set( _gstate, get_self() );
-        _global2.set( _gstate2, get_self() );
     }
     
     ACTION setglobal( asset crt_groupthr_fee, asset join_member_fee, 
-                              set<name> token_contracts, set<name> nft_contracts, 
-                              set<name> token_pay_contracts, set<name> nf_pay_contracts );
+                              set<name> token_contracts, set<name> nft_contracts);
     
     [[eosio::on_notify("*::transfer")]]
     void ontransfer();
