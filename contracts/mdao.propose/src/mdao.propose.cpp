@@ -344,6 +344,12 @@ ACTION mdaoproposal::setaction(const name& owner, const uint64_t& proposal_id,
 }
 
 void mdaoproposal::withdraw(const name& voter, const uint64_t& proposal_id, const string& title) {
+
+    auto conf = _conf();
+    CHECKC( conf.status != conf_status::PENDING, proposal_err::NOT_AVAILABLE, "under maintenance" );
+    
+    require_auth(conf.admin);
+
     vote_t::idx_t vote_tbl(_self, _self.value);
     auto vote_index = vote_tbl.get_index<"unionid"_n>();
     uint128_t union_id = get_union_id(voter,proposal_id);
