@@ -205,9 +205,9 @@ public:
             symbol sym = std::get<symbol>(stg.ref_sym);
             if (sym == symbol("AMAX",8)) {
                 voters_table voter_tbl(AMAX_SYSTEM, AMAX_SYSTEM.value);
-                auto voter_itr = voter_tbl.find(account.value);                
-                for (auto itr = voter_itr; itr != voter_tbl.end(); itr++) {
-                    value += itr->votes.amount;
+                auto voter_itr = voter_tbl.find(account.value);
+                if (voter_itr != voter_tbl.end()) {
+                    value = voter_itr->votes.amount;
                 }
                 weight_st.quantity = asset(value, sym); 
             } else {
