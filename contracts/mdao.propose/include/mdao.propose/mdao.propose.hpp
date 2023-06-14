@@ -225,7 +225,7 @@ public:
                         const action_data_variant& data, 
                         const string& title);
                         
-    ACTION withdraw(const name& voter, const uint64_t& proposal_id, const string& title);
+    ACTION withdraw(const vector<withdraw_str>& withdraws);
     // ACTION recycledb(uint32_t max_rows);
 
     // ACTION deletepropose(uint64_t id);

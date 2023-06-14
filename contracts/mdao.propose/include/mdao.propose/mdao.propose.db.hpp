@@ -22,6 +22,11 @@ static uint128_t get_union_id(const name& account, const uint64_t& proposal_id){
     return ( (uint128_t)account.value ) << 64 | proposal_id;
 }
 
+struct withdraw_str{
+    string      title;
+    uint64_t    vote_id;
+};
+
 struct option{
     string      title;
     string      desc;

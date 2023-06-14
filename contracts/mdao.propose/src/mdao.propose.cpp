@@ -343,53 +343,55 @@ ACTION mdaoproposal::setaction(const name& owner, const uint64_t& proposal_id,
     _db.set(proposal, _self);
 }
 
-void mdaoproposal::withdraw(const name& voter, const uint64_t& proposal_id, const string& title) {
+void mdaoproposal::withdraw(const vector<withdraw_str>& withdraws) {
 
     auto conf = _conf();
     CHECKC( conf.status != conf_status::PENDING, proposal_err::NOT_AVAILABLE, "under maintenance" );
-    
     require_auth(conf.admin);
 
-    vote_t::idx_t vote_tbl(_self, _self.value);
-    auto vote_index = vote_tbl.get_index<"unionid"_n>();
-    uint128_t union_id = get_union_id(voter,proposal_id);
-    auto vote_itr = vote_index.find(union_id);
-    CHECKC( vote_itr != vote_index.end() ,proposal_err::NOT_VOTED, "account not voted" );
-    CHECKC( vote_itr->stg_type == strategy_type::TOKEN_BALANCE || vote_itr->stg_type == strategy_type::NFT_BALANCE || vote_itr->stg_type == strategy_type::TOKEN_STAKE, proposal_err::NO_SUPPORT, "no support withdraw" );
+    CHECKC( withdraws.size() > 0, proposal_err::PARAM_ERROR, "withdraws size must be more than 0" );
     
-    proposal_t proposal(proposal_id);
-    CHECKC( _db.get(proposal) ,proposal_err::RECORD_NOT_FOUND, "proposal not found" );
-    CHECKC( proposal.status == proposal_status::VOTING, proposal_err::STATUS_ERROR, "proposal status must be running" );
-    
-    if(vote_itr->direction == vote_direction::APPROVE){
-        assert( proposal.options[title].recv_votes >= vote_itr->vote_weight );
-        proposal.options[title].recv_votes -= vote_itr->vote_weight;
-    }
-    
-    switch (vote_itr->direction.value)
-    {
-        case vote_direction::APPROVE.value:{
-            assert( proposal.approve_votes >= vote_itr->vote_weight );
-            proposal.approve_votes -= vote_itr->vote_weight;
-            break;
+    for (auto& w : withdraws) {
+        vote_t vote;
+        vote.id = w.vote_id;
+        CHECKC( _db.get(vote) ,proposal_err::NOT_VOTED, "account not voted" );
+        CHECKC( vote.stg_type == strategy_type::TOKEN_BALANCE || vote.stg_type == strategy_type::NFT_BALANCE || vote.stg_type == strategy_type::TOKEN_STAKE, proposal_err::NO_SUPPORT, "no support withdraw" );
+        
+        proposal_t proposal(vote.proposal_id);
+        CHECKC( _db.get(proposal) ,proposal_err::RECORD_NOT_FOUND, "proposal not found" );
+        CHECKC( proposal.status == proposal_status::VOTING, proposal_err::STATUS_ERROR, "proposal status must be running" );
+        
+        if(vote.direction == vote_direction::APPROVE){
+            assert( proposal.options[w.title].recv_votes >= vote.vote_weight );
+            proposal.options[w.title].recv_votes -= vote.vote_weight;
         }
-        case vote_direction::DENY.value:{
-            assert( proposal.deny_votes >= vote_itr->vote_weight );
-            proposal.deny_votes -= vote_itr->vote_weight;
-            proposal.deny_users_count--;
-            break;
+        
+        switch (vote.direction.value)
+        {
+            case vote_direction::APPROVE.value:{
+                assert( proposal.approve_votes >= vote.vote_weight );
+                proposal.approve_votes -= vote.vote_weight;
+                break;
+            }
+            case vote_direction::DENY.value:{
+                assert( proposal.deny_votes >= vote.vote_weight );
+                proposal.deny_votes -= vote.vote_weight;
+                proposal.deny_users_count--;
+                break;
+            }
+            case  vote_direction::WAIVE.value:{
+                assert( proposal.waive_votes >= vote.vote_weight );
+                proposal.waive_votes -= vote.vote_weight;
+                proposal.waive_users_count--;
+                break;
+            }
         }
-        case  vote_direction::WAIVE.value:{
-            assert( proposal.waive_votes >= vote_itr->vote_weight );
-            proposal.waive_votes -= vote_itr->vote_weight;
-            proposal.waive_users_count--;
-            break;
-        }
-    }
 
-    proposal.users_count--;
-    _db.set(proposal, _self);
-    _db.del(*vote_itr);
+        proposal.users_count--;
+        _db.set(proposal, _self);
+        _db.del(vote);
+    }
+     
 }
 
 void mdaoproposal::_check_proposal_params(const action_data_variant& data_var,  const name& action_name, const name& proposal_dao_code, const conf_t& conf)
