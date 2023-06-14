@@ -355,7 +355,7 @@ void mdaoproposal::withdraw(const name& voter, const uint64_t& proposal_id, cons
     uint128_t union_id = get_union_id(voter,proposal_id);
     auto vote_itr = vote_index.find(union_id);
     CHECKC( vote_itr != vote_index.end() ,proposal_err::NOT_VOTED, "account not voted" );
-    CHECKC( vote_itr->stg_type == strategy_type::TOKEN_BALANCE || vote_itr->stg_type == strategy_type::NFT_BALANCE, proposal_err::NO_SUPPORT, "no support withdraw" );
+    CHECKC( vote_itr->stg_type == strategy_type::TOKEN_BALANCE || vote_itr->stg_type == strategy_type::NFT_BALANCE || vote_itr->stg_type == strategy_type::TOKEN_STAKE, proposal_err::NO_SUPPORT, "no support withdraw" );
     
     proposal_t proposal(proposal_id);
     CHECKC( _db.get(proposal) ,proposal_err::RECORD_NOT_FOUND, "proposal not found" );
