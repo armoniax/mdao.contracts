@@ -6,6 +6,13 @@
 #include <thirdparty/utils.hpp>
 #include <set>
 
+
+ACTION mdaoproposal::removeglobal()
+{
+    require_auth( _self );
+    _global.remove();
+}
+
 ACTION mdaoproposal::create(const name& creator, const name& dao_code, const string& title, const string& desc)
 {
     require_auth( creator );
@@ -194,8 +201,9 @@ ACTION mdaoproposal::votefor(const name& voter, const uint64_t& proposal_id,
     _cal_votes(proposal.dao_code, *vote_strategy, voter, weight_str, conf.stake_period_days * seconds_per_day);
     CHECKC( weight_str.weight > 0, proposal_err::INSUFFICIENT_VOTES, "insufficient votes" );
 
+    auto id = vote_tbl.available_primary_key();
     vote_tbl.emplace( voter, [&]( auto& row ) {
-        row.id          =   _gstate.last_vote_id++;
+        row.id          =   id;
         row.account     =   voter;
         row.proposal_id =   proposal_id;
         row.direction   =   vote;

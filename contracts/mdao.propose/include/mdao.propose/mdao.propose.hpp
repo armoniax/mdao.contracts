@@ -208,6 +208,9 @@ public:
             _gstate = prop_global_t{};
         }
     }
+    
+    ACTION removeglobal();
+    
     ACTION create(const name& creator, const name& dao_code, const string& title, const string& desc);
 
     ACTION cancel(const name& owner, const uint64_t& proposalid);
