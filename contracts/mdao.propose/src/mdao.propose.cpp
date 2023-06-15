@@ -244,6 +244,7 @@ ACTION mdaoproposal::votefor(const name& voter, const uint64_t& proposal_id,
 
     proposal.users_count++;
     _db.set(proposal, _self);
+    _global.set( _gstate, get_self() );
 }
 
 // void mdaoproposal::deletepropose(uint64_t id) {
