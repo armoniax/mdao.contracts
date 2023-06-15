@@ -208,7 +208,8 @@ public:
             _gstate = prop_global_t{};
         }
     }
-    
+    ACTION init(const uint64_t& last_propose_id, const uint64_t& last_vote_id);
+
     ACTION removeglobal();
     
     ACTION create(const name& creator, const name& dao_code, const string& title, const string& desc);

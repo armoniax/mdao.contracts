@@ -7,7 +7,15 @@
 #include <set>
 
 
-ACTION mdaoproposal::removeglobal()
+ACTION mdaoproposal::init(const uint64_t& last_propose_id, const uint64_t& last_vote_id)
+{
+    require_auth( _self );
+    _gstate.last_propose_id = last_propose_id;
+    _gstate.last_vote_id    = last_vote_id;
+    _global.set( _gstate, get_self() );
+}
+
+ACTION mdaoproposal::removeglobal( )
 {
     require_auth( _self );
     _global.remove();
