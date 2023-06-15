@@ -110,7 +110,8 @@ struct TG_TBL vote_t {
 
 struct PROPOSE_TABLE_NAME("global") prop_global_t {
     uint64_t last_propose_id = 0;
-    EOSLIB_SERIALIZE( prop_global_t, (last_propose_id) )
+    uint64_t last_vote_id = 0;
+    EOSLIB_SERIALIZE( prop_global_t, (last_propose_id)(last_vote_id) )
 };
 
 typedef eosio::singleton< "global"_n, prop_global_t > propose_global_singleton;
