@@ -33,8 +33,8 @@ ACTION mdaogov::create(const name& dao_code, const uint64_t& propose_strategy_id
     CHECKC( propose_strategy != stg.end(), gov_err::STRATEGY_NOT_FOUND, "strategy not found");
     CHECKC( vote_strategy->status == strategy_status::published && propose_strategy->status == strategy_status::published, 
             gov_err::STRATEGY_STATUS_ERROR, "strategy type must be published" );
-    CHECKC( require_pass > 3 && require_pass <= 14, gov_err::PARAM_ERROR, "require_pass no less than 3 and no more than 14");
-
+    CHECKC( voting_period > 3 && voting_period <= 14, gov_err::PARAM_ERROR, "voting_period no less than 3 and no more than 14");
+    CHECKC( require_pass > 0 , gov_err::PARAM_ERROR, "require_pass no less than 0" );
 
     governance.dao_code                                                = dao_code;
     governance.strategies[strategy_action_type::PROPOSAL]              = propose_strategy_id;
@@ -95,8 +95,8 @@ ACTION mdaogov::setvotetime(const name& dao_code, const uint16_t& voting_period,
 
     governance_t governance(dao_code);
     CHECKC( _db.get(governance), gov_err::RECORD_NOT_FOUND, "governance not exist" );
-    CHECKC( voting_period > 0 , gov_err::PARAM_ERROR, "voting_period no less than 0" );
-    CHECKC( require_pass > 3 && require_pass <= 14, gov_err::PARAM_ERROR, "require_pass no less than 3 and no more than 14");
+    CHECKC( require_pass > 0 , gov_err::PARAM_ERROR, "require_pass no less than 0" );
+    CHECKC( voting_period > 3 && voting_period <= 14, gov_err::PARAM_ERROR, "require_pass no less than 3 and no more than 14");
 
     governance.voting_period = voting_period;
     governance.require_pass  = require_pass;
