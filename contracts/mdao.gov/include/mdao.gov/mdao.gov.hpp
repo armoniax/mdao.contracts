@@ -67,32 +67,20 @@ public:
 
     [[eosio::action]]
     ACTION create(const name& dao_code, const uint64_t& propose_strategy_id, 
-                            const uint64_t& vote_strategy_id, const uint32_t& require_participation, 
-                            const uint32_t& require_pass, const uint16_t& update_interval,
-                            const uint16_t& voting_period);
+                  const uint64_t& vote_strategy_id, const uint32_t& require_pass, 
+                  const uint16_t& voting_period);
 
     [[eosio::action]]
-    ACTION setvotestg(const name& dao_code, const uint64_t& vote_strategy_id, 
-                        const uint32_t& require_participation, const uint32_t& require_pass );
-                        
+    ACTION setvotestg(const name& dao_code, const uint64_t& vote_strategy_id);
 
     [[eosio::action]]
     ACTION setproposestg(const name& dao_code, const uint64_t& propose_strategy_id);
 
     [[eosio::action]]
-    ACTION setlocktime(const name& dao_code, const uint16_t& update_interval);
-
-    [[eosio::action]]
-    ACTION setvotetime(const name& dao_code, const uint16_t& voting_period);
-    
-    // [[eosio::action]]
-    // void deletegov(name dao_code);
-
-    [[eosio::action]]
-    ACTION setpropmodel(const name& dao_code, const name& propose_model);
+    ACTION setvotetime(const name& dao_code, const uint16_t& voting_period, 
+                       const uint32_t& require_pass);
 
 private:
     void _cal_votes(const name dao_code, const strategy_t& vote_strategy, const name voter, int64_t& value);
-    void _check_auth( const governance_t& governance, const conf_t& conf, const dao_info_t& info);
 
 };

@@ -65,6 +65,7 @@ public:
 
     [[eosio::action]]
     void create(const name& creator,
+                const uint64_t& stg_id,
                 const string& stg_name,
                 const string& stg_algo,
                 const name& type,

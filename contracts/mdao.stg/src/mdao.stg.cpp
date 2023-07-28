@@ -5,13 +5,16 @@ using namespace mdao;
 using namespace picomath;
 
 void strategy::create( const name& creator,
+            const uint64_t& stg_id,
             const string& stg_name,
             const string& stg_algo,
             const name& type,
             const name& ref_contract,
             const refsymbol& ref_sym){
     require_auth(creator);
-
+    
+    strategy_t strategy(stg_id);
+    CHECKC( !_db.get(strategy), err::RECORD_FOUND, "stg is exists")
     CHECKC( stg_name.size() < MAX_CONTENT_SIZE, err::OVERSIZED, "stg_name length should less than "+ to_string(MAX_CONTENT_SIZE) )
     CHECKC( stg_algo.size() < MAX_ALGO_SIZE, err::OVERSIZED, "stg_algo length should less than "+ to_string(MAX_ALGO_SIZE) )
     CHECKC( type == strategy_type::TOKEN_BALANCE ||
@@ -23,17 +26,13 @@ void strategy::create( const name& creator,
             type == strategy_type::NFT_PARENT_BALANCE, stg_err::PARAM_ERROR, "type error" )
     _check_contract_and_sym(ref_contract, ref_sym, type);
 
-    auto strategies         = strategy_t::idx_t(_self, _self.value);
-    auto pid                = strategies.available_primary_key();
-    auto strategy           = strategy_t(pid);
-    strategy.id             = pid;
     strategy.creator        = creator;
     strategy.stg_name       = stg_name;
     strategy.stg_algo       = stg_algo;
     strategy.type           = type;
     strategy.ref_sym        = ref_sym;
     strategy.ref_contract   = ref_contract;
-    strategy.status         = strategy_status::testing;
+    strategy.status         = strategy_status::published;
     strategy.created_at     = current_time_point();
 
     _db.set( strategy, creator );
@@ -59,9 +58,9 @@ void strategy::thresholdstg(const name& creator,
             type == strategy_type::NFT_PARENT_BALANCE, stg_err::PARAM_ERROR, "type error" )
     _check_contract_and_sym(ref_contract, ref_sym, type);
     string stg_algo = "min(x-"+ to_string(balance_value) + ",1)";
-
+                                               
     auto strategies         = strategy_t::idx_t(_self, _self.value);
-    auto pid                = strategies.available_primary_key();
+    auto pid                = _gstate.last_stg_id++;
     auto strategy           = strategy_t(pid);
     strategy.id             = pid;
     strategy.creator        = creator;
@@ -96,10 +95,10 @@ void strategy::balancestg(const name& creator,
             type == strategy_type::NFT_PARENT_BALANCE, stg_err::PARAM_ERROR, "type error" )
     _check_contract_and_sym(ref_contract, ref_sym, type);
 
-    string stg_algo = "x/"+ to_string(weight_value);
+    string stg_algo = "x*"+ to_string(weight_value);
 
     auto strategies         = strategy_t::idx_t(_self, _self.value);
-    auto pid                = strategies.available_primary_key();
+    auto pid                = _gstate.last_stg_id++;
     auto strategy           = strategy_t(pid);
     strategy.id             = pid;
     strategy.creator        = creator;
@@ -125,7 +124,7 @@ void strategy::setalgo( const name& creator,
     CHECKC( stg.status != strategy_status::published, stg_err::NO_AUTH, "cannot monidfy published strategy");
 
     stg.stg_algo    = stg_algo;
-    stg.status      = strategy_status::testing;
+    stg.status      = strategy_status::published;
     _db.set( stg, creator );
 }
 

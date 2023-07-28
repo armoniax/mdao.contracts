@@ -29,7 +29,8 @@ namespace wasm { namespace db {
 struct STG_TABLE_NAME("global") stg_global_t {
     name conf_contract;
     map<name,string> algos;
-    EOSLIB_SERIALIZE( stg_global_t, (conf_contract)(algos) )
+    uint64_t last_stg_id = 0;
+    EOSLIB_SERIALIZE( stg_global_t, (conf_contract)(algos)(last_stg_id) )
 };
 
 typedef eosio::singleton< "global"_n, stg_global_t > stg_singleton;

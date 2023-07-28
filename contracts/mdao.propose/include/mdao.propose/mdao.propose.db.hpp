@@ -31,27 +31,19 @@ struct option{
     string      title;
     string      desc;
     uint32_t    recv_votes = 0;
-    transaction execute_actions;
 };
 
 struct TG_TBL proposal_t {
     uint64_t        id;
     name            dao_code;
-    uint64_t        proposal_strategy_id;
     uint64_t        vote_strategy_id;
+    uint64_t        proposal_strategy_id;
     name            status;
     name            creator;
     string          title;
     string          desc;
     name            type;
-    uint32_t        approve_votes; //agree total vote
-    uint32_t        deny_votes; //deny total vote
-    uint32_t        waive_votes; //waive total vote
-    uint32_t        users_count; //total users
-    uint32_t        deny_users_count; //deny total users
-    uint32_t        waive_users_count; //waive total user
     time_point_sec  created_at = current_time_point();
-    time_point_sec  started_at;
     time_point_sec  executed_at;
     map<string, option>    options;
 
@@ -69,8 +61,8 @@ struct TG_TBL proposal_t {
     proposal_t() {}
     proposal_t(const uint64_t& i): id(i) {}
 
-    EOSLIB_SERIALIZE( proposal_t, (id)(dao_code)(proposal_strategy_id)(vote_strategy_id)(status)(creator)(title)(desc)(type)
-                (approve_votes)(deny_votes)(waive_votes)(users_count)(deny_users_count)(waive_users_count)(created_at)(started_at)(executed_at)(options) )
+    EOSLIB_SERIALIZE( proposal_t, (id)(dao_code)(vote_strategy_id)(proposal_strategy_id)(status)(creator)(title)(desc)(type)
+                                    (created_at)(executed_at)(options) )
 
     typedef eosio::multi_index <"proposals"_n, proposal_t,
         indexed_by<"creator"_n,  const_mem_fun<proposal_t, uint64_t, &proposal_t::by_creator> >,
@@ -100,7 +92,7 @@ struct TG_TBL vote_t {
     uint128_t by_union_id()const {
         return get_union_id( account, proposal_id);
     }
-    EOSLIB_SERIALIZE( vote_t, (id)(account)(direction)(proposal_id)(title)(vote_weight)(quantity)(stg_type)(voted_at) )
+    EOSLIB_SERIALIZE( vote_t, (id)(account)(proposal_id)(title)(vote_weight)(quantity)(stg_type)(voted_at) )
 
     typedef eosio::multi_index <"votes"_n, vote_t,
         indexed_by<"accountid"_n,  const_mem_fun<vote_t, uint64_t, &vote_t::by_account> >,

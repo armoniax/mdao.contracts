@@ -212,22 +212,20 @@ public:
 
     ACTION removeglobal();
     
-    ACTION create(const name& creator, const name& dao_code, const string& title, const string& desc);
+    ACTION create(const name& creator, const name& dao_code, const string& title, const string& desc, map<string, option> options);
 
     ACTION cancel(const name& owner, const uint64_t& proposalid);
 
-    ACTION addplan( const name& owner, const uint64_t& proposal_id, const string& title, const string& desc );
+    // ACTION addplan( const name& owner, const uint64_t& proposal_id, const string& title, const string& desc );
 
-    ACTION startvote(const name& creator, const uint64_t& proposal_id);
+    // ACTION execute(const uint64_t& proposal_id);
 
-    ACTION execute(const uint64_t& proposal_id);
+    ACTION votefor(const name& voter, const uint64_t& proposal_id,  const string& title);
 
-    ACTION votefor(const name& voter, const uint64_t& proposal_id,  const string& title, const name& vote);
-
-    ACTION setaction(const name& owner, const uint64_t& proposal_id, 
-                        const name& action_name,
-                        const action_data_variant& data, 
-                        const string& title);
+    // ACTION setaction(const name& owner, const uint64_t& proposal_id, 
+    //                     const name& action_name,
+    //                     const action_data_variant& data, 
+    //                     const string& title);
                         
     ACTION withdraw(const vector<withdraw_str>& withdraws);
     // ACTION recycledb(uint32_t max_rows);
@@ -236,6 +234,6 @@ public:
     // ACTION deletevote(uint32_t id); 
 
 private:
-    void _check_proposal_params(const action_data_variant& data_var,  const name& action_name, const name& proposal_dao_code, const conf_t& conf);
+    // void _check_proposal_params(const action_data_variant& data_var,  const name& action_name, const name& proposal_dao_code, const conf_t& conf);
     void _cal_votes(const name dao_code, const strategy_t& vote_strategy, const name voter, weight_struct& weight_str, const uint32_t& lock_time) ;
 };
