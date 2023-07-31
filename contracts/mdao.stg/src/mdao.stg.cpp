@@ -121,7 +121,6 @@ void strategy::setalgo( const name& creator,
     strategy_t stg = strategy_t(stg_id);
     CHECKC( _db.get( stg ), stg_err::RECORD_NOT_FOUND, "strategy not found: " + to_string(stg_id))
     CHECKC( stg.creator == creator, stg_err::NO_AUTH, "require creator auth")
-    CHECKC( stg.status != strategy_status::published, stg_err::NO_AUTH, "cannot monidfy published strategy");
 
     stg.stg_algo    = stg_algo;
     stg.status      = strategy_status::published;

@@ -23,13 +23,12 @@ static uint128_t get_union_id(const name& account, const uint64_t& proposal_id){
 }
 
 struct withdraw_str{
-    string      title;
+    string      option_key;
     uint64_t    vote_id;
 };
 
 struct option{
     string      title;
-    string      desc;
     uint32_t    recv_votes = 0;
 };
 
@@ -76,7 +75,7 @@ struct TG_TBL vote_t {
     name            account;
     name            direction; //approve ｜ deny ｜ waive
     uint64_t        proposal_id;
-    string          title;
+    string          option_key;
     uint32_t        vote_weight;
     refasset        quantity;
     name            stg_type;
@@ -92,7 +91,7 @@ struct TG_TBL vote_t {
     uint128_t by_union_id()const {
         return get_union_id( account, proposal_id);
     }
-    EOSLIB_SERIALIZE( vote_t, (id)(account)(proposal_id)(title)(vote_weight)(quantity)(stg_type)(voted_at) )
+    EOSLIB_SERIALIZE( vote_t, (id)(account)(proposal_id)(option_key)(vote_weight)(quantity)(stg_type)(voted_at) )
 
     typedef eosio::multi_index <"votes"_n, vote_t,
         indexed_by<"accountid"_n,  const_mem_fun<vote_t, uint64_t, &vote_t::by_account> >,

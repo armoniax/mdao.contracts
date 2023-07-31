@@ -21,17 +21,18 @@ ACTION mdaoproposal::removeglobal( )
     _global.remove();
 }
 
-ACTION mdaoproposal::create(const name& creator, const name& dao_code, const string& title, const string& desc, map<string, option> options)
+ACTION mdaoproposal::create(const name& creator, const name& dao_code, const string& title, const string& desc, map<string, string> options)
 {
     require_auth( creator );
     auto conf = _conf();
     CHECKC( conf.status != conf_status::PENDING, gov_err::NOT_AVAILABLE, "under maintenance" );
     CHECKC( title.size() <= 32, proposal_err::INVALID_FORMAT, "title length is more than 32 bytes");
     CHECKC( desc.size() <= 224, proposal_err::INVALID_FORMAT, "desc length is more than 224 bytes");
+    proposal_t proposal(_gstate.last_propose_id);
     
     for (auto option : options) {
-        CHECKC( option.second.title.size() <= 32, proposal_err::INVALID_FORMAT, "option title length is more than 32 bytes");
-        CHECKC( option.second.desc.size() <= 224, proposal_err::INVALID_FORMAT, "option desc length is more than 224 bytes");
+        CHECKC( option.second.size() <= 32, proposal_err::INVALID_FORMAT, "option title length is more than 32 bytes");
+        proposal.options[option.first] = {option.second, 0};
     }
       
     governance_t::idx_t governance(MDAO_GOV, MDAO_GOV.value);
@@ -48,19 +49,15 @@ ACTION mdaoproposal::create(const name& creator, const name& dao_code, const str
     _cal_votes(dao_code, *propose_strategy, creator, weight_str, 0);
     CHECKC( weight_str.weight > 0, proposal_err::INSUFFICIENT_BALANCE, "insufficient strategy weight")
 
-    proposal_t::idx_t proposal_tbl(_self, _self.value);
-    auto id = _gstate.last_propose_id;
-    proposal_tbl.emplace( creator, [&]( auto& row ) {
-        row.id                  =   id;
-        row.dao_code            =   dao_code;
-        row.vote_strategy_id    =   vote_strategy_id;
-        row.proposal_strategy_id=   proposal_strategy_id;
-        row.creator             =   creator;
-        row.status              =   proposal_status::VOTING;
-        row.desc	              =   desc;
-        row.title	              =   title;
-        row.options	            =   options;
-    });
+    proposal.dao_code            =   dao_code;
+    proposal.vote_strategy_id    =   vote_strategy_id;
+    proposal.proposal_strategy_id=   proposal_strategy_id;
+    proposal.creator             =   creator;
+    proposal.status              =   proposal_status::VOTING;
+    proposal.desc	               =   desc;
+    proposal.title	             =   title;
+    _db.set(proposal, creator);
+    
     _gstate.last_propose_id++;
     _global.set( _gstate, get_self() );
 }
@@ -87,7 +84,7 @@ ACTION mdaoproposal::cancel(const name& owner, const uint64_t& proposal_id)
 
 
 ACTION mdaoproposal::votefor(const name& voter, const uint64_t& proposal_id, 
-                                const string& title)
+                                const string& option_key)
 {
     require_auth( voter );
 
@@ -97,7 +94,7 @@ ACTION mdaoproposal::votefor(const name& voter, const uint64_t& proposal_id,
     proposal_t proposal(proposal_id);
     CHECKC( _db.get(proposal) ,proposal_err::RECORD_NOT_FOUND, "proposal not found" );
     CHECKC( proposal.status == proposal_status::VOTING, proposal_err::STATUS_ERROR, "proposal status must be running" );
-    CHECKC( proposal.options.count(title), proposal_err::PARAM_ERROR, "param error" );
+    CHECKC( proposal.options.count(option_key), proposal_err::PARAM_ERROR, "param error" );
 
     governance_t::idx_t governance_tbl(MDAO_GOV, MDAO_GOV.value);
     const auto governance = governance_tbl.find(proposal.dao_code.value);
@@ -117,18 +114,18 @@ ACTION mdaoproposal::votefor(const name& voter, const uint64_t& proposal_id,
         CHECKC( weight_str.weight > 0, proposal_err::INSUFFICIENT_VOTES, "insufficient votes" );
 
         vote_tbl.emplace( voter, [&]( auto& row ) {
-            row.id          =   _gstate.last_vote_id++;
-            row.account     =   voter;
-            row.proposal_id =   proposal_id;
+            row.id            =   _gstate.last_vote_id++;
+            row.account       =   voter;
+            row.proposal_id   =   proposal_id;
             row.vote_weight   =   weight_str.weight;
             row.quantity      =   weight_str.quantity;
             row.stg_type      =   vote_strategy->type;
             row.voted_at      =   current_time_point();
-            row.title         =   title;
+            row.option_key    =   option_key;
 
         });
 
-        proposal.options[title].recv_votes = proposal.options[title].recv_votes + weight_str.weight;
+        proposal.options[option_key].recv_votes = proposal.options[option_key].recv_votes + weight_str.weight;
 
         _db.set(proposal, _self);
         _global.set( _gstate, get_self() ); 
@@ -167,8 +164,8 @@ void mdaoproposal::withdraw(const vector<withdraw_str>& withdraws) {
         CHECKC( _db.get(proposal) ,proposal_err::RECORD_NOT_FOUND, "proposal not found" );
         CHECKC( proposal.status == proposal_status::VOTING, proposal_err::STATUS_ERROR, "proposal status must be running" );
         
-        assert( proposal.options[w.title].recv_votes >= vote.vote_weight );
-        proposal.options[w.title].recv_votes -= vote.vote_weight;
+        assert( proposal.options[w.option_key].recv_votes >= vote.vote_weight );
+        proposal.options[w.option_key].recv_votes -= vote.vote_weight;
     
         _db.set(proposal, _self);
         _db.del(vote);

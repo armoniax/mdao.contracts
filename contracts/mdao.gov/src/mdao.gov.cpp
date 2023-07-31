@@ -33,7 +33,7 @@ ACTION mdaogov::create(const name& dao_code, const uint64_t& propose_strategy_id
     CHECKC( propose_strategy != stg.end(), gov_err::STRATEGY_NOT_FOUND, "strategy not found");
     CHECKC( vote_strategy->status == strategy_status::published && propose_strategy->status == strategy_status::published, 
             gov_err::STRATEGY_STATUS_ERROR, "strategy type must be published" );
-    CHECKC( voting_period > 3 && voting_period <= 14, gov_err::PARAM_ERROR, "voting_period no less than 3 and no more than 14");
+    CHECKC( voting_period >= 3 && voting_period <= 14, gov_err::PARAM_ERROR, "voting_period no less than 3 and no more than 14");
     CHECKC( require_pass > 0 , gov_err::PARAM_ERROR, "require_pass no less than 0" );
 
     governance.dao_code                                                = dao_code;
@@ -41,6 +41,7 @@ ACTION mdaogov::create(const name& dao_code, const uint64_t& propose_strategy_id
     governance.strategies[strategy_action_type::VOTE]                  = vote_strategy_id;
     governance.require_pass                                            = require_pass;
     governance.voting_period                                           = voting_period;
+    governance.updated_at                                              = current_time_point();
     _db.set(governance, info->creator);
 }
 
@@ -73,7 +74,10 @@ ACTION mdaogov::setproposestg(const name& dao_code, const uint64_t& propose_stra
 {
     auto conf = _conf();
     CHECKC( conf.status != conf_status::PENDING, gov_err::NOT_AVAILABLE, "under maintenance" );
-    require_auth( conf.managers[manager_type::PROPOSAL] );
+
+    dao_info_t::idx_t info_tbl(MDAO_INFO, MDAO_INFO.value);
+    const auto info = info_tbl.find(dao_code.value);
+    CHECKC(has_auth(info->creator), gov_err::NOT_MODIFY, "cannot be modified for now" );
 
     governance_t governance(dao_code);
     CHECKC( _db.get(governance), gov_err::RECORD_NOT_FOUND, "governance not exist" );
@@ -91,12 +95,15 @@ ACTION mdaogov::setvotetime(const name& dao_code, const uint16_t& voting_period,
 {
     auto conf = _conf();
     CHECKC( conf.status != conf_status::PENDING, gov_err::NOT_AVAILABLE, "under maintenance" );
-    require_auth( conf.managers[manager_type::PROPOSAL] );
+    
+    dao_info_t::idx_t info_tbl(MDAO_INFO, MDAO_INFO.value);
+    const auto info = info_tbl.find(dao_code.value);
+    CHECKC(has_auth(info->creator), gov_err::NOT_MODIFY, "cannot be modified for now" );
 
     governance_t governance(dao_code);
     CHECKC( _db.get(governance), gov_err::RECORD_NOT_FOUND, "governance not exist" );
     CHECKC( require_pass > 0 , gov_err::PARAM_ERROR, "require_pass no less than 0" );
-    CHECKC( voting_period > 3 && voting_period <= 14, gov_err::PARAM_ERROR, "require_pass no less than 3 and no more than 14");
+    CHECKC( voting_period >= 3 && voting_period <= 14, gov_err::PARAM_ERROR, "require_pass no less than 3 and no more than 14");
 
     governance.voting_period = voting_period;
     governance.require_pass  = require_pass;
