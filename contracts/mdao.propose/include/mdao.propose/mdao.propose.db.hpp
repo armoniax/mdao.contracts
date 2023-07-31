@@ -73,7 +73,6 @@ struct TG_TBL proposal_t {
 struct TG_TBL vote_t {
     uint64_t        id;
     name            account;
-    name            direction; //approve ｜ deny ｜ waive
     uint64_t        proposal_id;
     string          option_key;
     uint32_t        vote_weight;
