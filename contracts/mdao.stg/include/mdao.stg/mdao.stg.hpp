@@ -164,6 +164,7 @@ public:
             symbol sym = std::get<symbol>(stg.ref_sym);
             value = eosio::token::get_balance(stg.ref_contract, account, sym.code()).amount;
             weight_st.quantity = asset(value, sym);
+            value = value / power(10, sym.precision());
             break;
          }
          case strategy_type::NFT_BALANCE.value:{
@@ -179,7 +180,7 @@ public:
          }
          case strategy_type::TOKEN_SUM.value: {
             symbol sym = std::get<symbol>(stg.ref_sym);
-            value = aplink::token::get_sum(stg.ref_contract, account, sym.code()).amount;
+            value = aplink::token::get_sum(stg.ref_contract, account, sym.code()).amount / power(10, sym.precision());
             break;
          }
          default:

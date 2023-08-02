@@ -29,7 +29,7 @@ struct withdraw_str{
 
 struct option{
     string      title;
-    uint32_t    recv_votes = 0;
+    int128_t    recv_votes = 0;
 };
 
 struct TG_TBL proposal_t {
@@ -62,8 +62,7 @@ struct TG_TBL proposal_t {
 
     EOSLIB_SERIALIZE( proposal_t, (id)(dao_code)(vote_strategy_id)(proposal_strategy_id)(status)(creator)(title)(desc)(type)
                                     (created_at)(executed_at)(options) )
-//5443624567621126458
-//4528838632201383619
+
     typedef eosio::multi_index <"proposals"_n, proposal_t,
         indexed_by<"creator"_n,  const_mem_fun<proposal_t, uint64_t, &proposal_t::by_creator> >,
         indexed_by<"daocode"_n,  const_mem_fun<proposal_t, uint64_t, &proposal_t::by_daocode> >,
@@ -76,7 +75,7 @@ struct TG_TBL vote_t {
     name            account;
     uint64_t        proposal_id;
     string          option_key;
-    uint32_t        vote_weight;
+    int128_t        vote_weight;
     refasset        quantity;
     name            stg_type;
     time_point_sec  voted_at;
