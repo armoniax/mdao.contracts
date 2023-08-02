@@ -30,7 +30,7 @@ namespace propose_model_type {
 struct GOV_TG_TBL governance_t {
     name                        dao_code;
     map<name, uint64_t>         strategies;
-    uint64_t                    require_pass;         // stake -> ratio(100% = 10000), token -> votes
+    uint32_t                    require_pass;         // stake -> ratio(100% = 10000), token -> votes
     uint16_t                    voting_period      = VOTING_HOURS;
     time_point_sec              updated_at;
     uint64_t    primary_key()const { return dao_code.value; }
