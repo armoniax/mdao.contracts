@@ -214,7 +214,7 @@ public:
     
     ACTION create(const name& creator, const name& dao_code, const string& title, const string& desc, map<string, string> options);
 
-    ACTION cancel(const name& owner, const uint64_t& proposalid);
+    ACTION cancel(const name& owner, const uint64_t& proposal_id);
 
     ACTION votefor(const name& voter, const uint64_t& proposal_id,  const string& title);
               
