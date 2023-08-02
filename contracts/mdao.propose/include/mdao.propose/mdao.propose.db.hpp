@@ -62,7 +62,8 @@ struct TG_TBL proposal_t {
 
     EOSLIB_SERIALIZE( proposal_t, (id)(dao_code)(vote_strategy_id)(proposal_strategy_id)(status)(creator)(title)(desc)(type)
                                     (created_at)(executed_at)(options) )
-
+//5443624567621126458
+//4528838632201383619
     typedef eosio::multi_index <"proposals"_n, proposal_t,
         indexed_by<"creator"_n,  const_mem_fun<proposal_t, uint64_t, &proposal_t::by_creator> >,
         indexed_by<"daocode"_n,  const_mem_fun<proposal_t, uint64_t, &proposal_t::by_daocode> >,

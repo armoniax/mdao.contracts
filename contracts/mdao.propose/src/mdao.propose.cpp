@@ -161,7 +161,7 @@ void mdaoproposal::withdraw(const vector<withdraw_str>& withdraws) {
         CHECKC( vote.stg_type == strategy_type::TOKEN_BALANCE || vote.stg_type == strategy_type::NFT_BALANCE || vote.stg_type == strategy_type::TOKEN_STAKE, proposal_err::NO_SUPPORT, "no support withdraw" );
         
         proposal_t proposal(vote.proposal_id);
-        CHECKC( _db.get(proposal) ,proposal_err::RECORD_NOT_FOUND, "proposal not found" );
+        CHECKC( _db.get(proposal), proposal_err::RECORD_NOT_FOUND, "proposal not found" );
         CHECKC( proposal.status == proposal_status::VOTING, proposal_err::STATUS_ERROR, "proposal status must be running" );
         
         assert( proposal.options[w.option_key].recv_votes >= vote.vote_weight );
@@ -205,13 +205,16 @@ void mdaoproposal::_cal_votes(const name dao_code, const strategy_t& vote_strate
 
             break;
         }
-        case strategy_type::TOKEN_BALANCE.value:
+        case strategy_type::TOKEN_BALANCE.value:{
+            weight_str = mdao::strategy::cal_balance_weight(MDAO_STG, vote_strategy.id, voter);
+            break;
+        }
         case strategy_type::NFT_BALANCE.value:
         case strategy_type::NFT_PARENT_BALANCE.value:
         case strategy_type::TOKEN_SUM.value: {
             weight_str = mdao::strategy::cal_balance_weight(MDAO_STG, vote_strategy.id, voter);
             break;
-         }
+        }
         default : {
            CHECKC( false, gov_err::TYPE_ERROR, "type error" );
         }
