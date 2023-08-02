@@ -115,8 +115,20 @@ void strategy::balancestg(const name& creator,
 
 void strategy::setalgo( const name& creator,
                         const uint64_t& stg_id,
-                        const string& stg_algo ){
+                        const string& stg_algo,
+                        const name& type,
+                        const name& ref_contract,
+                        const refsymbol& ref_sym ){
     require_auth( creator );
+    
+    CHECKC( type == strategy_type::TOKEN_BALANCE ||
+            type == strategy_type::TOKEN_STAKE ||
+            type == strategy_type::TOKEN_SUM ||
+            type == strategy_type::NFT_BALANCE ||
+            type == strategy_type::NFT_STAKE ||
+            type == strategy_type::NFT_PARENT_STAKE ||
+            type == strategy_type::NFT_PARENT_BALANCE, stg_err::PARAM_ERROR, "type error" )
+    _check_contract_and_sym(ref_contract, ref_sym, type);
 
     strategy_t stg = strategy_t(stg_id);
     CHECKC( _db.get( stg ), stg_err::RECORD_NOT_FOUND, "strategy not found: " + to_string(stg_id))
