@@ -67,7 +67,7 @@ public:
 
     [[eosio::action]]
     ACTION create(const name& dao_code, const uint64_t& propose_strategy_id, 
-                  const uint64_t& vote_strategy_id, const uint32_t& require_pass, 
+                  const uint64_t& vote_strategy_id, const int128_t& require_pass, 
                   const uint16_t& voting_period);
 
     [[eosio::action]]
@@ -78,7 +78,7 @@ public:
 
     [[eosio::action]]
     ACTION setvotetime(const name& dao_code, const uint16_t& voting_period, 
-                       const uint32_t& require_pass);
+                       const int128_t& require_pass);
     [[eosio::action]]
     ACTION delgov();
     

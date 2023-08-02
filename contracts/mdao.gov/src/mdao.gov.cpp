@@ -12,7 +12,7 @@
 { action(permission_level{get_self(), "active"_n }, bank, "create"_n, std::make_tuple( owner, proposeid)).send(); }
 
 ACTION mdaogov::create(const name& dao_code, const uint64_t& propose_strategy_id, 
-                            const uint64_t& vote_strategy_id, const uint32_t& require_pass, 
+                            const uint64_t& vote_strategy_id, const int128_t& require_pass, 
                             const uint16_t& voting_period)
 {    
     auto conf = _conf();
@@ -91,7 +91,7 @@ ACTION mdaogov::setproposestg(const name& dao_code, const uint64_t& propose_stra
 }
 
 ACTION mdaogov::setvotetime(const name& dao_code, const uint16_t& voting_period, 
-                            const uint32_t& require_pass)
+                            const int128_t& require_pass)
 {
     auto conf = _conf();
     CHECKC( conf.status != conf_status::PENDING, gov_err::NOT_AVAILABLE, "under maintenance" );
