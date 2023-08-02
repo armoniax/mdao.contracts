@@ -74,10 +74,10 @@ ACTION mdaoproposal::cancel(const name& owner, const uint64_t& proposal_id)
     CHECKC( owner == proposal.creator, proposal_err::PERMISSION_DENIED, "only the creator can operate" );
     CHECKC( proposal_status::VOTING == proposal.status, proposal_err::STATUS_ERROR, "can only operate if the state is created and voting" );
     
-    governance_t::idx_t governance_tbl(MDAO_GOV, MDAO_GOV.value);
-    const auto governance = governance_tbl.find(proposal.dao_code.value);
-    CHECKC( ((proposal.created_at + (governance->voting_period * seconds_per_day)) >= current_time_point()), 
-                proposal_err::ALREADY_EXPIRED, "the voting cycle is over. it can't be canceled" );
+    // governance_t::idx_t governance_tbl(MDAO_GOV, MDAO_GOV.value);
+    // const auto governance = governance_tbl.find(proposal.dao_code.value);
+    // CHECKC( ((proposal.created_at + (governance->voting_period * seconds_per_day)) >= current_time_point()), 
+    //             proposal_err::ALREADY_EXPIRED, "the voting cycle is over. it can't be canceled" );
 
     _db.del(proposal);
 }
