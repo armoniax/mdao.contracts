@@ -135,7 +135,7 @@ public:
     void testalgo(const name& account,
                  const uint64_t& stg_id);
 
-   static int32_t cal_weight(const name& stg_contract_account,
+   static int128_t cal_weight(const name& stg_contract_account,
                   const uint64_t& value,
                   const uint64_t& stg_id )
    {
@@ -143,14 +143,14 @@ public:
          auto stg = strategy_t(stg_id);
          check(db.get(stg), "cannot find strategy");
 
-         int32_t weight = cal_algo(stg.stg_algo, value);
+         int128_t weight = cal_algo(stg.stg_algo, value);
 
          return weight;
    }
 
-   static weight_struct cal_balance_weight(const name& stg_contract_account,
-                             const uint64_t& stg_id,
-                             const name& account )
+   static weight_struct cal_balance_weight( const name& stg_contract_account,
+                                            const uint64_t& stg_id,
+                                            const name& account )
    {
          auto db = dbc(stg_contract_account);
          auto stg = strategy_t(stg_id);
@@ -244,7 +244,7 @@ public:
          return weight_st;
    }
 
-   static int32_t cal_algo(const string& stg_algo,
+   static int128_t cal_algo(const string& stg_algo,
                             const uint64_t& value)
    {
          PicoMath pm;
@@ -252,7 +252,7 @@ public:
          x = value;
          auto result = pm.evalExpression(stg_algo.c_str());
          CHECKC(result.isOk(), err::PARAM_ERROR, result.getError());
-         int32_t weight = int32_t(floor(result.getResult()));
+         int128_t weight = int128_t(floor(result.getResult()));
 
          return weight;
    }

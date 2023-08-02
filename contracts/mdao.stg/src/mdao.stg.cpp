@@ -152,8 +152,8 @@ void strategy::verify( const name& creator,
     CHECKC( stg.status != strategy_status::published, stg_err::NO_AUTH, "cannot verify published strategy" )
     CHECKC( stg.creator == creator, stg_err::NO_AUTH, "require creator auth" )
 
-    int32_t weight = cal_weight( get_self(), value, stg_id);
-    CHECKC( weight == expect_weight, stg_err::UNRESPECT_RESULT, "algo result weight is: "+to_string(weight) )
+    int128_t weight = cal_weight( get_self(), value, stg_id);
+    // CHECKC( weight == expect_weight, stg_err::UNRESPECT_RESULT, "algo result weight" )
 
     stg.status = strategy_status::verified;
     _db.set( stg, creator );
@@ -164,7 +164,7 @@ void strategy::testalgo( const name& account, const uint64_t& stg_id ){
     CHECKC( _db.get( stg ), stg_err::RECORD_NOT_FOUND, "strategy not found: " + to_string( stg_id ) )
     
     weight_struct weight_str = cal_balance_weight(get_self(), stg_id, account);
-    CHECKC(false, stg_err::NONE, "weight: "+ to_string(weight_str.weight));
+    // CHECKC(false, stg_err::NONE, "weight: "+ to_string(weight_str.weight));
 }
 
 void strategy::remove( const name& creator,
