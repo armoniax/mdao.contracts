@@ -29,8 +29,8 @@ ACTION mdaogov::create(const name& dao_code, const uint64_t& propose_strategy_id
     strategy_t::idx_t stg(MDAO_STG, MDAO_STG.value);
     auto vote_strategy = stg.find(vote_strategy_id);
     auto propose_strategy = stg.find(propose_strategy_id);
-    CHECKC( vote_strategy!= stg.end(), gov_err::STRATEGY_NOT_FOUND, "strategy not found");
-    CHECKC( propose_strategy != stg.end(), gov_err::STRATEGY_NOT_FOUND, "strategy not found");
+    CHECKC( vote_strategy!= stg.end(), gov_err::STRATEGY_NOT_FOUND, "vote strategy not found");
+    CHECKC( propose_strategy != stg.end(), gov_err::STRATEGY_NOT_FOUND, "propose strategy not found");
     CHECKC( vote_strategy->status == strategy_status::published && propose_strategy->status == strategy_status::published, 
             gov_err::STRATEGY_STATUS_ERROR, "strategy type must be published" );
     CHECKC( voting_period >= 3 && voting_period <= 14, gov_err::PARAM_ERROR, "voting_period no less than 3 and no more than 14");
@@ -134,6 +134,14 @@ ACTION mdaogov::setvotetime(const name& dao_code, const uint16_t& voting_period,
 //     VOTE_CREATE(MDAO_PROPOSAL, dao_code, creator, desc, title, vote_strategy_id, proposal_strategy_id)
 // }
 
+ACTION mdaogov::delgov()
+{
+    governance_t::idx_t governance(_self, _self.value);
+    auto governance_itr = governance.begin(); 
+    for(;governance_itr != governance.end();){
+        governance_itr = governance.erase(governance_itr);
+    }
+}
 
 void mdaogov::_cal_votes(const name dao_code, const strategy_t& vote_strategy, const name voter, int64_t& value) {
     switch(vote_strategy.type.value){

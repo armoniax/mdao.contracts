@@ -79,7 +79,9 @@ public:
     [[eosio::action]]
     ACTION setvotetime(const name& dao_code, const uint16_t& voting_period, 
                        const uint32_t& require_pass);
-
+    [[eosio::action]]
+    ACTION delgov();
+    
 private:
     void _cal_votes(const name dao_code, const strategy_t& vote_strategy, const name voter, int64_t& value);
 
