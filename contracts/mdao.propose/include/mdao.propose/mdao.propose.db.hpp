@@ -43,7 +43,7 @@ struct TG_TBL proposal_t {
     string          desc;
     name            type;
     time_point_sec  created_at = current_time_point();
-    time_point_sec  executed_at;
+    time_point_sec  ended_at;
     map<string, option>    options;
 
     uint64_t    primary_key()const { return id; }
@@ -61,7 +61,7 @@ struct TG_TBL proposal_t {
     proposal_t(const uint64_t& i): id(i) {}
 
     EOSLIB_SERIALIZE( proposal_t, (id)(dao_code)(vote_strategy_id)(proposal_strategy_id)(status)(creator)(title)(desc)(type)
-                                    (created_at)(executed_at)(options) )
+                                    (created_at)(ended_at)(options) )
 
     typedef eosio::multi_index <"proposals"_n, proposal_t,
         indexed_by<"creator"_n,  const_mem_fun<proposal_t, uint64_t, &proposal_t::by_creator> >,

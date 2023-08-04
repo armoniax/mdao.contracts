@@ -109,14 +109,6 @@ public:
                 const refsymbol& ref_sym);
 
     [[eosio::action]]
-    void setalgo( const name& creator,
-                  const uint64_t& stg_id,
-                  const string& stg_algo,
-                  const name& type,
-                  const name& ref_contract,
-                  const refsymbol& ref_sym );
-
-    [[eosio::action]]
     void verify(const name& creator,
                    const uint64_t& stg_id,
                    const uint64_t& value,

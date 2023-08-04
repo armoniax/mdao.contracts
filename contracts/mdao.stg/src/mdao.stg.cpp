@@ -15,8 +15,8 @@ void strategy::create( const name& creator,
     
     strategy_t strategy(stg_id);
     CHECKC( !_db.get(strategy), err::RECORD_FOUND, "stg is exists")
-    CHECKC( stg_name.size() < MAX_CONTENT_SIZE, err::OVERSIZED, "stg_name length should less than "+ to_string(MAX_CONTENT_SIZE) )
-    CHECKC( stg_algo.size() < MAX_ALGO_SIZE, err::OVERSIZED, "stg_algo length should less than "+ to_string(MAX_ALGO_SIZE) )
+    CHECKC( stg_name.size() > 0 && stg_name.size() < MAX_CONTENT_SIZE, err::OVERSIZED, "stg_name length should less than "+ to_string(MAX_CONTENT_SIZE) +" and greater than 0" )
+    CHECKC( stg_algo.size() > 0 && stg_algo.size() < MAX_ALGO_SIZE, err::OVERSIZED, "stg_algo length should less than "+ to_string(MAX_ALGO_SIZE) +" and greater than 0" )
     CHECKC( type == strategy_type::TOKEN_BALANCE ||
             type == strategy_type::TOKEN_STAKE ||
             type == strategy_type::TOKEN_SUM ||
@@ -111,32 +111,6 @@ void strategy::balancestg(const name& creator,
     strategy.created_at     = current_time_point();
 
     _db.set( strategy, creator );
-}
-
-void strategy::setalgo( const name& creator,
-                        const uint64_t& stg_id,
-                        const string& stg_algo,
-                        const name& type,
-                        const name& ref_contract,
-                        const refsymbol& ref_sym ){
-    require_auth( creator );
-    
-    CHECKC( type == strategy_type::TOKEN_BALANCE ||
-            type == strategy_type::TOKEN_STAKE ||
-            type == strategy_type::TOKEN_SUM ||
-            type == strategy_type::NFT_BALANCE ||
-            type == strategy_type::NFT_STAKE ||
-            type == strategy_type::NFT_PARENT_STAKE ||
-            type == strategy_type::NFT_PARENT_BALANCE, stg_err::PARAM_ERROR, "type error" )
-    _check_contract_and_sym(ref_contract, ref_sym, type);
-
-    strategy_t stg = strategy_t(stg_id);
-    CHECKC( _db.get( stg ), stg_err::RECORD_NOT_FOUND, "strategy not found: " + to_string(stg_id))
-    CHECKC( stg.creator == creator, stg_err::NO_AUTH, "require creator auth")
-
-    stg.stg_algo    = stg_algo;
-    stg.status      = strategy_status::published;
-    _db.set( stg, creator );
 }
 
 void strategy::verify( const name& creator,
