@@ -90,8 +90,9 @@ ACTION mdaogov::setproposestg(const name& dao_code, const uint64_t& propose_stra
     _db.set(governance, _self);
 }
 
-ACTION mdaogov::setvotetime(const name& dao_code, const uint16_t& voting_period, 
-                            const int128_t& require_pass)
+ACTION mdaogov::setgov(const name& dao_code, const uint16_t& voting_period, 
+                            const int128_t& require_pass,const uint64_t& propose_strategy_id,
+                            const uint64_t& vote_strategy_id)
 {
     auto conf = _conf();
     CHECKC( conf.status != conf_status::PENDING, gov_err::NOT_AVAILABLE, "under maintenance" );
@@ -108,6 +109,9 @@ ACTION mdaogov::setvotetime(const name& dao_code, const uint16_t& voting_period,
     governance.voting_period = voting_period;
     governance.require_pass  = require_pass;
     governance.updated_at = current_time_point();
+    governance.strategies[strategy_action_type::PROPOSAL] = propose_strategy_id;
+    governance.strategies[strategy_action_type::VOTE]     = vote_strategy_id;
+
     _db.set(governance, _self);
 }
  

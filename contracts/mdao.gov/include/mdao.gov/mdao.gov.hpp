@@ -77,8 +77,9 @@ public:
     ACTION setproposestg(const name& dao_code, const uint64_t& propose_strategy_id);
 
     [[eosio::action]]
-    ACTION setvotetime(const name& dao_code, const uint16_t& voting_period, 
-                       const int128_t& require_pass);
+    ACTION setgov(const name& dao_code, const uint16_t& voting_period, 
+                            const int128_t& require_pass,const uint64_t& propose_strategy_id,
+                            const uint64_t& vote_strategy_id);
     [[eosio::action]]
     ACTION delgov();
     
