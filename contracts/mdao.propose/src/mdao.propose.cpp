@@ -57,7 +57,7 @@ ACTION mdaoproposal::create(const name& creator, const name& dao_code, const str
     proposal.status              =   proposal_status::CREATED;
     proposal.desc	               =   desc;
     proposal.title	             =   title;
-    proposal.ended_at	           =   time_point_sec(current_time_point()) + (gov->voting_period * second_per_day);
+    // proposal.ended_at	           =   time_point_sec(current_time_point()) + (gov->voting_period * second_per_day);
     // proposal.require_pass	       =   gov->require_pass;
     _db.set(proposal, creator);
     
@@ -99,7 +99,8 @@ ACTION mdaoproposal::votefor(const name& voter, const uint64_t& proposal_id,
     CHECKC( proposal.status == proposal_status::VOTING || proposal.status == proposal_status::CREATED, proposal_err::STATUS_ERROR, "proposal status must be running" );
     CHECKC( proposal.options.count(option_key), proposal_err::PARAM_ERROR, "param error" );
 
-    bool is_not_expired = proposal.ended_at >= current_time_point();
+    // bool is_not_expired = proposal.ended_at >= current_time_point();
+    bool is_not_expired = false;
     if ( is_not_expired ) {
         vote_t::idx_t vote_tbl(_self, _self.value);
         auto vote_index = vote_tbl.get_index<"unionid"_n>();
