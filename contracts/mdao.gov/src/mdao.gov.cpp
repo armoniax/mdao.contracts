@@ -106,6 +106,14 @@ ACTION mdaogov::setgov(const name& dao_code, const uint16_t& voting_period,
     CHECKC( require_pass > 0 , gov_err::PARAM_ERROR, "require_pass no less than 0" );
     CHECKC( voting_period >= 3 && voting_period <= 14, gov_err::PARAM_ERROR, "require_pass no less than 3 and no more than 14");
 
+    strategy_t::idx_t stg(MDAO_STG, MDAO_STG.value);
+    auto vote_strategy = stg.find(vote_strategy_id);
+    auto propose_strategy = stg.find(propose_strategy_id);
+    CHECKC( vote_strategy!= stg.end(), gov_err::STRATEGY_NOT_FOUND, "vote strategy not found");
+    CHECKC( propose_strategy != stg.end(), gov_err::STRATEGY_NOT_FOUND, "propose strategy not found");
+    CHECKC( vote_strategy->status == strategy_status::published && propose_strategy->status == strategy_status::published, 
+            gov_err::STRATEGY_STATUS_ERROR, "strategy type must be published" );
+            
     governance.voting_period = voting_period;
     governance.require_pass  = require_pass;
     governance.updated_at = current_time_point();

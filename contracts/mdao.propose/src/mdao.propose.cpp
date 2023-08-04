@@ -28,8 +28,9 @@ ACTION mdaoproposal::create(const name& creator, const name& dao_code, const str
     CHECKC( conf.status != conf_status::PENDING, gov_err::NOT_AVAILABLE, "under maintenance" );
     CHECKC( title.size() > 0 && title.size() <= 32, proposal_err::INVALID_FORMAT, "title length is more than 32 bytes and less than 0 bytes");
     CHECKC( desc.size() <= 224, proposal_err::INVALID_FORMAT, "desc length is more than 224 bytes");
+    CHECKC( options.size() > 0, proposal_err::PARAM_ERROR, "options size must be more than 0" );
+
     proposal_t proposal(_gstate.last_propose_id);
-    
     for (auto option : options) {
         CHECKC( option.second.size() > 0 && option.second.size() <= 32, proposal_err::INVALID_FORMAT, "option title length is more than 32 bytes and less than 0 bytes");
         CHECKC( option.first.size() > 0, proposal_err::INVALID_FORMAT, "option key length is less than 0 bytes");
