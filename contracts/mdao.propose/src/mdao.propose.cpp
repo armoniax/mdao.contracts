@@ -58,7 +58,7 @@ ACTION mdaoproposal::create(const name& creator, const name& dao_code, const str
     proposal.desc	               =   desc;
     proposal.title	             =   title;
     proposal.ended_at	           =   time_point_sec(current_time_point()) + (gov->voting_period * second_per_day);
-    proposal.require_pass	       =   gov->require_pass;
+    // proposal.require_pass	       =   gov->require_pass;
     _db.set(proposal, creator);
     
     _gstate.last_propose_id++;
