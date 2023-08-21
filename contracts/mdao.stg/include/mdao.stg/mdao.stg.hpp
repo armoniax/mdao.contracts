@@ -156,23 +156,26 @@ public:
             symbol sym = std::get<symbol>(stg.ref_sym);
             value = eosio::token::get_balance(stg.ref_contract, account, sym.code()).amount;
             weight_st.quantity = asset(value, sym);
-            value = value / power(10, sym.precision());
+            weight_st.weight  = cal_algo(stg.stg_algo, value) / power(10, sym.precision());
             break;
          }
          case strategy_type::NFT_BALANCE.value:{
             nsymbol sym = std::get<nsymbol>(stg.ref_sym);
             value = amax::ntoken::get_balance(stg.ref_contract, account, sym).amount;
             weight_st.quantity = nasset(value, sym);
+            weight_st.weight  = cal_algo(stg.stg_algo, value);
             break;
          }
          case strategy_type::NFT_PARENT_BALANCE.value:{
             nsymbol sym = std::get<nsymbol>(stg.ref_sym);
             value = amax::ntoken::get_balance_by_parent(stg.ref_contract, account, sym.id);
+            weight_st.weight  = cal_algo(stg.stg_algo, value);
             break;
          }
          case strategy_type::TOKEN_SUM.value: {
             symbol sym = std::get<symbol>(stg.ref_sym);
-            value = aplink::token::get_sum(stg.ref_contract, account, sym.code()).amount / power(10, sym.precision());
+            value = aplink::token::get_sum(stg.ref_contract, account, sym.code()).amount;
+            weight_st.weight  = cal_algo(stg.stg_algo, value) / power(10, sym.precision());
             break;
          }
          default:
@@ -180,7 +183,6 @@ public:
             break;
          }
 
-         weight_st.weight  = cal_algo(stg.stg_algo, value);
          return weight_st;
    }
 
