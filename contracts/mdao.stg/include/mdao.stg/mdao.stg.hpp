@@ -243,7 +243,7 @@ public:
    }
 
    static int128_t cal_algo(const string& stg_algo,
-                            const uint64_t& value)
+                            const double& value)
    {
          PicoMath pm;
          auto &x = pm.addVariable("x");
@@ -255,5 +255,6 @@ public:
          return weight;
    }
 };
+
 
 }
