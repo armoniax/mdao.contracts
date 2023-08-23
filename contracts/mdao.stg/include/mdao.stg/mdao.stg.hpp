@@ -140,14 +140,10 @@ public:
          return weight;
    }
 
-   static weight_struct cal_balance_weight( const name& stg_contract_account,
-                                            const uint64_t& stg_id,
-                                            const name& account )
+   static weight_struct cal_balance_weight( const strategy_t& stg,
+                                            const name& account,
+                                            const int128_t& voting_rate )
    {
-         auto db = dbc(stg_contract_account);
-         auto stg = strategy_t(stg_id);
-         check(db.get(stg), "cannot find strategy");
-
          weight_struct weight_st;
          uint64_t value;
          switch (stg.type.value)
@@ -156,7 +152,13 @@ public:
             symbol sym = std::get<symbol>(stg.ref_sym);
             value = eosio::token::get_balance(stg.ref_contract, account, sym.code()).amount;
             weight_st.quantity = asset(value, sym);
-            weight_st.weight  = cal_algo(stg.stg_algo, value) / power(10, sym.precision());
+            if ( voting_rate > 0 ) {
+                //min(x-1000,0)
+                weight_st.weight  = cal_algo(stg.stg_algo, double(value) * double(voting_rate) / double(power(10, sym.precision()))) ;
+            } else {
+                //x*1000
+                weight_st.weight  = cal_algo(stg.stg_algo, double(value) / double(power(10, sym.precision())));
+            }  
             break;
          }
          case strategy_type::NFT_BALANCE.value:{
@@ -175,7 +177,13 @@ public:
          case strategy_type::TOKEN_SUM.value: {
             symbol sym = std::get<symbol>(stg.ref_sym);
             value = aplink::token::get_sum(stg.ref_contract, account, sym.code()).amount;
-            weight_st.weight  = cal_algo(stg.stg_algo, value) / power(10, sym.precision());
+            if ( voting_rate > 0 ) {
+                //min(x-1000,0)
+                weight_st.weight  = cal_algo(stg.stg_algo, double(value) * double(voting_rate) / double(power(10, sym.precision()))) ;
+            } else {
+                //x*1000
+                weight_st.weight  = cal_algo(stg.stg_algo, double(value) / double(power(10, sym.precision())));
+            }            
             break;
          }
          default:
@@ -186,16 +194,11 @@ public:
          return weight_st;
    }
 
-   static weight_struct cal_stake_weight(const name& stg_contract_account,
-                             const uint64_t& stg_id,
+   static weight_struct cal_stake_weight(const strategy_t& stg,
                              const name& dao_code,
                              const name& stake_contract,
                              const name& account )
    {
-         auto db = dbc(stg_contract_account);
-         auto stg = strategy_t(stg_id);
-         check(db.get(stg), "cannot find strategy");
-         
          weight_struct weight_st;
          uint64_t value = 0;
          switch (stg.type.value)

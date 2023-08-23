@@ -17,7 +17,8 @@ using namespace amax;
 #define TG_TBL [[eosio::table, eosio::contract("mdao.propose")]]
 #define PROPOSE_TABLE_NAME(name) [[eosio::table(name), eosio::contract("mdao.propose")]]
 typedef std::variant<asset, nasset> refasset;
-static constexpr uint64_t   second_per_day       = 24 * 3600;
+// static constexpr uint64_t   second_per_day       = 24 * 3600;
+static constexpr uint64_t   second_per_day       = 120;
 static uint128_t get_union_id(const name& account, const uint64_t& proposal_id){
     return ( (uint128_t)account.value ) << 64 | proposal_id;
 }

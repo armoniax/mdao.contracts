@@ -44,11 +44,16 @@ ACTION mdaoproposal::create(const name& creator, const name& dao_code, const str
     uint64_t proposal_strategy_id = gov->strategies.at(strategy_action_type::PROPOSAL);
 
     strategy_t::idx_t stg(MDAO_STG, MDAO_STG.value);
+    
+    auto vote_strategy = stg.find(vote_strategy_id);
+    CHECKC( vote_strategy != stg.end(), proposal_err::RECORD_NOT_FOUND, "vote strategy not found" );   
+    int128_t voting_rate = mdao::strategy::cal_algo(vote_strategy->stg_algo, 1);
+    
     auto propose_strategy = stg.find(proposal_strategy_id);
-    CHECKC( propose_strategy != stg.end(), proposal_err::RECORD_NOT_FOUND, "strategy not found" );   
+    CHECKC( propose_strategy != stg.end(), proposal_err::RECORD_NOT_FOUND, "propose strategy not found" );   
 
     weight_struct weight_str;
-    _cal_votes(dao_code, *propose_strategy, creator, weight_str, 0);
+    _cal_votes(dao_code, *propose_strategy, creator, weight_str, 0, voting_rate);
     CHECKC( weight_str.weight > 0, proposal_err::INSUFFICIENT_BALANCE, "insufficient strategy weight")
 
     proposal.dao_code            =   dao_code;
@@ -77,11 +82,6 @@ ACTION mdaoproposal::cancel(const name& owner, const uint64_t& proposal_id)
     CHECKC( _db.get(proposal) ,proposal_err::RECORD_NOT_FOUND, "record not found" );
     CHECKC( owner == proposal.creator, proposal_err::PERMISSION_DENIED, "only the creator can operate" );
     CHECKC( proposal_status::CREATED == proposal.status, proposal_err::STATUS_ERROR, "can only operate if the state is created and voting" );
-    
-    // governance_t::idx_t governance_tbl(MDAO_GOV, MDAO_GOV.value);
-    // const auto governance = governance_tbl.find(proposal.dao_code.value);
-    // CHECKC( ((proposal.created_at + (governance->voting_period * second_per_day)) >= current_time_point()), 
-    //             proposal_err::ALREADY_EXPIRED, "the voting cycle is over. it can't be canceled" );
 
     _db.del(proposal);
 }
@@ -111,7 +111,7 @@ ACTION mdaoproposal::votefor(const name& voter, const uint64_t& proposal_id,
         auto vote_strategy = stg.find(proposal.vote_strategy_id);
 
         weight_struct weight_str;
-        _cal_votes(proposal.dao_code, *vote_strategy, voter, weight_str, conf.stake_period_days * second_per_day);
+        _cal_votes(proposal.dao_code, *vote_strategy, voter, weight_str, conf.stake_period_days * second_per_day, 0);
         CHECKC( weight_str.weight > 0, proposal_err::INSUFFICIENT_VOTES, "insufficient votes" );
 
         vote_tbl.emplace( voter, [&]( auto& row ) {
@@ -175,10 +175,10 @@ void mdaoproposal::withdraw(const vector<withdraw_str>& withdraws) {
      
 }
 
-void mdaoproposal::_cal_votes(const name dao_code, const strategy_t& vote_strategy, const name voter, weight_struct& weight_str, const uint32_t& lock_time) {
+void mdaoproposal::_cal_votes(const name dao_code, const strategy_t& vote_strategy, const name voter, weight_struct& weight_str, const uint32_t& lock_time, const int128_t& voting_rate) {
     switch(vote_strategy.type.value){
         case strategy_type::TOKEN_STAKE.value :{
-            weight_str = mdao::strategy::cal_stake_weight(MDAO_STG, vote_strategy.id, dao_code, MDAO_STAKE, voter);
+            weight_str = mdao::strategy::cal_stake_weight(vote_strategy, dao_code, MDAO_STAKE, voter);
             
             asset quantity = std::get<asset>(weight_str.quantity);
             if(quantity.symbol != symbol("AMAX",8) && lock_time > 0 && weight_str.weight > 0){
@@ -194,7 +194,7 @@ void mdaoproposal::_cal_votes(const name dao_code, const strategy_t& vote_strate
         } 
         case strategy_type::NFT_STAKE.value : 
         case strategy_type::NFT_PARENT_STAKE.value:{
-            weight_str = mdao::strategy::cal_stake_weight(MDAO_STG, vote_strategy.id, dao_code, MDAO_STAKE, voter);
+            weight_str = mdao::strategy::cal_stake_weight(vote_strategy, dao_code, MDAO_STAKE, voter);
             
             if(lock_time > 0 && weight_str.weight > 0){
                 user_stake_t::idx_t user_stake(MDAO_STAKE, MDAO_STAKE.value); 
@@ -207,14 +207,11 @@ void mdaoproposal::_cal_votes(const name dao_code, const strategy_t& vote_strate
 
             break;
         }
-        case strategy_type::TOKEN_BALANCE.value:{
-            weight_str = mdao::strategy::cal_balance_weight(MDAO_STG, vote_strategy.id, voter);
-            break;
-        }
+        case strategy_type::TOKEN_BALANCE.value:
         case strategy_type::NFT_BALANCE.value:
         case strategy_type::NFT_PARENT_BALANCE.value:
         case strategy_type::TOKEN_SUM.value: {
-            weight_str = mdao::strategy::cal_balance_weight(MDAO_STG, vote_strategy.id, voter);
+            weight_str = mdao::strategy::cal_balance_weight(vote_strategy, voter, voting_rate);
             break;
         }
         default : {

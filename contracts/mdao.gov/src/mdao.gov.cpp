@@ -155,26 +155,26 @@ ACTION mdaogov::delgov()
     }
 }
 
-void mdaogov::_cal_votes(const name dao_code, const strategy_t& vote_strategy, const name voter, int64_t& value) {
-    switch(vote_strategy.type.value){
-        case strategy_type::TOKEN_STAKE.value : 
-        case strategy_type::NFT_STAKE.value : 
-        case strategy_type::NFT_PARENT_STAKE.value:{
-            value = mdao::strategy::cal_stake_weight(MDAO_STG, vote_strategy.id, dao_code, MDAO_STAKE, voter).weight;
-            break;
-        }
-        case strategy_type::TOKEN_BALANCE.value:
-        case strategy_type::NFT_BALANCE.value:
-        case strategy_type::NFT_PARENT_BALANCE.value:
-        case strategy_type::TOKEN_SUM.value: {
-            value = mdao::strategy::cal_balance_weight(MDAO_STG, vote_strategy.id, voter).weight;
-            break;
-         }
-        default : {
-           CHECKC( false, gov_err::TYPE_ERROR, "type error" );
-        }
-    }
-}
+// void mdaogov::_cal_votes(const name dao_code, const strategy_t& vote_strategy, const name voter, int64_t& value) {
+//     switch(vote_strategy.type.value){
+//         case strategy_type::TOKEN_STAKE.value : 
+//         case strategy_type::NFT_STAKE.value : 
+//         case strategy_type::NFT_PARENT_STAKE.value:{
+//             value = mdao::strategy::cal_stake_weight(vote_strategy, dao_code, MDAO_STAKE, voter).weight;
+//             break;
+//         }
+//         case strategy_type::TOKEN_BALANCE.value:
+//         case strategy_type::NFT_BALANCE.value:
+//         case strategy_type::NFT_PARENT_BALANCE.value:
+//         case strategy_type::TOKEN_SUM.value: {
+//             value = mdao::strategy::cal_balance_weight(vote_strategy, voter, 0).weight;
+//             break;
+//          }
+//         default : {
+//            CHECKC( false, gov_err::TYPE_ERROR, "type error" );
+//         }
+//     }
+// }
 
 const mdaogov::conf_t& mdaogov::_conf() {
     if (!_conf_ptr) {

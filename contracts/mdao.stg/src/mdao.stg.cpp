@@ -137,7 +137,7 @@ void strategy::testalgo( const name& account, const uint64_t& stg_id ){
     strategy_t stg = strategy_t( stg_id );
     CHECKC( _db.get( stg ), stg_err::RECORD_NOT_FOUND, "strategy not found: " + to_string( stg_id ) )
     
-    weight_struct weight_str = cal_balance_weight(get_self(), stg_id, account);
+    weight_struct weight_str = cal_balance_weight(stg, account, 0);
     // CHECKC(false, stg_err::NONE, "weight: "+ to_string(weight_str.weight));
 }
 
