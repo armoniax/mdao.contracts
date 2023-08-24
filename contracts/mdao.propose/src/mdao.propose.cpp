@@ -81,7 +81,7 @@ ACTION mdaoproposal::cancel(const name& owner, const uint64_t& proposal_id)
     proposal_t proposal(proposal_id);
     CHECKC( _db.get(proposal) ,proposal_err::RECORD_NOT_FOUND, "record not found" );
     CHECKC( owner == proposal.creator, proposal_err::PERMISSION_DENIED, "only the creator can operate" );
-    CHECKC( proposal_status::CREATED == proposal.status, proposal_err::STATUS_ERROR, "can only operate if the state is created and voting" );
+    CHECKC( proposal.ended_at >= current_time_point(), proposal_err::STATUS_ERROR, "proposal already expired" );
 
     _db.del(proposal);
 }
