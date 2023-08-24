@@ -113,6 +113,9 @@ public:
                    const uint64_t& stg_id,
                    const uint64_t& value,
                    const uint64_t& expect_weight);
+    
+    [[eosio::action]]
+    void deldata();
 
     [[eosio::action]]
     void publish(const name& creator,

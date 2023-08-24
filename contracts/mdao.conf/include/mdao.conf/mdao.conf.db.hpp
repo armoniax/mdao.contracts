@@ -131,13 +131,19 @@ struct CONF_TABLE_NAME("global2") conf_global_t2 {
         {"t"_n,tags_info{{"t.defi","t.socialfi","t.gamefi","t.nft","t.token","t.tech","t.tour","t.sport","t.charity","t.film"}}},
         {"l"_n,tags_info{{"l.cn","l.en","l.vi","l.th","l.id","l.ko","l.ja","l.ru"}}}
     };
-    set<name>   token_creator_whitelist;
-    asset crt_token_threshold = asset(200000000000,AMAX_SYMBOL);
-    uint64_t custody_plan_id = 43;
-    EOSLIB_SERIALIZE( conf_global_t2,    (available_tags)(token_creator_whitelist)(crt_token_threshold)(custody_plan_id) )
+    set<name> token_creator_whitelist;
+    asset crt_token_threshold         = asset(200000000000,AMAX_SYMBOL);
+    uint64_t custody_plan_id          = 43;
+    EOSLIB_SERIALIZE( conf_global_t2, (available_tags)(token_creator_whitelist)(crt_token_threshold)(custody_plan_id) )
+};
+
+struct CONF_TABLE_NAME("global3") conf_global_t3 {
+    bool meeting_switch;
+    EOSLIB_SERIALIZE( conf_global_t3, (meeting_switch) )
 };
 
 typedef eosio::singleton< "global"_n, conf_global_t > conf_global_singleton;
 typedef eosio::singleton< "global2"_n, conf_global_t2 > conf_global_singleton2;
+typedef eosio::singleton< "global3"_n, conf_global_t3 > conf_global_singleton3;
 
 } //amax

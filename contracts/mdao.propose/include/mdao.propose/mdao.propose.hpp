@@ -92,10 +92,9 @@ public:
     ACTION votefor(const name& voter, const uint64_t& proposal_id,  const string& title);
               
     ACTION withdraw(const vector<withdraw_str>& withdraws);
-    // ACTION recycledb(uint32_t max_rows);
+    
+    ACTION deldata();
 
-    // ACTION deletepropose(uint64_t id);
-    // ACTION deletevote(uint32_t id); 
 
 private:
     void _cal_votes(const name dao_code, const strategy_t& vote_strategy, const name voter, weight_struct& weight_str, const uint32_t& lock_time, const int128_t& voting_rate) ;

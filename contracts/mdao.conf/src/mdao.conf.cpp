@@ -23,6 +23,12 @@ ACTION mdaoconf::setseat( uint16_t& dappmax )
     _gstate.dapp_seats_max = dappmax;
 }
 
+ACTION mdaoconf::setmeeting( bool& meeting_switch )
+{
+    require_auth( _self );
+    _gstate3.meeting_switch = meeting_switch;
+}
+
 ACTION mdaoconf::setmanager( const name& manage_type, const name& manager )
 {
     require_auth( _self );

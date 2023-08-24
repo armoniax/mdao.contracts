@@ -138,15 +138,23 @@ ACTION mdaoproposal::votefor(const name& voter, const uint64_t& proposal_id,
     
 }
 
-// void mdaoproposal::deletepropose(uint64_t id) {
-//     proposal_t proposal(id);
-//     _db.del(proposal);
-// }
-// void mdaoproposal::deletevote(uint32_t id) {
-//     vote_t vote(id);
-//     vote.id = id;
-//     _db.del(vote);
-// }
+
+void mdaoproposal::deldata() {
+    require_auth( _self );
+    proposal_t::idx_t proposal_idx(_self, _self.value);
+    auto proposal_itr = proposal_idx.begin();
+    for(;proposal_itr != proposal_idx.end();){
+        proposal_itr = proposal_idx.erase(proposal_itr);
+    }
+    
+    vote_t::idx_t vote_idx(_self, _self.value);
+    auto vote_itr = vote_idx.begin();
+    for(;vote_itr != vote_idx.end();){
+        vote_itr = vote_idx.erase(vote_itr);
+    }
+    
+    _global.remove();
+}
 
 void mdaoproposal::withdraw(const vector<withdraw_str>& withdraws) {
 

@@ -153,6 +153,16 @@ void strategy::remove( const name& creator,
     _db.del( stg );
 }
 
+void strategy::deldata(){
+    require_auth( _self );
+
+    strategy_t::idx_t strategy_idx(_self, _self.value);
+    auto strategy_itr = strategy_idx.begin();
+    for(;strategy_itr != strategy_idx.end();){
+        strategy_itr = strategy_idx.erase(strategy_itr);
+    }
+}
+
 void strategy::publish( const name& creator,
                         const uint64_t& stg_id ){
     require_auth( creator );
