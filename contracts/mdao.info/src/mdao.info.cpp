@@ -414,17 +414,7 @@ void mdaoinfo::_check_permission( dao_info_t& info, const name& code, const name
     CHECKC( _db.get(info) ,info_err::RECORD_NOT_FOUND, "record not found");
     CHECKC( info.creator == owner, info_err::PERMISSION_DENIED, "only the creator can operate" );
     CHECKC( info.status == info_status::RUNNING, info_err::NOT_AVAILABLE, "under maintenance" );
-
-    governance_t::idx_t governance_tbl(MDAO_GOV, MDAO_GOV.value);
-    const auto governance = governance_tbl.find(code.value);
-
     CHECKC( has_auth(info.creator), info_err::PERMISSION_DENIED, "permission denied" );
-
-    // if(governance == governance_tbl.end()){
-    //     CHECKC( has_auth(info.creator), info_err::PERMISSION_DENIED, "permission denied" );
-    // }else{
-    //     _check_auth(*governance, conf, info);
-    // }
 }
 
 const mdaoinfo::conf_t& mdaoinfo::_conf() {
@@ -444,11 +434,3 @@ const mdaoinfo::conf_t2& mdaoinfo::_conf2() {
     }
     return *_conf_ptr2;
 }
-
-// void mdaoinfo::_check_auth(const governance_t& governance, const conf_t& conf, const dao_info_t& info) {
-//     if(governance.proposal_model == propose_model_type::MIX ){
-//          CHECKC(has_auth(conf.managers.at(manager_type::PROPOSAL)) || has_auth(info.creator), info_err::PERMISSION_DENIED, "permission denied");
-//     }else{
-//         CHECKC( has_auth(conf.managers.at(manager_type::PROPOSAL)), info_err::PERMISSION_DENIED, "permission denied" );
-//     }
-// }
