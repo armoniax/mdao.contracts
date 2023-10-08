@@ -200,7 +200,8 @@ public:
    static weight_struct cal_stake_weight(const strategy_t& stg,
                              const name& dao_code,
                              const name& stake_contract,
-                             const name& account )
+                             const name& account,
+                             const int128_t& voting_rate )
    {
          weight_struct weight_st;
          uint64_t value = 0;
@@ -214,7 +215,14 @@ public:
                 if (voter_itr != voter_tbl.end()) {
                     value = voter_itr->votes.amount * 1'0000;
                 }
-                weight_st.quantity = asset(value, sym); 
+                weight_st.quantity = asset(value, sym);
+                if ( voting_rate > 0 ) {
+                    //min(x-1000,0)
+                    weight_st.weight  = cal_algo(stg.stg_algo, double(value) * double(voting_rate) / double(power(10, sym.precision()))) ;
+                } else {
+                    //x*1000
+                    weight_st.weight  = cal_algo(stg.stg_algo, double(value) / double(power(10, sym.precision())));
+                }  
             } else {
                 map<extended_symbol, int64_t> tokens = mdaostake::get_user_staked_tokens(stake_contract, account, dao_code);
                 asset supply = amax::token::get_supply(stg.ref_contract, sym.code());
@@ -225,6 +233,7 @@ public:
          case strategy_type::NFT_STAKE.value:{
             map<extended_nsymbol, int64_t> nfts = mdaostake::get_user_staked_nfts(stake_contract, account, dao_code);
             value = nfts.at(extended_nsymbol(std::get<nsymbol>(stg.ref_sym), stg.ref_contract));
+            weight_st.weight = cal_algo(stg.stg_algo, value);
             break;
          }
          case strategy_type::NFT_PARENT_STAKE.value:{
@@ -233,13 +242,13 @@ public:
             for (auto itr = syms.begin() ; itr != syms.end(); itr++) {
                if (nfts.count(*itr)) value += nfts.at(*itr);
             }
+            weight_st.weight = cal_algo(stg.stg_algo, value);
             break;
          }
          default:
             check(false, "unsupport calculating type");
             break;
          }
-         weight_st.weight = cal_algo(stg.stg_algo, value);
 
          // check(false, " balance: " + to_string(value) + " | weight: "+ to_string(weight));
          return weight_st;
