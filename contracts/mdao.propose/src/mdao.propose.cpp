@@ -186,7 +186,7 @@ void mdaoproposal::withdraw(const vector<withdraw_str>& withdraws) {
 void mdaoproposal::_cal_votes(const name dao_code, const strategy_t& vote_strategy, const name voter, weight_struct& weight_str, const uint32_t& lock_time, const int128_t& voting_rate) {
     switch(vote_strategy.type.value){
         case strategy_type::TOKEN_STAKE.value :{
-            weight_str = mdao::strategy::cal_stake_weight(vote_strategy, dao_code, MDAO_STAKE, voter);
+            weight_str = mdao::strategy::cal_stake_weight(vote_strategy, dao_code, MDAO_STAKE, voter, voting_rate);
             
             asset quantity = std::get<asset>(weight_str.quantity);
             if(quantity.symbol != symbol("AMAX",8) && lock_time > 0 && weight_str.weight > 0){
@@ -202,7 +202,7 @@ void mdaoproposal::_cal_votes(const name dao_code, const strategy_t& vote_strate
         } 
         case strategy_type::NFT_STAKE.value : 
         case strategy_type::NFT_PARENT_STAKE.value:{
-            weight_str = mdao::strategy::cal_stake_weight(vote_strategy, dao_code, MDAO_STAKE, voter);
+            weight_str = mdao::strategy::cal_stake_weight(vote_strategy, dao_code, MDAO_STAKE, voter, voting_rate);
             
             if(lock_time > 0 && weight_str.weight > 0){
                 user_stake_t::idx_t user_stake(MDAO_STAKE, MDAO_STAKE.value); 
