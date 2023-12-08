@@ -49,6 +49,17 @@ MEEING_TBL_NAME("global") global_t {
     typedef eosio::singleton< "global"_n, global_t > tbl_t;
 };
 
+
+// _self
+MEEING_TBL whitelist_t{
+    name                        dao_code;
+
+    uint64_t primary_key()const { return dao_code.value; }
+
+    typedef eosio::multi_index< "whitelist"_n, whitelist_t 
+    > tbl_t;
+};
+
 // scope : self
 MEEING_TBL meeting_t{
     name                        dao_code;

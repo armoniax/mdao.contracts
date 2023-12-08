@@ -63,7 +63,33 @@ void mdaomeeting::ontransfer(const name& from, const name& to, const asset& quan
     
 }
 
+void mdaomeeting::setwhitelist(const set<name>& accounts){
+    CHECKC( has_auth(_self) || has_auth(_gstate.admin), err::NO_AUTH,"no auth")
+    for ( name n : accounts ){
+        auto itr = _whitelist_tbl.find( n.value );
+        db::set( _whitelist_tbl, itr, _self, [&]( auto& p, bool is_new ){
+            p.dao_code = n;
+        });
+    }
+}
+
+void mdaomeeting::delwhitelist(const set<name>& accounts){
+    
+    CHECKC( has_auth(_self) || has_auth(_gstate.admin), err::NO_AUTH,"no auth")
+
+    for ( name n : accounts ){
+
+        auto itr = _whitelist_tbl.find( n.value );
+        if ( itr != _whitelist_tbl.end() )
+            _whitelist_tbl.erase(itr);
+    }
+}   
+
+
 void mdaomeeting::_create_renew_dao(const name& from, const name& dao_code, const string& group_id, const asset& quantity, const uint64_t& month){
+
+    auto whitelist_itr = _whitelist_tbl.find( dao_code.value );
+    CHECKC( whitelist_itr !=  _whitelist_tbl.end(), err::NO_AUTH,"Not yet open")
 
     dao_info_t::idx_t dao_info(MDAO_INFO_ACCOUNT,MDAO_INFO_ACCOUNT.value);
     auto dao_itr = dao_info.find( dao_code.value );
@@ -85,10 +111,11 @@ void mdaomeeting::_create_renew_dao(const name& from, const name& dao_code, cons
         if ( is_new ){
             p.created_at = now;
             p.dao_code = dao_code;
-            p.group_id = group_id;
-            p.creator = from;
+           
             p.expired_at = now;
         }
+        p.creator = from;
+        p.group_id = group_id;
         if ( p.expired_at < now )
             p.expired_at = now;
         // p.expired_at = p.expired_at < now ? now : p.expired_at;
