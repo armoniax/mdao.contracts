@@ -98,6 +98,18 @@ ACTION mdaoinfo::updatedao(const name& owner, const name& code, const string& lo
     _db.set(info, _self);
 }
 
+ACTION mdaoinfo::unbind(const name& owner, const name& code)
+{
+    auto conf = _conf();
+    CHECKC( conf.status != conf_status::PENDING, info_err::NOT_AVAILABLE, "under maintenance" );
+
+    dao_info_t info(code);
+    _check_permission(info, code, owner, conf);
+
+    info.group_id.clear();
+    _db.set(info, _self);
+}
+
 ACTION mdaoinfo::setlogo(const name& owner, const name& code, const string& logo)
 {
     require_auth( owner );
@@ -164,7 +176,7 @@ ACTION mdaoinfo::updatecode(const name& admin, const name& code, const name& new
 
 }
 
-ACTION mdaoinfo::binddapps(const name& owner, const name& code, const set<app_info>& dapps)
+ACTION mdaoinfo::binddapps(const name& owner, const name& code, const std::set<app_info>& dapps)
 {
     // require_auth( owner );
     auto conf = _conf();
@@ -175,7 +187,7 @@ ACTION mdaoinfo::binddapps(const name& owner, const name& code, const set<app_in
     CHECKC( dapps.size() != 0 ,info_err::CANNOT_ZERO, "dapp size cannot be zero" );
     CHECKC( ( info.dapps.size() + dapps.size() ) <= conf.dapp_seats_max, info_err::SIZE_TOO_MUCH, "dapp size more than limit" );
 
-    for( set<app_info>::iterator dapp_iter = dapps.begin(); dapp_iter!=dapps.end(); dapp_iter++ ){
+    for( std::set<app_info>::iterator dapp_iter = dapps.begin(); dapp_iter!=dapps.end(); dapp_iter++ ){
         info.dapps.insert(*dapp_iter);
     }
     _db.set(info, _self);
