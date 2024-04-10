@@ -13,11 +13,11 @@
 #include <mdao.info/mdao.info.db.hpp>
 #include <thirdparty/utils.hpp>
 #include <thirdparty/contract_function.hpp>
+#include <map>
 #include <set>
-using namespace eosio;
+
 using namespace wasm::db;
 using namespace mdao;
-using namespace std;
 
 #define GET_UNION_TYPE_ID(prefix, suffix) \
 { ( (uint128_t) prefix.value << 64 ) | ((uint128_t) suffix.value << 64) }
@@ -65,6 +65,11 @@ namespace member_status {
     static constexpr eosio::name INIT               = "init"_n;
     static constexpr eosio::name CREATED            = "created"_n;
 };
+
+namespace amax {
+
+using namespace std;
+using namespace eosio;
 
 static constexpr uint8_t month                     = 1;
 static constexpr uint8_t months_per_quarter        = 3;
@@ -123,6 +128,7 @@ private:
                         const uint64_t& groupthr_id);
 public:
     using contract::contract;
+
     mdaogroupthr(name receiver, name code, datastream<const char*> ds):_db(_self),  contract(receiver, code, ds), _global(_self, _self.value){
         if (_global.exists()) {
             _gstate = _global.get();
@@ -137,7 +143,7 @@ public:
     }
     
     ACTION setglobal( asset crt_groupthr_fee, asset join_member_fee, 
-                              set<name> token_contracts, set<name> nft_contracts);
+                            std::set<name> token_contracts, std::set<name> nft_contracts);
     
     [[eosio::on_notify("*::transfer")]]
     void ontransfer();
@@ -152,3 +158,5 @@ public:
     
     ACTION delgroupthrs(vector<uint64_t> &deleted_groupthrs);
 };
+
+} // amax namespace

@@ -5,8 +5,29 @@
 
 namespace wasm { namespace db {
 
-using namespace eosio;
+template<typename table, typename Lambda>
+    inline void set(table &tbl,  typename table::const_iterator& itr, const eosio::name& emplaced_payer,
+            const eosio::name& modified_payer, Lambda&& setter )
+   {
+        if (itr == tbl.end()) {
+            tbl.emplace(emplaced_payer, [&]( auto& p ) {
+               setter(p, true);
+            });
+        } else {
+            tbl.modify(itr, modified_payer, [&]( auto& p ) {
+               setter(p, false);
+            });
+        }
+    }
 
+    template<typename table, typename Lambda>
+    inline void set(table &tbl,  typename table::const_iterator& itr, const eosio::name& emplaced_payer,
+               Lambda&& setter )
+   {
+      set(tbl, itr, emplaced_payer, eosio::same_payer, setter);
+   }
+
+using namespace eosio;
 
 template<eosio::name::raw TableName, typename T, typename... Indices>
 class multi_index_ex: public eosio::multi_index<TableName, T, Indices...> {

@@ -1,5 +1,7 @@
 #include <mdao.groupthr/mdao.groupthr.hpp>
 
+namespace amax {
+
 #define TOKEN_TRANSFER(bank, to, quantity, memo) \
 { action(permission_level{get_self(), "active"_n }, bank, "transfer"_n, std::make_tuple( _self, to, quantity, memo )).send(); }
 
@@ -11,7 +13,7 @@
 
 
 void mdaogroupthr::setglobal( asset crt_groupthr_fee, asset join_member_fee, 
-                              set<name> token_contracts, set<name> nft_contracts)
+                              std::set<name> token_contracts, std::set<name> nft_contracts)
 {
     require_auth(_self);
     asset crt_groupthr_fee_supply = token::get_supply(AMAX_CONTRACT, crt_groupthr_fee.symbol.code());
@@ -439,3 +441,5 @@ const mdaogroupthr::conf_t& mdaogroupthr::_conf() {
     }
     return *_conf_ptr;
 }
+
+} //namespace: amax
