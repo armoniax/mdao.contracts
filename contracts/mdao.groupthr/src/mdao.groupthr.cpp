@@ -402,7 +402,7 @@ void mdaogroupthr::_join_balance_member( const name& from,
     auto member_index = member_tbl.get_index<"byidgroupid"_n>();
     uint128_t sec_index = (uint128_t)from.value << 64 | (uint128_t)groupthr_id;
     auto member_itr = member_index.find(sec_index);
-    CHECKC( member_itr == member_index.end(), err::RECORD_FOUND, "record is exists" );
+    CHECKC( member_itr == member_index.end(), err::RECORD_FOUND, "member already joined: " + from.to_string() )
 
     auto mid = _gstate.last_member_id++;
     member_t member(mid);
@@ -421,7 +421,7 @@ void mdaogroupthr::_init_member( const name& from,
     auto member_index = member_tbl.get_index<"byidgroupid"_n>();
     uint128_t sec_index = (uint128_t)from.value << 64 | (uint128_t)groupthr_id;
     auto member_itr = member_index.find(sec_index);
-    CHECKC( member_itr == member_index.end(), err::RECORD_FOUND, "record is exists" );
+    CHECKC( member_itr == member_index.end(), err::RECORD_FOUND, "member already exists: " + from.to_string() )
 
     auto mid = _gstate.last_member_id++;
     member_t member(mid);
