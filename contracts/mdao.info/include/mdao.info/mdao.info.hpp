@@ -12,7 +12,6 @@
 using namespace eosio;
 using namespace wasm::db;
 using namespace mdao;
-using namespace std;
 static constexpr symbol AMAX_SYMBOL = symbol(symbol_code("AMAX"), 8);
 static constexpr uint64_t INFO_PERMISSION_AGING = 24 * 3600;
 
@@ -91,6 +90,10 @@ public:
     void updatedao(const name& owner, const name& code, const string& logo,
                             const string& desc,const map<name, string>& links,
                             const string& symcode, string symcontract, const string& groupid);
+    
+    [[eosio::action]]                     
+    void unbind(const name& owner, const name& code);
+    
     [[eosio::action]]
     void setlogo(const name& owner, const name& code, const string& logo);
 
@@ -104,7 +107,7 @@ public:
     void updatecode(const name& admin, const name& code, const name& new_code);
 
     [[eosio::action]]
-    void binddapps(const name& owner, const name& code, const set<app_info>& dapps);
+    void binddapps(const name& owner, const name& code, const std::set<app_info>& dapps);
 
     [[eosio::action]]
     void bindtoken(const name& owner, const name& code, const extended_symbol& token);
